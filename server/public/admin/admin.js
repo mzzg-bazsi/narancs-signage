@@ -719,7 +719,11 @@
       pending.length ? h('div', { class: 'card mt', style: { marginBottom: '18px', borderColor: 'var(--primary)' } },
         h('div', { class: 'card-head' }, h('h3', {}, `⏳ Párosításra váró eszközök (${pending.length})`)),
         pending.map((p) => h('div', { class: 'list-item' }, h('span', { class: 'dot on' }), h('div', { class: 'grow' }, h('b', {}, `Eszköz ${p.device_short}`), h('div', { class: 'small muted' }, `${p.info?.w ? `${p.info.w}×${p.info.h} · ` : ''}${p.info?.platform || ''} · ${ago(p.last_seen)}`)),
-          btn('Párosítás kóddal', () => pairDialog(), { cls: 'sm primary' })))) : null,
+          btn('Párosítás kóddal', () => pairDialog(), { cls: 'sm primary' }),
+          btn('Elvetés', async () => {
+            if (!(await confirmBox(`Elveted a(z) „${p.device_short}” eszközt? Ha újra jelentkezik, új kóddal kerül vissza a listára.`, { ok: 'Elvetés' }))) return;
+            await DEL(`/api/screens/${p.id}`); toast('Eszköz elvetve'); refreshBadges(); route();
+          }, { cls: 'sm ghost', ic: 'trash', title: 'Nem kívánt eszköz eltávolítása a listáról' })))) : null,
       screens.length ? grid : h('div', { class: 'card' }, h('div', { class: 'empty' }, h('div', { class: 'big' }, '📺'), h('h3', {}, 'Még nincs párosított képernyő'),
         h('div', { style: { maxWidth: '640px', margin: '0 auto 16px', textAlign: 'left' } }, installHint()),
         btn('Képernyő párosítása', () => pairDialog(), { cls: 'primary' }))),

@@ -1,0 +1,20 @@
+{
+  // Narancs Signage – a szerver a mappa megnyitásakor automatikusan elindul egy VS Code terminálban.
+  // Kézzel: Terminal → Run Task… → „Narancs Signage szerver”. Leállítás: a terminálban Ctrl+C.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Narancs Signage szerver",
+      "type": "shell",
+      "command": "node --disable-warning=ExperimentalWarning --watch src/server.js",
+      "options": {
+        "cwd": "${workspaceFolder}/server",
+        "env": { "PORT": "8099", "SIGNAGE_DATA": "./data" }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": false, "clear": true },
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}

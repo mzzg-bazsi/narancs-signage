@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.4.1] – 2026-10-09
+
+### Új
+- Képernyők → párosításra váró eszközök: „Elvetés” gomb a nem kívánt eszközökhöz
+- `.vscode/tasks.json`: a VS Code a mappa megnyitásakor automatikusan elindítja a szervert (8099-es port, `server/data` adatkönyvtár, fájlfigyeléssel)
+
 ## [1.4.0] – 2026-10-09
 
 ### Új
