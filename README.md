@@ -144,7 +144,6 @@ Translations: every UI string is wrapped in `tr('…')` with the original Hungar
 - Some websites (Google, Facebook, etc.) block embedding; they will not show in the “Website” content type.
 - The iCal import does not expand recurring events (RRULE); only the first occurrence is shown.
 - Video sound works on an installed player (the kiosk allows autoplay with sound); in a regular browser the browser may mute it.
-- The installer scripts (terminal output, boot splash) are in Hungarian.
 
 ## Versioning
 

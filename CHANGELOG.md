@@ -7,6 +7,13 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.5] – 2026-10-09
+
+### Változott
+- A telepítők angolul: a szerver és a lejátszó telepítő minden kiírása, a `--help` súgó, a `signage-diag` hibakereső, az ügynök naplóbejegyzései, a systemd szolgáltatások leírása és a Plymouth bootképernyő állapotszövegei
+- A lejátszó indulóképei (`splash-1/2/3/restart.png`) angol szöveggel: „Starting graphical interface…”, „Connecting to the server…”, „Starting player…”, „Restarting player…”
+- A kioszk Chromium nyelve `en-US` (a lejátszó felirata továbbra is az admin felületen választott nyelvet követi)
+
 ## [1.9.4] – 2026-10-09
 
 ### Javítva

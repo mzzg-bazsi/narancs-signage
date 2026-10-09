@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Narancs Signage – LEJÁTSZÓ (kijelző) telepítő
-#  Ubuntu Server 22.04/24.04 és Raspberry Pi OS Lite – arm64, armhf és amd64
+#  Narancs Signage – PLAYER (display) installer
+#  Ubuntu Server 22.04/24.04 and Raspberry Pi OS Lite – arm64, armhf and amd64
 #
-#  Legegyszerűbben a szerverről:
-#     curl -fsSL http://SZERVER:8080/install-player.sh | sudo bash
-#  vagy kézzel:
-#     sudo ./install-player.sh http://SZERVER:8080 [--rotate 90] [--nightly-reboot]
+#  Easiest, straight from the server:
+#     curl -fsSL http://SERVER:8080/install-player.sh | sudo bash
+#  or manually:
+#     sudo ./install-player.sh http://SERVER:8080 [--rotate 90] [--nightly-reboot]
 #
-#  Grafika: virtuális gépen vagy GPU nélkül automatikusan szoftveres megjelenítés.
-#     --no-gpu / --gpu  a felismerés felülbírálása
+#  Graphics: software rendering is used automatically in a VM or without a GPU.
+#     --no-gpu / --gpu  override the detection
 #
-#  Eltávolítás:
-#     curl -fsSL http://SZERVER:8080/install-player.sh | sudo bash -s -- --uninstall
-#     (--purge: a Chromiumot és a grafikus csomagokat is eltávolítja)
+#  Uninstall:
+#     curl -fsSL http://SERVER:8080/install-player.sh | sudo bash -s -- --uninstall
+#     (--purge: also removes Chromium and the graphics packages)
 #
-#  Mit csinál?
-#   - minimális grafikus környezet (X11, ablakkezelő nélkül) asztal nélkül
-#   - Chromium kioszk módban, automatikus újraindítással ha összeomlik
-#   - automatikus bejelentkezés a tty1-en egy dedikált "kiosk" felhasználóval
-#   - képernyőkímélő/energiatakarékos mód kikapcsolása; egérmutató csak egérmozgatáskor
-#   - monitor ki/bekapcsolás az admin felületen beállított üzemidő szerint
+#  What does it do?
+#   - minimal graphical environment (X11, no window manager, no desktop)
+#   - Chromium in kiosk mode, restarted automatically if it crashes
+#   - automatic login on tty1 with a dedicated "kiosk" user
+#   - screen saver / power saving off; mouse pointer only while the mouse moves
+#   - monitor on/off according to the operating hours set in the admin panel
 # =============================================================================
 set -euo pipefail
 
@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
     --uninstall) UNINSTALL=1; shift ;;
     --purge) UNINSTALL=1; PURGE=1; shift ;;
     -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
-    *) echo "Ismeretlen kapcsoló: $1"; exit 1 ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
 
@@ -51,17 +51,17 @@ c_ok()   { printf '\033[1;32m✔ %s\033[0m\n' "$*"; }
 c_info() { printf '\033[1;33m➜ %s\033[0m\n' "$*"; }
 c_err()  { printf '\033[1;31m✘ %s\033[0m\n' "$*" >&2; }
 
-[[ $EUID -eq 0 ]] || { c_err "Rootként futtasd (sudo)."; exit 1; }
+[[ $EUID -eq 0 ]] || { c_err "Run as root (sudo)."; exit 1; }
 
 # ---------- Eltávolítás ----------
 if [[ $UNINSTALL -eq 1 ]]; then
-  c_info "Narancs Signage lejátszó eltávolítása…"
+  c_info "Removing the Narancs Signage player…"
   if id "$KIOSK_USER" >/dev/null 2>&1; then
     loginctl terminate-user "$KIOSK_USER" 2>/dev/null || true
     pkill -KILL -u "$KIOSK_USER" 2>/dev/null || true
     sleep 1
     userdel -r "$KIOSK_USER" 2>/dev/null || userdel "$KIOSK_USER" 2>/dev/null || true
-    c_ok "Kiosk felhasználó és a Chromium profil törölve"
+    c_ok "Kiosk user and Chromium profile removed"
   fi
   rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
   rmdir /etc/systemd/system/getty@tty1.service.d 2>/dev/null || true
@@ -83,45 +83,45 @@ if [[ $UNINSTALL -eq 1 ]]; then
   done
   systemctl daemon-reload
   systemctl restart getty@tty1.service 2>/dev/null || true
-  c_ok "Automatikus bejelentkezés, indítószkriptek és eszközazonosító törölve"
+  c_ok "Automatic login, start scripts and device ID removed"
   if [[ $PURGE -eq 1 ]]; then
-    c_info "Csomagok eltávolítása…"
+    c_info "Removing packages…"
     snap remove chromium >/dev/null 2>&1 || true
     apt-get purge -y -qq chromium chromium-browser >/dev/null 2>&1 || true
     apt-get purge -y -qq xserver-xorg xinit openbox >/dev/null 2>&1 || true
     apt-get autoremove -y -qq >/dev/null 2>&1 || true
-    c_ok "Csomagok eltávolítva"
+    c_ok "Packages removed"
   fi
   echo
-  c_ok "Kész. Az admin felületen a Képernyők menüben töröld a régi képernyőt is (ha párosítva volt)."
+  c_ok "Done. Also delete the old screen in the admin panel under Screens (if it was paired)."
   exit 0
 fi
 if [[ "$SERVER" == *__SIGNAGE_SERVER__* || -z "$SERVER" ]]; then
-  if [[ -t 0 ]]; then read -rp "Signage szerver címe (pl. http://192.168.1.10:8080): " SERVER; SERVER="${SERVER%/}"; fi
-  [[ "$SERVER" =~ ^https?:// ]] || { c_err "Add meg a szerver címét: sudo $0 http://SZERVER:8080"; exit 1; }
+  if [[ -t 0 ]]; then read -rp "Signage server address (e.g. http://192.168.1.10:8080): " SERVER; SERVER="${SERVER%/}"; fi
+  [[ "$SERVER" =~ ^https?:// ]] || { c_err "Specify the server address: sudo $0 http://SERVER:8080"; exit 1; }
 fi
 
 ARCH="$(dpkg --print-architecture)"
 . /etc/os-release
-c_info "Lejátszó telepítése – $PRETTY_NAME ($ARCH) → $SERVER"
+c_info "Installing the player – $PRETTY_NAME ($ARCH) → $SERVER"
 
 if ! curl -fs --max-time 5 "$SERVER/healthz" >/dev/null 2>&1; then
-  c_info "Figyelem: a szerver most nem érhető el ($SERVER). A telepítés folytatódik, a lejátszó később csatlakozik."
+  c_info "Warning: the server is not reachable right now ($SERVER). Installation continues; the player will connect later."
 fi
 
 # ---------- Csomagok ----------
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-c_info "Grafikus környezet telepítése (X11)…"
+c_info "Installing the graphical environment (X11)…"
 apt-get install -y -qq --no-install-recommends \
   xserver-xorg xserver-xorg-input-libinput x11-xserver-utils x11-utils xdotool xinit \
   curl jq ca-certificates fonts-noto-color-emoji fonts-dejavu-core dbus-x11 feh plymouth plymouth-themes plymouth-label >/dev/null
 # Egérmutató elrejtése X szinten (az unclutter-xfixes az újabb változat; ha nincs, a régi unclutter)
 apt-get install -y -qq --no-install-recommends unclutter-xfixes >/dev/null 2>&1 \
   || apt-get install -y -qq --no-install-recommends unclutter >/dev/null 2>&1 \
-  || c_info "Figyelem: az unclutter nem telepíthető – egér nélkül a mutató a képernyő sarkába kerül"
+  || c_info "Warning: unclutter could not be installed – without a mouse the pointer is moved to the screen corner"
 
-c_info "Chromium telepítése…"
+c_info "Installing Chromium…"
 CHROMIUM=""
 if [[ "$ID" == "ubuntu" ]]; then
   # Ubuntun a Chromium csak snap csomagként érhető el
@@ -133,7 +133,7 @@ else
     || apt-get install -y -qq --no-install-recommends chromium-browser >/dev/null
   CHROMIUM="$(command -v chromium || command -v chromium-browser)"
 fi
-[[ -x "$CHROMIUM" ]] || { c_err "A Chromium telepítése nem sikerült."; exit 1; }
+[[ -x "$CHROMIUM" ]] || { c_err "Chromium installation failed."; exit 1; }
 c_ok "Chromium: $CHROMIUM"
 
 # ---------- Kioszk felhasználó ----------
@@ -156,7 +156,7 @@ DEVICE="$(cat /etc/narancs-signage/device)"
 if [[ "$GPU" == auto ]]; then
   VIRT="$(systemd-detect-virt 2>/dev/null || true)"
   if [[ -n "$VIRT" && "$VIRT" != none ]] || ! ls /dev/dri/renderD* >/dev/null 2>&1; then GPU=off; else GPU=on; fi
-  c_info "Grafikus gyorsítás: $GPU${VIRT:+ (virtualizáció: $VIRT)}"
+  c_info "Graphics acceleration: $GPU${VIRT:+ (virtualization: $VIRT)}"
 fi
 EXTRA_FLAGS=""
 [[ "$GPU" == off ]] && EXTRA_FLAGS="--disable-gpu --disable-gpu-compositing"
@@ -173,7 +173,7 @@ Section "Device"
   Option "AccelMethod" "none"
 EndSection
 XEOF
-  c_ok "VM grafika: szoftveres X rajzolás beállítva"
+  c_ok "VM graphics: software X rendering configured"
 else
   rm -f /etc/X11/xorg.conf.d/20-signage-vm.conf
 fi
@@ -312,14 +312,14 @@ while true; do
   mkdir -p "$PROFILE/Default"
   [[ -s "$PROFILE/Default/Preferences" ]] || echo '{}' > "$PROFILE/Default/Preferences"
   jq 'del(.browser.window_placement, .browser.app_window_placement)
-      | .translate.enabled = false | .translate_blocked_languages = ["hu"]
-      | .intl.accept_languages = "hu-HU,hu"' "$PROFILE/Default/Preferences" > "$PROFILE/prefs.tmp" 2>/dev/null \
+      | .translate.enabled = false | .translate_blocked_languages = ["en", "hu"]
+      | .intl.accept_languages = "en-US,en,hu-HU,hu"' "$PROFILE/Default/Preferences" > "$PROFILE/prefs.tmp" 2>/dev/null \
     && mv "$PROFILE/prefs.tmp" "$PROFILE/Default/Preferences"
   # "Chromium nem állt le megfelelően" buborék elkerülése
   sed -i 's/"exited_cleanly":false/"exited_cleanly":true/; s/"exit_type":"[^"]*"/"exit_type":"Normal"/' "$PROFILE/Default/Preferences" 2>/dev/null || true
   "$CHROMIUM" \
     --kiosk --start-fullscreen --noerrdialogs --disable-infobars --no-first-run \
-    --disable-session-crashed-bubble --disable-translate --lang=hu-HU --accept-lang=hu-HU,hu \
+    --disable-session-crashed-bubble --disable-translate --lang=en-US --accept-lang=en-US,en,hu-HU,hu \
     --disable-features=Translate,TranslateUI,TranslateBubbleUpdate \
     --check-for-update-interval=31536000 --overscroll-history-navigation=0 --disable-pinch \
     --autoplay-policy=no-user-gesture-required --password-store=basic \
@@ -374,31 +374,31 @@ cat > /usr/local/bin/signage-diag <<'EOF'
 # Narancs Signage lejátszó – hibakereső
 . /etc/narancs-signage/player.conf
 ok() { printf '\033[1;32m✔\033[0m %s\n' "$*"; }; bad() { printf '\033[1;31m✘\033[0m %s\n' "$*"; }
-echo "Szerver: $SERVER   Eszköz: $DEVICE"
+echo "Server: $SERVER   Device: $DEVICE"
 ip -4 -br addr | grep -v '^lo' || true
-ip route | grep -q default && ok "Van alapértelmezett átjáró" || bad "Nincs hálózati útvonal (DHCP?)"
-if curl -fs --max-time 5 "$SERVER/healthz" >/dev/null; then ok "A szerver elérhető"; else
-  bad "A szerver NEM érhető el: $SERVER"
-  case "$SERVER" in *localhost*|*127.0.0.1*) echo "   ↳ A cím localhost – a telepítőt a szerver IP címével kell futtatni (nem localhost-tal)!";; esac
+ip route | grep -q default && ok "Default gateway present" || bad "No network route (DHCP?)"
+if curl -fs --max-time 5 "$SERVER/healthz" >/dev/null; then ok "Server reachable"; else
+  bad "Server NOT reachable: $SERVER"
+  case "$SERVER" in *localhost*|*127.0.0.1*) echo "   ↳ The address is localhost – run the installer with the server's IP address (not localhost)!";; esac
 fi
 r="$(curl -fs --max-time 5 "$SERVER/api/player/config?device=$DEVICE" 2>/dev/null)"
 if [[ -n "$r" ]]; then
-  if echo "$r" | jq -e '.paired' >/dev/null; then ok "Párosítva"; else echo "   Párosító kód: $(echo "$r" | jq -r '.code // "—"')"; fi
-else bad "Az eszköz még nincs regisztrálva a szerveren (a lejátszó még nem kapcsolódott)"; fi
-pgrep -f signage-kiosk >/dev/null && ok "Kioszk fut" || bad "A kioszk nem fut (nincs automatikus bejelentkezés a tty1-en?)"
-pgrep -f -- "--kiosk" >/dev/null && ok "Chromium fut" || bad "A Chromium nem fut"
-pgrep -x unclutter >/dev/null && ok "Egérmutató elrejtés (unclutter) fut" || bad "Az unclutter nem fut – egér nélkül a mutató látszódhat (futtasd újra a telepítőt)"
-systemctl is-active -q narancs-signage-agent && ok "Távvezérlő ügynök fut" || bad "A távvezérlő ügynök nem fut (systemctl status narancs-signage-agent)"
-echo "Virtualizáció: $(systemd-detect-virt 2>/dev/null || echo none)   Kapcsolók: ${EXTRA_FLAGS:-(nincs)}"
-echo "GPU eszközök: $(ls /dev/dri 2>/dev/null | tr '\n' ' ')"
+  if echo "$r" | jq -e '.paired' >/dev/null; then ok "Paired"; else echo "   Pairing code: $(echo "$r" | jq -r '.code // "—"')"; fi
+else bad "The device is not registered on the server yet (the player has not connected)"; fi
+pgrep -f signage-kiosk >/dev/null && ok "Kiosk running" || bad "Kiosk not running (no automatic login on tty1?)"
+pgrep -f -- "--kiosk" >/dev/null && ok "Chromium running" || bad "Chromium not running"
+pgrep -x unclutter >/dev/null && ok "Pointer hiding (unclutter) running" || bad "unclutter not running – without a mouse the pointer may be visible (run the installer again)"
+systemctl is-active -q narancs-signage-agent && ok "Remote agent running" || bad "Remote agent not running (systemctl status narancs-signage-agent)"
+echo "Virtualization: $(systemd-detect-virt 2>/dev/null || echo none)   Flags: ${EXTRA_FLAGS:-(none)}"
+echo "GPU devices: $(ls /dev/dri 2>/dev/null | tr '\n' ' ')"
 if command -v xdpyinfo >/dev/null; then
   sudo -u kiosk DISPLAY=:0 xdpyinfo 2>/dev/null | grep -E "dimensions|depth of root" | sed 's/^ */X: /'
-  sudo -u kiosk DISPLAY=:0 xwininfo -root -children 2>/dev/null | grep -iE "chrom|[0-9]+x[0-9]+\+" | head -5 | sed 's/^ */Ablak: /'
+  sudo -u kiosk DISPLAY=:0 xwininfo -root -children 2>/dev/null | grep -iE "chrom|[0-9]+x[0-9]+\+" | head -5 | sed 's/^ */Window: /'
 fi
 XLOG="$(ls -t /home/kiosk/.local/share/xorg/Xorg.0.log /var/log/Xorg.0.log 2>/dev/null | head -1)"
 [[ -n "$XLOG" ]] && grep -E "\(II\) (modeset|fbdev|vesa)\(0\): (Output|Using|Depth|glamor)|Loading.*drivers" "$XLOG" | head -6 | sed 's/^/Xorg: /'
 KH="$(getent passwd kiosk | cut -d: -f6)"
-echo "--- X napló (utolsó 15 sor): $KH/.signage-x.log"
+echo "--- X log (last 15 lines): $KH/.signage-x.log"
 tail -n 15 "$KH/.signage-x.log" 2>/dev/null
 EOF
 chmod +x /usr/local/bin/signage-diag
@@ -425,11 +425,11 @@ report() {
 handle() {
   case "$1" in
     restart)
-      logger -t signage-agent "Parancs: lejátszó újraindítása"
+      logger -t signage-agent "Command: restart player"
       # ha fut a grafikus felület, csak a böngészőt indítjuk újra (közben a logós háttér látszik)
       if pgrep -f -- '--kiosk' >/dev/null; then pkill -f -- '--kiosk'; else systemctl restart getty@tty1.service; fi ;;
     reboot)
-      logger -t signage-agent "Parancs: eszköz újraindítása"
+      logger -t signage-agent "Command: reboot device"
       sleep 2; systemctl reboot ;;
   esac
 }
@@ -450,7 +450,7 @@ chmod +x /usr/local/bin/signage-agent
 
 cat > /etc/systemd/system/narancs-signage-agent.service <<'EOF'
 [Unit]
-Description=Narancs Signage távvezérlő ügynök
+Description=Narancs Signage remote agent
 After=network-online.target
 Wants=network-online.target
 
@@ -465,7 +465,7 @@ EOF
 systemctl daemon-reload
 systemctl enable narancs-signage-agent.service >/dev/null 2>&1
 systemctl restart narancs-signage-agent.service
-c_ok "Távvezérlő ügynök telepítve (újraindítás az admin felületről)"
+c_ok "Remote agent installed (restart from the admin panel)"
 
 # Ablakkezelő nélkül: egyetlen teljes képernyős ablakhoz nem kell, és VM-ekben (hiányos monitor
 # információ mellett) az Openbox 1×1 pixeles keretbe tette a Chromiumot
@@ -481,14 +481,14 @@ systemctl disable --now systemd-networkd-wait-online.service >/dev/null 2>&1 || 
 systemctl set-default multi-user.target >/dev/null
 if [[ $NIGHTLY_REBOOT -eq 1 ]]; then
   echo "30 4 * * * root /sbin/shutdown -r now" > /etc/cron.d/narancs-signage-reboot
-  c_ok "Éjszakai újraindítás beállítva (04:30)"
+  c_ok "Nightly reboot configured (04:30)"
 fi
 
 # ---------- Bootképernyő: logó narancs háttéren, szöveges üzenetek nélkül ----------
 install -d /usr/share/narancs-signage
 for f in splash.png splash-1.png splash-2.png splash-3.png splash-restart.png logo.png bar_bg.png bar_fg.png; do
   curl -fsS --max-time 20 "${SERVER%/}/shared/splash/$f" -o "/usr/share/narancs-signage/$f" 2>/dev/null \
-    || c_info "A bootkép ($f) nem tölthető le most – a telepítő újrafuttatásakor pótolható"
+    || c_info "Boot image ($f) could not be downloaded now – it will be fetched when the installer runs again"
 done
 THEME_DIR=/usr/share/plymouth/themes/narancs
 if [[ -f /usr/share/narancs-signage/logo.png ]]; then
@@ -497,7 +497,7 @@ if [[ -f /usr/share/narancs-signage/logo.png ]]; then
   cat > "$THEME_DIR/narancs.plymouth" <<'EOF'
 [Plymouth Theme]
 Name=Narancs Signage
-Description=Narancs Signage bootképernyő
+Description=Narancs Signage boot screen
 ModuleName=script
 
 [script]
@@ -542,10 +542,10 @@ mode = Plymouth.GetMode();
 custom = "";
 if (mode == "shutdown" || mode == "reboot") {
   bar_bg.SetOpacity(0);
-  if (mode == "reboot") set_text("Újraindítás…"); else set_text("Leállítás…");
+  if (mode == "reboot") set_text("Restarting…"); else set_text("Shutting down…");
 } else {
   set_progress(0.02);
-  set_text("Rendszer indítása…");
+  set_text("Starting system…");
 }
 
 # A rendszer betöltése a teljes sáv 0–60%-a; a többit a grafikus felület és a lejátszó adja
@@ -553,10 +553,10 @@ fun progress_cb(duration, progress) {
   if (mode == "shutdown" || mode == "reboot") return;
   set_progress(0.02 + progress * 0.58);
   if (custom == "") {
-    if (progress < 0.25) set_text("Rendszer betöltése…");
-    else if (progress < 0.55) set_text("Eszközök és szolgáltatások indítása…");
-    else if (progress < 0.85) set_text("Hálózat csatlakoztatása…");
-    else set_text("Kijelző indítása…");
+    if (progress < 0.25) set_text("Loading system…");
+    else if (progress < 0.55) set_text("Starting devices and services…");
+    else if (progress < 0.85) set_text("Connecting to the network…");
+    else set_text("Starting display…");
   }
 }
 Plymouth.SetBootProgressFunction(progress_cb);
@@ -573,8 +573,8 @@ EOF
   fi
   install -d /etc/initramfs-tools/conf.d
   echo "FRAMEBUFFER=y" > /etc/initramfs-tools/conf.d/narancs-signage-splash
-  c_info "Bootképernyő beállítása (initramfs frissítése, ez eltarthat egy percig)…"
-  update-initramfs -u >/dev/null 2>&1 || c_info "Az initramfs frissítése nem sikerült – a bootkép a rendszer betöltése után jelenik meg"
+  c_info "Setting up the boot screen (updating initramfs, this may take a minute)…"
+  update-initramfs -u >/dev/null 2>&1 || c_info "Updating initramfs failed – the boot image will appear once the system has loaded"
 fi
 QUIET_ARGS="quiet splash loglevel=3 systemd.show_status=false rd.systemd.show_status=false udev.log_level=3 rd.udev.log_level=3 vt.global_cursor_default=0 plymouth.ignore-serial-consoles"
 if command -v update-grub >/dev/null && [[ -d /etc/default ]]; then
@@ -587,14 +587,14 @@ GRUB_RECORDFAIL_TIMEOUT=0
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_CMDLINE_LINUX_DEFAULT="$QUIET_ARGS"
 EOF
-  update-grub >/dev/null 2>&1 && c_ok "Csendes indulás bootképpel beállítva (GRUB)"
+  update-grub >/dev/null 2>&1 && c_ok "Quiet boot with boot screen configured (GRUB)"
 fi
 for cmdfile in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
   if [[ -f "$cmdfile" ]]; then
     [[ -f "$cmdfile.narancs-bak" ]] || cp "$cmdfile" "$cmdfile.narancs-bak"
     line="$(tr -d '\n' < "$cmdfile.narancs-bak")"
     echo "$line $QUIET_ARGS logo.nologo" > "$cmdfile"
-    c_ok "Csendes indulás bootképpel beállítva (Raspberry Pi)"
+    c_ok "Quiet boot with boot screen configured (Raspberry Pi)"
     break
   fi
 done
@@ -603,24 +603,24 @@ done
 for cfgfile in /boot/firmware/config.txt /boot/config.txt; do
   if [[ -f "$cfgfile" ]] && ! grep -q "narancs-signage" "$cfgfile"; then
     printf '\n# narancs-signage\ndisable_overscan=1\ndisable_splash=1\n' >> "$cfgfile"
-    c_ok "Raspberry Pi beállítások: $cfgfile"
+    c_ok "Raspberry Pi settings: $cfgfile"
     break
   fi
 done
 
 systemctl daemon-reload
-c_ok "A lejátszó telepítve! Eszköz azonosító: $DEVICE"
+c_ok "Player installed! Device ID: $DEVICE"
 echo
-echo "  Újraindítás után a képernyőn megjelenik egy 6 jegyű párosító kód."
-echo "  Add meg az admin felületen: $SERVER/admin/  →  Képernyők → Új képernyő"
+echo "  After a restart the screen shows a 6-digit pairing code."
+echo "  Enter it in the admin panel: $SERVER/admin/  →  Screens → New screen"
 echo
-echo "  Hibakeresés: sudo signage-diag"
-echo "  Beállítások: /etc/narancs-signage/player.conf"
-echo "  Napló:       $HOME_DIR/.signage-x.log"
+echo "  Troubleshooting: sudo signage-diag"
+echo "  Settings:        /etc/narancs-signage/player.conf"
+echo "  Log:             $HOME_DIR/.signage-x.log"
 echo
 if [[ -t 0 ]]; then
-  read -rp "Újraindítsam most? [I/n] " ans
-  [[ "${ans:-i}" =~ ^[IiYy]$ ]] && reboot
+  read -rp "Restart now? [Y/n] " ans
+  [[ "${ans:-y}" =~ ^[YyIi]$ ]] && reboot
 else
-  c_info "Indítsd újra az eszközt: sudo reboot"
+  c_info "Restart the device: sudo reboot"
 fi

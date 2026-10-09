@@ -8,7 +8,7 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
 - **Új szöveg felvételekor az `EN` szótárba is kell bejegyzés**, különben angolul is magyarul jelenik meg.
 - Admin: a nyelvet a `/api/lang.js` szinkron szkript adja még az `admin.js` előtt (a modul szintű állandók is fordítottak) → nyelvváltás után újratöltés. Lejátszó: `cfg.org.lang` / hello válasz, `localStorage`-ben tárolva az offline induláshoz; modul szintű táblákba (pl. `WX`) ne kerüljön `tr()`, a használat helyén fordíts.
 - Szerver: `src/i18n.js` (`tr`, `lang`, `locale`); a hibaüzeneteket a központi hibakezelő fordítja.
-- A telepítő szkriptek (Plymouth, terminál kimenet) magyarok maradtak.
+- A telepítő szkriptek kimenete (terminál, `--help`, `signage-diag`, Plymouth bootkép szövegei) **angol**, a kódkommentek magyarok. A `splash-1/2/3/restart.png` képekbe égetett angol szöveg van (a szöveg nélküli `splash.png` hátterére rajzolva, Helvetica Neue 26px, alapvonal y=821, sáv 700–1220 × 767–775).
 
 ## Felépítés
 - `server/src/` – Node.js (≥22.13) szerver, **nulla külső függőség** (beépített `node:sqlite`, `http`, `crypto`). Nincs `npm install` – ne vezess be függőséget.
