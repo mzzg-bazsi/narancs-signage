@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.3] – 2026-10-09
+
+### Változott
+- A README angol lett (`README.md`), a magyar változat `README.hu.md` néven érhető el, a két nyelv között hivatkozással; mindkettőbe bekerült a nyelvválasztás és a minta tartalmak leírása
+
 ## [1.9.2] – 2026-10-09
 
 ### Változott
