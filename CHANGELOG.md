@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.8.1] – 2026-10-09
+
+### Változott
+- README: a ◐ emoji helyett a Narancs Signage logó a címben
+
 ## [1.8.0] – 2026-10-09
 
 ### Új

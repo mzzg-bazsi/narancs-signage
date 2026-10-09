@@ -1,4 +1,8 @@
-# ◐ Narancs Signage
+<p align="center">
+  <img src="server/public/shared/splash/favicon.svg" alt="Narancs Signage logó" width="96" height="96">
+</p>
+
+<h1 align="center">Narancs Signage</h1>
 
 Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin felület (halvány narancs témával), böngészőalapú lejátszó, ami ARM-on is fut, és egyparancsos telepítők Ubuntu Serverre.
 
