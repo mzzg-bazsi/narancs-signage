@@ -1,6 +1,6 @@
 {
   "name": "narancs-signage",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "Teljeskörű digital signage rendszer – admin felület, lejátszó, ütemezés, interaktív tartalmak",
   "type": "module",
   "main": "src/server.js",
