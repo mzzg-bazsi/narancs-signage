@@ -159,4 +159,4 @@ Frissítés később: `git pull && sudo ./install/install-server.sh`. Egy adott 
 
 © 2026 Balázs Mazzag – [Narancs Signage License](LICENSE)
 
-Bárki szabadon és ingyen használhatja, módosíthatja, továbbadhatja – üzleti célra, nagyvállalatnál is. **Egyetlen feltétel a névfeltüntetés:** a licencfájl és a szerzői jogi megjegyzés maradjon meg, az admin felületen látható „© 2026 Balázs Mazzag” felirat nem távolítható el, továbbadáskor pedig jelezni kell, hogy a rendszer a „Narancs Signage by Balázs Mazzag”-on alapul. A kijelzőkön nem jelenik meg felirat.
+Bárki szabadon és ingyen használhatja, módosíthatja, továbbadhatja – üzleti célra, nagyvállalatnál is. **A szoftvert pénzért csak a szerző adhatja:** más nem adhatja el, nem adhatja bérbe és nem árulhatja fizetős szolgáltatásként (telepítésért, üzemeltetésért, tartalomkészítésért lehet díjat kérni). **Kötelező a névfeltüntetés:** a licencfájl és a szerzői jogi megjegyzés maradjon meg, az admin felületen látható „© 2026 Balázs Mazzag” felirat nem távolítható el, továbbadáskor pedig jelezni kell, hogy a rendszer a „Narancs Signage by Balázs Mazzag”-on alapul. A kijelzőkön nem jelenik meg felirat.

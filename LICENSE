@@ -1,14 +1,14 @@
 Narancs Signage License
-Version 2.0
+Version 2.1
 
 Copyright (c) 2026 Balázs Mazzag
 https://github.com/mzzg-bazsi
 
 Permission is hereby granted, free of charge, to any person or organization
 obtaining a copy of this software and associated files (the "Software"), to
-use, copy, modify, merge, publish, distribute, sublicense and/or sell copies of
-the Software, for any purpose including commercial use, subject to the
-following conditions.
+use, copy, modify, merge, publish and distribute the Software free of charge,
+for any purpose including commercial use, subject to the following
+conditions.
 
 1. ATTRIBUTION (REQUIRED FOR EVERY USE)
 
@@ -29,13 +29,33 @@ Whoever uses the Software must name the author, Balázs Mazzag, as follows:
 
 The display (player) screens are not required to show any notice.
 
-2. TERMINATION
+2. NO SELLING OF THE SOFTWARE
+
+Only the author may sell the Software. Nobody else may, without the author's
+prior written permission:
+
+  (a) sell, rent or lease the Software or a modified version of it, or charge
+      any fee for a copy of it or for a license to use it;
+  (b) offer the Software or a modified version of it to others as a paid
+      hosted, cloud or "software as a service" product;
+  (c) bundle the Software into a product sold for a price that includes the
+      Software.
+
+Copies of the Software, modified or not, may only be passed on free of charge
+and under this License.
+
+Charging for your own work around the Software is permitted, for example
+installation, configuration, content creation, hardware, or operating screens
+for a client, as long as the Software itself is provided free of charge under
+this License and Section 1 is respected.
+
+3. TERMINATION
 
 The rights granted by this License end automatically for anyone who does not
-comply with Section 1. They are reinstated if the breach is cured within 30
+comply with Section 1 or Section 2. They are reinstated if the breach is cured within 30
 days after becoming aware of it.
 
-3. NO WARRANTY, NO LIABILITY
+4. NO WARRANTY, NO LIABILITY
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -44,7 +64,7 @@ AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
 ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-4. GOVERNING LAW
+5. GOVERNING LAW
 
 This License is governed by the laws of Hungary. If any provision is held
 unenforceable, the remaining provisions remain in effect.
@@ -54,9 +74,14 @@ Magyar összefoglaló (tájékoztató jellegű; eltérés esetén az angol szöv
 irányadó):
 
 - Bárki – magánszemély, cég, nagyvállalat, intézmény – ingyen használhatja,
-  másolhatja, módosíthatja, továbbadhatja és akár el is adhatja, üzleti célra
-  is.
-- Egyetlen feltétel a szerző nevének feltüntetése: a licencfájl és a szerzői
+  másolhatja, módosíthatja és továbbadhatja, üzleti célra is.
+- A szoftvert pénzért csak a szerző adhatja: más nem adhatja el, nem adhatja
+  bérbe, nem árulhatja fizetős felhőszolgáltatásként és nem építheti be pénzért
+  árult termékbe. Továbbadni csak ingyen, ezzel a licenccel lehet.
+- A szoftverhez kapcsolódó saját munkáért (telepítés, beállítás,
+  tartalomkészítés, hardver, üzemeltetés) lehet díjat kérni, ha maga a szoftver
+  ingyenes marad.
+- Kötelező a szerző nevének feltüntetése: a licencfájl és a szerzői
   jogi megjegyzés maradjon meg, az admin felületen látható
   „© 2026 Balázs Mazzag” felirat nem távolítható el, továbbadáskor pedig
   jelezni kell, hogy a rendszer a „Narancs Signage by Balázs Mazzag”-on alapul.

@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.2] – 2026-10-09
+
+### Változott
+- Licenc 2.1: a szoftvert pénzért csak a szerző adhatja – más nem adhatja el, nem adhatja bérbe, nem árulhatja fizetős felhőszolgáltatásként és nem építheti be pénzért árult termékbe. A kapcsolódó munkáért (telepítés, üzemeltetés, tartalomkészítés) továbbra is lehet díjat kérni; a névfeltüntetés kötelező marad
+
 ## [1.9.1] – 2026-10-09
 
 ### Változott
