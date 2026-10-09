@@ -17,6 +17,44 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 └──────────────────────────┘                                            └───────────────────────────┘
 ```
 
+<p align="center"><img src="docs/screenshots/admin-dashboard.png" alt="Dashboard" width="900"></p>
+
+## Screenshots
+
+**Admin panel**
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-screens.png" alt="Screens"><br><sub>Screens</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-playlist.png" alt="Playlist editor with live preview"><br><sub>Playlist editor with live preview</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-content-editor.png" alt="Content editor (interactive menu)"><br><sub>Content editor (interactive menu)</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-branding.png" alt="Branding: 10 themes, live preview"><br><sub>Branding: 10 themes, live preview</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-alerts.png" alt="Emergency alerts"><br><sub>Emergency alerts</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-dashboard-dark.png" alt="Dark mode"><br><sub>Dark mode</sub></td>
+  </tr>
+</table>
+
+**Player (on the display)**
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-welcome.png" alt="Announcement"><br><sub>Announcement</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-clock.png" alt="Clock & weather"><br><sub>Clock & weather</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-calendar.png" alt="Calendar"><br><sub>Calendar</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-cards.png" alt="Cards"><br><sub>Cards</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-menu.png" alt="Interactive menu"><br><sub>Interactive menu</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-form.png" alt="Touch-screen form"><br><sub>Touch-screen form</sub></td>
+  </tr>
+</table>
+
 ## Features
 
 **Content types (14)**

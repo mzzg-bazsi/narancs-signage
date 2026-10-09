@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.6] – 2026-10-09
+
+### Új
+- Képernyőképek a README-ben (angol és magyar): irányítópult, képernyők, lejátszási lista, tartalomszerkesztő, arculat, vészjelzés, sötét mód, valamint a lejátszó minta tartalmai (`docs/screenshots/`)
+
+### Javítva
+- A háttér mező helykitöltője („pl. #222 vagy linear-gradient(...)”) angol felületen is magyarul jelent meg
+- A képernyő kártyán az „Egér” jelvény ikonja színes emojiként jelenik meg
+
 ## [1.9.5] – 2026-10-09
 
 ### Változott

@@ -17,6 +17,44 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 └──────────────────────────┘                                            └───────────────────────────┘
 ```
 
+<p align="center"><img src="docs/screenshots/admin-dashboard.png" alt="Irányítópult" width="900"></p>
+
+## Képernyőképek
+
+**Admin felület**
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-screens.png" alt="Képernyők"><br><sub>Képernyők</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-playlist.png" alt="Lejátszási lista élő előnézettel"><br><sub>Lejátszási lista élő előnézettel</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-content-editor.png" alt="Tartalomszerkesztő (interaktív menü)"><br><sub>Tartalomszerkesztő (interaktív menü)</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-branding.png" alt="Arculat: 10 téma, élő előnézet"><br><sub>Arculat: 10 téma, élő előnézet</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/admin-alerts.png" alt="Vészjelzés"><br><sub>Vészjelzés</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-dashboard-dark.png" alt="Sötét mód"><br><sub>Sötét mód</sub></td>
+  </tr>
+</table>
+
+**Lejátszó (a kijelzőn)**
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-welcome.png" alt="Hirdetmény"><br><sub>Hirdetmény</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-clock.png" alt="Óra és időjárás"><br><sub>Óra és időjárás</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-calendar.png" alt="Naptár"><br><sub>Naptár</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-cards.png" alt="Kártyák"><br><sub>Kártyák</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/player-menu.png" alt="Interaktív menü"><br><sub>Interaktív menü</sub></td>
+    <td width="50%"><img src="docs/screenshots/player-form.png" alt="Érintőképernyős űrlap"><br><sub>Érintőképernyős űrlap</sub></td>
+  </tr>
+</table>
+
 ## Funkciók
 
 **Tartalomtípusok (14 db)**

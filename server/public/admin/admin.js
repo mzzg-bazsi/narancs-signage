@@ -281,7 +281,7 @@
       const chips = h('div', { class: 'row', style: { gap: '6px' } }, themeOpts.map(([v, l]) => h('button', { type: 'button', class: 'btn sm', title: v || tr('Az arculat alapértelmezett háttere'), onclick: () => { if (v) obj[key] = v; else delete obj[key]; inp.value = v; o.onchange?.(); } },
         h('span', { class: 'color-dot', style: { background: themeCss(v || 'var(--bg)'), border: '1px solid var(--border-strong)' } }), l)));
       const presets = ['#1b130e', '#0f172a', '#ffffff', 'linear-gradient(135deg, #3b2312, #a8521d)', 'linear-gradient(135deg, #f59e5b, #e0565b)', 'linear-gradient(135deg, #0f2027, #2c5364)', 'linear-gradient(135deg, #134e5e, #71b280)', 'linear-gradient(160deg, #24170e, #101010)'];
-      const inp = h('input', { class: 'input', value: obj[key] || '', placeholder: 'pl. #222 vagy linear-gradient(...)' });
+      const inp = h('input', { class: 'input', value: obj[key] || '', placeholder: tr('pl. #222 vagy linear-gradient(...)') });
       const sw = h('div', { class: 'row', style: { gap: '6px' } }, presets.map((p) => h('button', { type: 'button', title: p, style: { width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: p, cursor: 'pointer' }, onclick: () => { obj[key] = p; inp.value = p; o.onchange?.(); } })));
       inp.addEventListener('input', () => { obj[key] = inp.value; o.onchange?.(); });
       return F.wrap(label, h('div', { class: 'stack', style: { gap: '8px' } }, chips, sw, inp), { hint: tr('Üresen hagyva az Arculat menüben beállított téma hátterét használja.'), ...o });
@@ -723,7 +723,7 @@
       return h('div', { class: 'card screen-card' },
         h('div', { class: 'thumb' },
           h('div', { class: 'pill st' }, h('span', { class: `dot ${s.online ? 'on' : ''}` }), s.online ? tr('Online') : tr('Offline')),
-          h('div', { class: 'pill mode', title: s.settings?.tablet ? tr('Csak érintés, egérmutató nélkül') : tr('Egérmutató mozgatáskor 3 mp-ig') }, s.settings?.tablet ? tr('👆 Tablet') : tr('🖱 Egér')),
+          h('div', { class: 'pill mode', title: s.settings?.tablet ? tr('Csak érintés, egérmutató nélkül') : tr('Egérmutató mozgatáskor 3 mp-ig') }, s.settings?.tablet ? tr('👆 Tablet') : tr('🖱️ Egér')),
           live ? h('iframe', { src: `/player/?preview=screen:${s.id}`, loading: 'lazy' })
             : h('div', { class: 'now' }, playing ? [h('small', {}, tr('Most játszik')), h('b', {}, s.info.current.name)] : h('small', {}, s.online ? tr('Nincs adat') : portrait ? tr('Álló kijelző') : tr('Fekvő kijelző'))),
           s.online ? h('div', { class: 'ctl' },
