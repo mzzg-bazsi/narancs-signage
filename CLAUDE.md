@@ -1,6 +1,14 @@
 # Narancs Signage – projekt jegyzetek
 
-Saját fejlesztésű digital signage rendszer. A felület és minden szöveg **magyar**. A felhasználó magyarul kommunikál.
+Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunikál, a kód és a kommentek magyarok.
+
+## Nyelvek (i18n)
+- A felület nyelve választható (Beállítások → Nyelv, `settings.language`: `en` | `hu`), **alapból angol**. Egy beállítás az egész rendszerre (admin + kijelzők + szerverüzenetek).
+- Minden látható szöveg `tr('magyar eredeti')` hívással: a kulcs a magyar szöveg, az angol a `server/public/shared/i18n.js` `EN` szótárában. Paraméter: `tr('{n} fájl', { n })`, többes szám: `pl(egyes, többes)`. Azonos magyar szó eltérő jelentéshez: `'Lista#lejátszási lista'` (magyarul a `#` előtti rész látszik).
+- **Új szöveg felvételekor az `EN` szótárba is kell bejegyzés**, különben angolul is magyarul jelenik meg.
+- Admin: a nyelvet a `/api/lang.js` szinkron szkript adja még az `admin.js` előtt (a modul szintű állandók is fordítottak) → nyelvváltás után újratöltés. Lejátszó: `cfg.org.lang` / hello válasz, `localStorage`-ben tárolva az offline induláshoz; modul szintű táblákba (pl. `WX`) ne kerüljön `tr()`, a használat helyén fordíts.
+- Szerver: `src/i18n.js` (`tr`, `lang`, `locale`); a hibaüzeneteket a központi hibakezelő fordítja.
+- A telepítő szkriptek (Plymouth, terminál kimenet) magyarok maradtak.
 
 ## Felépítés
 - `server/src/` – Node.js (≥22.13) szerver, **nulla külső függőség** (beépített `node:sqlite`, `http`, `crypto`). Nincs `npm install` – ne vezess be függőséget.
@@ -8,7 +16,7 @@ Saját fejlesztésű digital signage rendszer. A felület és minden szöveg **m
   - `db.js` SQLite séma, JSON oszlopok automatikus kezelése, `crud()` segéd
 - `server/public/admin/` – admin SPA (vanilla JS, build nélkül). Halvány narancs téma. `F.*` űrlap-segédek, `TYPES` = 14 tartalomtípus.
 - `server/public/player/` – lejátszó (kioszk böngészőben fut). Renderelők a `renderers` objektumban; `fixEmoji` minden emojit színes betűtípusba tesz; `#boot` indulókép.
-- `server/public/shared/` – `themes.js` (10 arculati téma, admin + lejátszó közös), `splash/` (logó: félnap egy tévén, bootképkockák).
+- `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (10 arculati téma, admin + lejátszó közös), `splash/` (logó: félnap egy tévén, bootképkockák).
 - `install/install-server.sh` – Ubuntu szerver (systemd `narancs-signage`, adat: `/var/lib/narancs-signage`).
 - `install/install-player.sh` – kioszk: X11 ablakkezelő nélkül + snap Chromium, autologin tty1, `signage-kiosk`, `signage-power` (DPMS), `signage-agent` (root, újraindítás parancsok), `signage-diag`, Plymouth bootkép folyamatjelzővel. A szerver kiszolgálja: `curl -fsSL http://SZERVER:PORT/install-player.sh | sudo bash` (`__SIGNAGE_SERVER__` helyére a szerver címe kerül).
 

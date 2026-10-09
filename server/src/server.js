@@ -10,6 +10,7 @@ import {
 import { Router, HttpError, send, readBody, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, userCount, listUsers, verifyPassword, hashPassword } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal } from './feeds.js';
+import { LANGS, lang, locale, tr } from './i18n.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
@@ -142,6 +143,7 @@ function orgInfo() {
     slogan: getSetting('slogan', ''),
     logo_media_id: getSetting('logo_media_id'),
     branding: getSetting('branding', { preset: 'narancs' }),
+    lang: lang(),
   };
 }
 
@@ -184,14 +186,14 @@ r.post('/api/player/hello', async (req, res) => {
   } else {
     run('UPDATE screens SET info = ?, last_seen = ? WHERE id = ?', info, now(), s.id);
   }
-  send(res, 200, { paired: !!s.approved, code: s.code, name: s.name, server_version: VERSION });
+  send(res, 200, { paired: !!s.approved, code: s.code, name: s.name, server_version: VERSION, lang: lang() });
 });
 
 r.get('/api/player/config', (req, res) => {
   const s = screenByDevice(req.query.get('device'));
   if (!s) throw new HttpError(404, 'Ismeretlen eszköz');
   run('UPDATE screens SET last_seen = ? WHERE id = ?', now(), s.id);
-  if (!s.approved) return send(res, 200, { paired: false, code: s.code });
+  if (!s.approved) return send(res, 200, { paired: false, code: s.code, lang: lang() });
   send(res, 200, { paired: true, ...playerConfig(s) });
 });
 
@@ -238,8 +240,8 @@ r.post('/api/player/forms/:id', async (req, res) => {
     let v = body.data?.[f.key];
     if (f.type === 'checkbox') v = !!v;
     else if (v != null) v = String(v).slice(0, 5000);
-    if (f.required && (v === undefined || v === '' || v === false || v === null)) throw new HttpError(400, `Kötelező mező: ${f.label}`);
-    if (f.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) throw new HttpError(400, `Érvénytelen e-mail: ${f.label}`);
+    if (f.required && (v === undefined || v === '' || v === false || v === null)) throw new HttpError(400, tr('Kötelező mező: {label}', { label: f.label }));
+    if (f.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) throw new HttpError(400, tr('Érvénytelen e-mail: {label}', { label: f.label }));
     clean[f.key] = v ?? '';
   }
   run('INSERT INTO submissions (form_id, screen_id, data, created_at) VALUES (?, ?, ?, ?)', form.id, s?.id || null, JSON.stringify(clean), now());
@@ -266,20 +268,20 @@ function brandDemo() {
   const at = (d, h, m = 0) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + d, h, m).toISOString();
   const org = orgInfo();
   const slides = {
-    [-1]: { id: -1, name: 'Hirdetmény', type: 'text', duration: 6, data: { kicker: 'Közlemény', title: org.name || 'Üdvözlünk!', body: org.slogan || 'Így néz ki egy hirdetmény az új arculattal. A színek, a betűtípus és a logó mindenhol egységes.', bg: 'linear-gradient(135deg, var(--bg2), var(--bg))', show_logo: true } },
-    [-2]: { id: -2, name: 'Kártyák', type: 'cards', duration: 6, data: { title: 'Szolgáltatásaink', subtitle: 'Minta kártyák az arculat színeivel', columns: 3, cards: [{ icon: '☕', title: 'Kávézó', text: 'Földszint, 7:00–18:00', badge: 'ÚJ' }, { icon: '📚', title: 'Könyvtár', text: '2. emelet' }, { icon: '🏋️', title: 'Edzőterem', text: '-1. szint' }] } },
-    [-3]: { id: -3, name: 'Menü', type: 'menu', duration: 6, data: { title: 'Miben segíthetünk?', subtitle: 'Érintsd meg a témát', columns: 3, buttons: [{ icon: '🗺️', label: 'Térkép' }, { icon: '📅', label: 'Programok' }, { icon: '✍️', label: 'Visszajelzés' }] } },
-    [-4]: { id: -4, name: 'Naptár', type: 'calendar', duration: 6, data: { title: 'Közelgő események', calendar_ids: [-1], view: 'list' } },
-    [-5]: { id: -5, name: 'Óra', type: 'clock', duration: 6, data: { style: 'digital', show_weather: false, title: org.slogan || '' } },
+    [-1]: { id: -1, name: tr('Hirdetmény'), type: 'text', duration: 6, data: { kicker: tr('Közlemény'), title: org.name || tr('Üdvözlünk!'), body: org.slogan || tr('Így néz ki egy hirdetmény az új arculattal. A színek, a betűtípus és a logó mindenhol egységes.'), bg: 'linear-gradient(135deg, var(--bg2), var(--bg))', show_logo: true } },
+    [-2]: { id: -2, name: tr('Kártyák'), type: 'cards', duration: 6, data: { title: tr('Szolgáltatásaink'), subtitle: tr('Minta kártyák az arculat színeivel'), columns: 3, cards: [{ icon: '☕', title: tr('Kávézó'), text: tr('Földszint, 7:00–18:00'), badge: tr('ÚJ') }, { icon: '📚', title: tr('Könyvtár'), text: tr('2. emelet') }, { icon: '🏋️', title: tr('Edzőterem'), text: tr('-1. szint') }] } },
+    [-3]: { id: -3, name: tr('Menü'), type: 'menu', duration: 6, data: { title: tr('Miben segíthetünk?'), subtitle: tr('Érintsd meg a témát'), columns: 3, buttons: [{ icon: '🗺️', label: tr('Térkép') }, { icon: '📅', label: tr('Programok') }, { icon: '✍️', label: tr('Visszajelzés') }] } },
+    [-4]: { id: -4, name: tr('Naptár'), type: 'calendar', duration: 6, data: { title: tr('Közelgő események'), calendar_ids: [-1], view: 'list' } },
+    [-5]: { id: -5, name: tr('Óra'), type: 'clock', duration: 6, data: { style: 'digital', show_weather: false, title: org.slogan || '' } },
   };
   return {
-    screen: { id: 0, name: 'Arculat előnézet', playlist_id: 0, schedule: [], settings: { idle_return: 30 } },
+    screen: { id: 0, name: tr('Arculat előnézet'), playlist_id: 0, schedule: [], settings: { idle_return: 30 } },
     org, slides, forms: {}, alerts: [], version: String(now()),
-    playlists: { 0: { id: 0, name: 'Arculat', transition: 'fade', items: Object.keys(slides).map((k) => ({ slide_id: +k })) } },
+    playlists: { 0: { id: 0, name: tr('Arculat'), transition: 'fade', items: Object.keys(slides).map((k) => ({ slide_id: +k })) } },
     calendars: { [-1]: [
-      { title: 'Csapatmegbeszélés', location: 'Tárgyaló 2', start: at(0, t.getHours(), 0), end: at(0, t.getHours() + 1), color: null, all_day: false },
-      { title: 'Workshop', location: 'Aula', start: at(1, 10), end: at(1, 12), color: null, all_day: false },
-      { title: 'Családi nap', location: 'Park', start: at(3, 9), end: at(3, 17), color: null, all_day: false },
+      { title: tr('Csapatmegbeszélés'), location: tr('Tárgyaló 2'), start: at(0, t.getHours(), 0), end: at(0, t.getHours() + 1), color: null, all_day: false },
+      { title: 'Workshop', location: tr('Aula'), start: at(1, 10), end: at(1, 12), color: null, all_day: false },
+      { title: tr('Családi nap'), location: tr('Park'), start: at(3, 9), end: at(3, 17), color: null, all_day: false },
     ] },
     media: mediaMap([org.logo_media_id]),
   };
@@ -300,9 +302,9 @@ r.get('/api/preview', (req, res) => {
     cfg = playerConfig(s);
   } else {
     const bundle = buildBundle(playlistId ? [playlistId] : [], slideId ? [slideId] : []);
-    if (slideId) bundle.playlists[0] = { id: 0, name: 'Előnézet', transition: 'fade', items: [{ slide_id: slideId }] };
+    if (slideId) bundle.playlists[0] = { id: 0, name: tr('Előnézet'), transition: 'fade', items: [{ slide_id: slideId }] };
     cfg = {
-      screen: { id: 0, name: 'Előnézet', playlist_id: playlistId || 0, schedule: [], settings: { idle_return: 30 } },
+      screen: { id: 0, name: tr('Előnézet'), playlist_id: playlistId || 0, schedule: [], settings: { idle_return: 30 } },
       org: orgInfo(),
       ...bundle, alerts: [], version: String(now()),
     };
@@ -315,7 +317,11 @@ r.get('/api/preview', (req, res) => {
 // =====================================================================
 r.get('/api/auth/state', (req, res) => {
   const u = currentUser(req);
-  send(res, 200, { setup: userCount() === 0, user: u ? { id: u.id, username: u.username } : null, version: VERSION });
+  send(res, 200, { setup: userCount() === 0, user: u ? { id: u.id, username: u.username } : null, version: VERSION, lang: lang() });
+});
+// Az admin felület nyelve – szinkron szkriptként töltődik be, a felület kódja előtt
+r.get('/api/lang.js', (req, res) => {
+  send(res, 200, `window.SIGNAGE_LANG = ${JSON.stringify(lang())};\n`, { 'Content-Type': 'text/javascript; charset=utf-8' });
 });
 
 r.post('/api/auth/setup', async (req, res) => {
@@ -468,7 +474,7 @@ crudRoutes('slides', Slides, {
 r.post('/api/slides/:id/duplicate', A, (req, res) => {
   const s = Slides.get(id(req));
   if (!s) throw new HttpError(404, 'Nem található');
-  send(res, 200, Slides.create({ ...s, name: s.name + ' (másolat)' }));
+  send(res, 200, Slides.create({ ...s, name: s.name + tr(' (másolat)') }));
 });
 
 crudRoutes('playlists', Playlists, {
@@ -544,10 +550,10 @@ r.get('/api/forms/:id/export.csv', A, (req, res) => {
   if (!f) throw new HttpError(404, 'Nem található');
   const subs = all('SELECT sub.*, sc.name screen_name FROM submissions sub LEFT JOIN screens sc ON sc.id = sub.screen_id WHERE form_id = ? ORDER BY sub.id', f.id);
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const head = ['Időpont', 'Képernyő', ...f.fields.map((x) => x.label)];
-  const rows = subs.map((s) => [new Date(s.created_at).toLocaleString('hu-HU'), s.screen_name || '', ...f.fields.map((x) => (typeof s.data[x.key] === 'boolean' ? (s.data[x.key] ? 'igen' : 'nem') : s.data[x.key]))]);
+  const head = [tr('Időpont'), tr('Képernyő'), ...f.fields.map((x) => x.label)];
+  const rows = subs.map((s) => [new Date(s.created_at).toLocaleString(locale()), s.screen_name || '', ...f.fields.map((x) => (typeof s.data[x.key] === 'boolean' ? (s.data[x.key] ? tr('igen') : tr('nem')) : s.data[x.key]))]);
   const csv = '﻿' + [head, ...rows].map((row) => row.map(esc).join(';')).join('\r\n');
-  send(res, 200, csv, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="urlap-${f.id}.csv"` });
+  send(res, 200, csv, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${tr('urlap')}-${f.id}.csv"` });
 });
 r.del('/api/submissions/:id', A, (req, res) => { run('DELETE FROM submissions WHERE id = ?', id(req)); send(res, 200, { ok: true }); });
 
@@ -562,7 +568,7 @@ r.post('/api/screens/pair', A, async (req, res) => {
   const { code, name, playlist_id } = await readBody(req);
   const s = get('SELECT * FROM screens WHERE code = ? AND approved = 0', String(code || '').replace(/\D/g, ''));
   if (!s) throw new HttpError(404, 'Nincs ilyen párosító kód. Ellenőrizd a képernyőn megjelenő számot.');
-  run('UPDATE screens SET approved = 1, name = ?, playlist_id = ? WHERE id = ?', name || 'Képernyő ' + s.id, playlist_id || null, s.id);
+  run('UPDATE screens SET approved = 1, name = ?, playlist_id = ? WHERE id = ?', name || tr('Képernyő {n}', { n: s.id }), playlist_id || null, s.id);
   pushTo(s.device_id, 'refresh');
   send(res, 200, screenOut(get('SELECT * FROM screens WHERE id = ?', s.id)));
 });
@@ -622,6 +628,7 @@ r.get('/api/settings', A, (req, res) => send(res, 200, {
   slogan: getSetting('slogan', ''), branding: getSetting('branding', { preset: 'narancs' }),
   logo_url: mediaMap([getSetting('logo_media_id')])[getSetting('logo_media_id')]?.url || null,
   default_lat: getSetting('default_lat', 47.4979), default_lon: getSetting('default_lon', 19.0402), default_city: getSetting('default_city', 'Budapest'),
+  language: lang(),
   version: VERSION, data_dir: DATA_DIR, node: process.version, uptime: process.uptime(),
 }));
 r.put('/api/settings', A, async (req, res) => {
@@ -630,6 +637,10 @@ r.put('/api/settings', A, async (req, res) => {
   if (b.branding !== undefined) {
     if (typeof b.branding !== 'object' || Array.isArray(b.branding) || JSON.stringify(b.branding).length > 20000) throw new HttpError(400, 'Érvénytelen arculat');
     setSetting('branding', b.branding);
+  }
+  if (b.language !== undefined) {
+    if (!LANGS.includes(b.language)) throw new HttpError(400, 'Érvénytelen nyelv');
+    setSetting('language', b.language);
   }
   notifyChange();
   send(res, 200, { ok: true });
@@ -702,7 +713,7 @@ const server = http.createServer(async (req, res) => {
   } catch (e) {
     const status = e.status || 500;
     if (status === 500) console.error(e);
-    send(res, status, { error: e.message || 'Szerverhiba' });
+    send(res, status, { error: tr(e.message || 'Szerverhiba') });
   }
 });
 server.requestTimeout = 0; // nagy feltöltések és SSE miatt

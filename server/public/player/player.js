@@ -72,11 +72,25 @@
   const pad = (n) => String(n).padStart(2, '0');
   const fmtTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  const HU_DAYS = ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'];
-  const HU_DAYS_SHORT = ['V', 'H', 'K', 'Sze', 'Cs', 'P', 'Szo'];
-  const HU_MONTHS = ['január', 'február', 'március', 'április', 'május', 'június', 'július', 'augusztus', 'szeptember', 'október', 'november', 'december'];
-  const fmtDay = (d) => `${HU_MONTHS[d.getMonth()]} ${d.getDate()}., ${HU_DAYS[d.getDay()]}`;
-  const fmtDateLong = (d) => `${d.getFullYear()}. ${fmtDay(d)}`;
+  // Nyelv: a szerver beállítása (cfg.org.lang / hello válasz), offline indulásnál a legutóbb tárolt
+  const I18N = window.SIGNAGE_I18N;
+  const tr = I18N.t;
+  const { fmtDay, fmtDateLong, dayShort, monthName } = I18N;
+  function setLang(l) {
+    if (!l || l === I18N.lang) return false;
+    I18N.set(l);
+    if (!PREVIEW) LS.set('lang', I18N.lang);
+    translateStatic();
+    return true;
+  }
+  // az index.html statikus feliratai (data-i18n / data-i18n-aria)
+  function translateStatic() {
+    document.documentElement.lang = I18N.lang;
+    for (const el of document.querySelectorAll('[data-i18n]')) { el.dataset.i18n ||= el.innerHTML; el.innerHTML = tr(el.dataset.i18n); }
+    for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', tr(el.dataset.i18nAria));
+  }
+  I18N.set(LS.get('lang'));
+  translateStatic();
   // Egész napos események dátuma helyi idő szerint (nem UTC)
   const localDate = (str) => { const [y, m, d] = String(str).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
   const evStart = (e) => (e.all_day ? localDate(e.start) : new Date(e.start));
@@ -212,12 +226,12 @@
     let finished = false;
     const done = () => { if (!finished && state.current?.el === el) { finished = true; advance(); } };
     const ctrl = r(el, slide, { done }) || {};
-    const tr = interactive ? 'up' : (d.transition || state.transition || 'fade');
-    if (tr !== 'none') el.classList.add('t-' + tr);
+    const fx = interactive ? 'up' : (d.transition || state.transition || 'fade');
+    if (fx !== 'none') el.classList.add('t-' + fx);
     $('#stage').append(el);
     if (old?.el) {
       old.el.classList.add('leaving');
-      if (tr === 'slide') old.el.classList.add('t-slide-out');
+      if (fx === 'slide') old.el.classList.add('t-slide-out');
       const oldEl = old.el;
       setTimeout(() => oldEl.remove(), 950);
     }
@@ -237,7 +251,7 @@
       h('div', { class: 'empty-slide' },
         org.logo_media_id && mediaUrl(org.logo_media_id) ? h('img', { class: 'logo', src: mediaUrl(org.logo_media_id) }) : null,
         h('h1', {}, org.name || 'Narancs Signage'),
-        h('p', {}, state.cfg?.screen?.name ? `${state.cfg.screen.name} – nincs hozzárendelt tartalom` : 'Nincs hozzárendelt tartalom')));
+        h('p', {}, state.cfg?.screen?.name ? tr('{name} – nincs hozzárendelt tartalom', { name: state.cfg.screen.name }) : tr('Nincs hozzárendelt tartalom'))));
     $('#stage').replaceChildren(el);
     state.current = { slide: null, el, ctrl: {} };
     clearTimeout(state.timer);
@@ -318,7 +332,7 @@
       const dots = d.show_dots ? h('div', { class: 'dots' }, ids.map(() => h('i'))) : null;
       if (dots) g.append(dots);
       el.append(g);
-      if (!ids.length) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, 'Nincs kép kiválasztva'))); return { duration: 5 }; }
+      if (!ids.length) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, tr('Nincs kép kiválasztva')))); return { duration: 5 }; }
       let i = -1;
       const showImg = () => {
         const prev = i;
@@ -357,7 +371,7 @@
     video(el, s, { done }) {
       const d = s.data;
       const m = media(d.media_id);
-      if (!m) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, 'Nincs videó kiválasztva'))); return { duration: 5 }; }
+      if (!m) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, tr('Nincs videó kiválasztva')))); return { duration: 5 }; }
       const v = h('video', { class: `full ${d.fit === 'cover' ? 'cover' : ''}`, src: m.url, autoplay: true, playsinline: true, preload: 'auto' });
       v.muted = d.muted !== false;
       v.loop = !!d.loop && !!s.duration;
@@ -381,7 +395,7 @@
 
     pdf(el, s) {
       const m = media(s.data.media_id);
-      el.append(m ? h('iframe', { class: 'full', src: `${m.url}#toolbar=0&navpanes=0&view=Fit&page=${+s.data.page || 1}` }) : h('div', { class: 'empty-slide' }, h('p', {}, 'Nincs PDF kiválasztva')));
+      el.append(m ? h('iframe', { class: 'full', src: `${m.url}#toolbar=0&navpanes=0&view=Fit&page=${+s.data.page || 1}` }) : h('div', { class: 'empty-slide' }, h('p', {}, tr('Nincs PDF kiválasztva'))));
       el.append(h('div', { class: 'web-cover' }));
     },
 
@@ -447,7 +461,7 @@
               onclick: linkHandler(b),
             }, b.icon ? h('span', { class: 'bi' }, b.icon) : null, b.label || '', b.sub ? h('small', {}, b.sub) : null);
           })),
-        d.hint !== '' ? h('div', { class: 'touch-hint' }, d.hint || '👆 Érintsd meg a képernyőt') : null,
+        d.hint !== '' ? h('div', { class: 'touch-hint' }, d.hint || tr('👆 Érintsd meg a képernyőt')) : null,
       );
       el.append(w);
     },
@@ -459,9 +473,9 @@
       evs.sort((a, b) => evStart(a) - evStart(b));
       const now = new Date();
       const w = h('div', { class: 'cal-wrap' },
-        h('div', { class: 'cal-head' }, h('h1', {}, d.title || 'Események'), h('div', { class: 'today' }, fmtDateLong(now))));
+        h('div', { class: 'cal-head' }, h('h1', {}, d.title || tr('Események')), h('div', { class: 'today' }, fmtDateLong(now))));
       const view = d.view || 'list';
-      const evTime = (e) => (e.all_day ? 'Egész nap' : fmtTime(evStart(e)));
+      const evTime = (e) => (e.all_day ? tr('Egész nap') : fmtTime(evStart(e)));
       if (view === 'list') {
         const ahead = (+d.days_ahead || 14) * 864e5;
         const list = evs.filter((e) => evEnd(e) >= now && evStart(e) - now <= ahead).slice(0, +d.max_items || 8);
@@ -469,16 +483,16 @@
         let lastDay = '';
         list.forEach((e, i) => {
           const st = evStart(e), en = evEnd(e);
-          const dayLabel = sameDay(st, now) ? 'Ma' : sameDay(st, new Date(now.getTime() + 864e5)) ? 'Holnap' : fmtDay(st);
+          const dayLabel = sameDay(st, now) ? tr('Ma') : sameDay(st, new Date(now.getTime() + 864e5)) ? tr('Holnap') : fmtDay(st);
           if (dayLabel !== lastDay && st > now) { box.append(h('div', { class: 'cal-day' }, dayLabel)); lastDay = dayLabel; }
-          else if (st <= now && lastDay !== 'Most') { box.append(h('div', { class: 'cal-day' }, 'Most zajlik')); lastDay = 'Most'; }
+          else if (st <= now && lastDay !== 'Most') { box.append(h('div', { class: 'cal-day' }, tr('Most zajlik'))); lastDay = 'Most'; }
           const live = st <= now && en >= now;
           box.append(h('div', { class: `cal-ev ${live ? 'now' : ''}`, style: { '--c': e.color, animationDelay: `${i * 0.08}s` } },
             h('div', { class: 'time' }, evTime(e), !e.all_day && e.end ? h('div', { class: 'meta' }, '– ' + fmtTime(en)) : null),
-            h('div', {}, h('div', { class: 'title' }, e.title, live ? h('span', { class: 'live' }, 'MOST') : null),
+            h('div', {}, h('div', { class: 'title' }, e.title, live ? h('span', { class: 'live' }, tr('MOST')) : null),
               e.location || e.description ? h('div', { class: 'meta' }, [e.location && `📍 ${e.location}`, e.description].filter(Boolean).join(' · ').slice(0, 160)) : null)));
         });
-        if (!list.length) box.append(h('div', { class: 'cal-empty' }, 'Nincs közelgő esemény 🎉'));
+        if (!list.length) box.append(h('div', { class: 'cal-empty' }, tr('Nincs közelgő esemény 🎉')));
         w.append(box);
       } else if (view === 'week') {
         const start = new Date(now); start.setHours(0, 0, 0, 0);
@@ -487,15 +501,15 @@
           const day = new Date(start.getTime() + i * 864e5);
           const dayEvs = evs.filter((e) => evStart(e) < new Date(day.getTime() + 864e5) && evEnd(e) >= day);
           wk.append(h('div', { class: `col ${i === 0 ? 'today' : ''}` },
-            h('h4', {}, `${HU_DAYS_SHORT[day.getDay()]} ${day.getDate()}.`),
+            h('h4', {}, `${dayShort(day.getDay())} ${day.getDate()}.`),
             dayEvs.slice(0, 6).map((e) => h('div', { class: 'ev', style: { '--c': e.color } }, h('small', {}, evTime(e)), e.title))));
         }
         w.append(wk);
       } else {
         const first = new Date(now.getFullYear(), now.getMonth(), 1);
         const offset = (first.getDay() + 6) % 7;
-        const grid = h('div', { class: 'month' }, ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'].map((x) => h('div', { class: 'dow' }, x)));
-        w.querySelector('h1').textContent = `${d.title || 'Események'} – ${HU_MONTHS[now.getMonth()]}`;
+        const grid = h('div', { class: 'month' }, [1, 2, 3, 4, 5, 6, 0].map(dayShort).map((x) => h('div', { class: 'dow' }, x)));
+        w.querySelector('h1').textContent = `${d.title || tr('Események')} – ${monthName(now.getMonth())}`;
         for (let i = 0; i < 42; i++) {
           const day = new Date(now.getFullYear(), now.getMonth(), 1 - offset + i);
           const dayEvs = evs.filter((e) => evStart(e) < new Date(day.getTime() + 864e5) && evEnd(e) >= day);
@@ -510,7 +524,7 @@
 
     form(el, s) {
       const form = state.cfg.forms[s.data.form_id];
-      if (!form) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, 'Az űrlap nem található'))); return; }
+      if (!form) { el.append(h('div', { class: 'empty-slide' }, h('p', {}, tr('Az űrlap nem található')))); return; }
       const values = {};
       const wrap = h('div', { class: 'form-wrap' });
       const err = h('div', { class: 'err' });
@@ -522,7 +536,7 @@
           case 'textarea':
             return h('div', { class: 'f wide' }, lab, h('textarea', { id, name: f.key, placeholder: f.placeholder || '' }));
           case 'select':
-            return h('div', { class: `f ${wide ? 'wide' : ''}` }, lab, h('select', { id, name: f.key }, h('option', { value: '' }, '— válassz —'), (f.options || []).map((o) => h('option', { value: o }, o))));
+            return h('div', { class: `f ${wide ? 'wide' : ''}` }, lab, h('select', { id, name: f.key }, h('option', { value: '' }, tr('— válassz —')), (f.options || []).map((o) => h('option', { value: o }, o))));
           case 'choice': {
             const box = h('div', { class: 'choices' });
             (f.options || []).forEach((o) => box.append(h('button', { type: 'button', class: 'choice', onclick: (e) => {
@@ -548,7 +562,7 @@
           }
         }
       };
-      const formEl = h('form', { novalidate: true }, form.fields.map(fieldEl), err, h('button', { type: 'submit', class: 'submit' }, form.submit_text || 'Küldés'));
+      const formEl = h('form', { novalidate: true }, form.fields.map(fieldEl), err, h('button', { type: 'submit', class: 'submit' }, form.submit_text || tr('Küldés')));
       formEl.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideKeyboard();
@@ -560,17 +574,17 @@
         }
         for (const f of form.fields) {
           const v = data[f.key];
-          if (f.required && (v == null || v === '' || v === false)) { err.textContent = `Kérjük, töltsd ki: ${f.label}`; return; }
-          if (f.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { err.textContent = `Érvénytelen e-mail cím: ${f.label}`; return; }
+          if (f.required && (v == null || v === '' || v === false)) { err.textContent = tr('Kérjük, töltsd ki: {label}', { label: f.label }); return; }
+          if (f.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { err.textContent = tr('Érvénytelen e-mail cím: {label}', { label: f.label }); return; }
         }
-        err.textContent = 'Küldés…';
+        err.textContent = tr('Küldés…');
         try {
           if (PREVIEW) await new Promise((r) => setTimeout(r, 400));
           else await api(`/api/player/forms/${form.id}`, { method: 'POST', body: JSON.stringify({ device: DEVICE, data }) });
-          wrap.replaceChildren(h('div', { class: 'form-thanks' }, h('div', { class: 'ok' }, '✓'), h('h2', {}, form.thanks_text || 'Köszönjük!')));
+          wrap.replaceChildren(h('div', { class: 'form-thanks' }, h('div', { class: 'ok' }, '✓'), h('h2', {}, form.thanks_text || tr('Köszönjük!'))));
           later(() => { if (state.stack.length) goHome(); else advance(); }, 6000);
         } catch (ex) {
-          err.textContent = ex.status ? ex.message : 'Nincs kapcsolat a szerverrel, próbáld újra később.';
+          err.textContent = ex.status ? ex.message : tr('Nincs kapcsolat a szerverrel, próbáld újra később.');
         }
       });
       wrap.append(h('h1', {}, form.title), form.intro ? h('p', { class: 'subtitle' }, form.intro) : null, formEl);
@@ -599,7 +613,7 @@
 
     rss(el, s) {
       const d = s.data;
-      const w = h('div', { class: 'rss-wrap' }, h('h1', {}, d.title || 'Hírek'));
+      const w = h('div', { class: 'rss-wrap' }, h('h1', {}, d.title || tr('Hírek')));
       const box = h('div', { style: { flex: 1, display: 'flex' } });
       w.append(box); el.append(w);
       const per = Math.max(4, +d.per_item || 8);
@@ -611,7 +625,7 @@
       function run(feed) {
         const items = feed.items.slice(0, max);
         if (!d.title && feed.title) w.firstChild.textContent = feed.title;
-        if (!items.length) { box.append(h('div', { class: 'cal-empty' }, 'A hírfolyam nem érhető el')); return; }
+        if (!items.length) { box.append(h('div', { class: 'cal-empty' }, tr('A hírfolyam nem érhető el'))); return; }
         let i = 0;
         const one = () => {
           const it = items[i++ % items.length];
@@ -629,12 +643,12 @@
       const d = s.data;
       const target = new Date(d.target);
       const units = h('div', { class: 'units' });
-      const w = h('div', { class: 'countdown' }, h('h1', {}, d.title || 'Visszaszámlálás'), units, d.subtitle ? h('p', { class: 'subtitle' }, d.subtitle) : null);
+      const w = h('div', { class: 'countdown' }, h('h1', {}, d.title || tr('Visszaszámlálás')), units, d.subtitle ? h('p', { class: 'subtitle' }, d.subtitle) : null);
       el.append(w);
       const tick = () => {
         let diff = Math.max(0, target - Date.now()) / 1000;
-        if (!diff) { units.replaceChildren(h('div', { class: 'done' }, d.done_text || 'Elkezdődött! 🎉')); return; }
-        const parts = [['nap', Math.floor(diff / 86400)], ['óra', Math.floor(diff / 3600) % 24], ['perc', Math.floor(diff / 60) % 60], ['mp', Math.floor(diff) % 60]];
+        if (!diff) { units.replaceChildren(h('div', { class: 'done' }, d.done_text || tr('Elkezdődött! 🎉'))); return; }
+        const parts = [[tr('nap'), Math.floor(diff / 86400)], [tr('óra'), Math.floor(diff / 3600) % 24], [tr('perc'), Math.floor(diff / 60) % 60], [tr('mp'), Math.floor(diff) % 60]];
         units.replaceChildren(...parts.map(([l, v]) => h('div', { class: 'u' }, h('b', {}, pad(v)), h('span', {}, l))));
       };
       tick(); every(tick, 1000);
@@ -645,11 +659,11 @@
       const canvas = h('canvas');
       try { drawQr(canvas, d.url || ' '); } catch { /* túl hosszú */ }
       el.append(h('div', { class: 'qr-wrap' }, canvas,
-        h('div', {}, h('h1', {}, d.title || 'Olvasd be!'), d.text ? h('p', {}, d.text) : null, d.show_url !== false ? h('p', { class: 'url' }, d.url) : null)));
+        h('div', {}, h('h1', {}, d.title || tr('Olvasd be!')), d.text ? h('p', {}, d.text) : null, d.show_url !== false ? h('p', { class: 'url' }, d.url) : null)));
     },
 
     unknown(el, s) {
-      el.append(h('div', { class: 'empty-slide' }, h('p', {}, `Ismeretlen tartalomtípus: ${s.type}`)));
+      el.append(h('div', { class: 'empty-slide' }, h('p', {}, tr('Ismeretlen tartalomtípus: {type}', { type: s.type }))));
     },
   };
 
@@ -692,11 +706,11 @@
     const [ic, desc] = WX[c.weather_code] || ['🌡️', ''];
     const icon = c.is_day === 0 && c.weather_code <= 1 ? '🌙' : ic;
     box.replaceChildren(h('div', { class: 'now' }, h('div', { class: 'ic' }, icon),
-      h('div', {}, h('div', { class: 't' }, `${Math.round(c.temperature_2m)}°`), h('div', { class: 'd' }, `${d.city || ''} · ${desc}`), h('div', { class: 'd' }, `💧 ${c.relative_humidity_2m}%  💨 ${Math.round(c.wind_speed_10m)} km/h`))));
+      h('div', {}, h('div', { class: 't' }, `${Math.round(c.temperature_2m)}°`), h('div', { class: 'd' }, `${d.city || ''} · ${tr(desc)}`), h('div', { class: 'd' }, `💧 ${c.relative_humidity_2m}%  💨 ${Math.round(c.wind_speed_10m)} km/h`))));
     if (d.show_forecast !== false && j.daily) {
       j.daily.time.slice(1, 5).forEach((t, i) => {
         const dd = new Date(t);
-        box.append(h('div', { class: 'day' }, h('div', {}, HU_DAYS_SHORT[dd.getDay()]), h('div', { class: 'ic' }, (WX[j.daily.weather_code[i + 1]] || ['🌡️'])[0]),
+        box.append(h('div', { class: 'day' }, h('div', {}, dayShort(dd.getDay())), h('div', { class: 'ic' }, (WX[j.daily.weather_code[i + 1]] || ['🌡️'])[0]),
           h('div', {}, `${Math.round(j.daily.temperature_2m_max[i + 1])}° / ${Math.round(j.daily.temperature_2m_min[i + 1])}°`)));
       });
     }
@@ -736,7 +750,7 @@
       const data = new TextEncoder().encode(text);
       let ver = 1, cap = 0;
       for (; ver <= 40; ver++) { cap = dataCodewords(ver, ecl) * 8; if (4 + (ver < 10 ? 8 : 16) + data.length * 8 <= cap) break; }
-      if (ver > 40) throw new Error('Túl hosszú szöveg a QR kódhoz');
+      if (ver > 40) throw new Error(tr('Túl hosszú szöveg a QR kódhoz'));
       const bits = [];
       const push = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
       push(4, 4); push(data.length, ver < 10 ? 8 : 16); data.forEach((b) => push(b, 8));
@@ -842,19 +856,28 @@
   // ------------------------------------------------------------------
   //  Virtuális billentyűzet érintőképernyőkhöz
   // ------------------------------------------------------------------
-  const KB_ROWS = [
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'ö', 'ü', 'ó'],
-    ['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ő', 'ú'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'é', 'á', 'ű'],
-    ['⇧', 'í', 'y', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-', '⌫'],
-    ['@', '.hu', '.com', ' ', '✓'],
-  ];
+  const KB_LAYOUTS = {
+    hu: [
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'ö', 'ü', 'ó'],
+      ['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ő', 'ú'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'é', 'á', 'ű'],
+      ['⇧', 'í', 'y', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-', '⌫'],
+      ['@', '.hu', '.com', ' ', '✓'],
+    ],
+    en: [
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '⌫'],
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', "'"],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ',', '.'],
+      ['⇧', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '_', '/', '?'],
+      ['@', '.com', '.net', ' ', '✓'],
+    ],
+  };
   let kbTarget = null, kbShift = false;
   const kb = $('#keyboard');
   function renderKeyboard() {
-    kb.replaceChildren(...KB_ROWS.map((row) => h('div', { class: 'row' }, row.map((k) => {
-      const cls = k === ' ' ? 'space' : k === '✓' ? 'wide act' : ['⇧', '⌫', '.com', '.hu'].includes(k) ? `wide ${k === '⇧' && kbShift ? 'on' : ''}` : '';
-      const label = k === ' ' ? 'szóköz' : k === '✓' ? 'Kész' : kbShift && k.length === 1 ? k.toUpperCase() : k;
+    kb.replaceChildren(...(KB_LAYOUTS[I18N.lang] || KB_LAYOUTS.en).map((row) => h('div', { class: 'row' }, row.map((k) => {
+      const cls = k === ' ' ? 'space' : k === '✓' ? 'wide act' : ['⇧', '⌫', '.com', '.hu', '.net'].includes(k) ? `wide ${k === '⇧' && kbShift ? 'on' : ''}` : '';
+      const label = k === ' ' ? tr('szóköz') : k === '✓' ? tr('Kész') : kbShift && k.length === 1 ? k.toUpperCase() : k;
       return h('button', { type: 'button', class: cls, 'data-k': k }, label);
     }))));
   }
@@ -1000,7 +1023,7 @@
     if (!c) return;
     const n = new Date();
     c.firstChild.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
-    c.lastChild.textContent = `${HU_MONTHS[n.getMonth()]} ${n.getDate()}., ${HU_DAYS[n.getDay()]}`;
+    c.lastChild.textContent = fmtDay(n);
   }
 
   // Admin arculat-szerkesztő élő előnézete: a még nem mentett beállítások azonnal látszanak
@@ -1069,7 +1092,7 @@
 
   function identify(sec = 10) {
     const el = $('#identify');
-    el.replaceChildren(state.cfg?.screen?.name || 'Képernyő', h('small', {}, `Eszköz: ${DEVICE.slice(0, 8)} · ${screen.width}×${screen.height}`));
+    el.replaceChildren(state.cfg?.screen?.name || tr('Képernyő'), h('small', {}, `${tr('Eszköz')}: ${DEVICE.slice(0, 8)} · ${screen.width}×${screen.height}`));
     el.hidden = false;
     setTimeout(() => { el.hidden = true; }, sec * 1000);
   }
@@ -1084,6 +1107,7 @@
   }
 
   function applyConfig(cfg, fromCache = false) {
+    if (setLang(cfg.org?.lang)) renderKeyboard();
     const changed = !state.cfg || state.cfg.version !== cfg.version;
     state.cfg = cfg;
     if (!fromCache && !PREVIEW) LS.set('config:' + DEVICE, cfg);
@@ -1092,7 +1116,7 @@
     applyOverlays();
     // folyamatjelző 100%, majd az első tartalom (ami már a háttérben rajzolódik) előtűnik
     const bb = document.querySelector('#boot .bbar i');
-    if (bb) { bb.style.width = '100%'; document.querySelector('#boot .btxt').textContent = 'Kész'; }
+    if (bb) { bb.style.width = '100%'; document.querySelector('#boot .btxt').textContent = tr('Kész'); }
     setTimeout(hideBoot, 500);
     if (changed) {
       if (state.current?.slide && cfg.slides[state.current.slide.id] && JSON.stringify(cfg.slides[state.current.slide.id]) !== JSON.stringify(state.current.slide)) {
@@ -1119,7 +1143,7 @@
     try {
       const cfg = await api(url);
       setOnline(true);
-      if (!cfg.paired) { showPairing(cfg.code); return; }
+      if (!cfg.paired) { setLang(cfg.lang); showPairing(cfg.code); return; }
       applyConfig(cfg);
     } catch (e) {
       if (e.status === 404 && !PREVIEW) { await hello(); return; }
@@ -1142,7 +1166,7 @@
     $('#pairing').hidden = false;
     $('#pair-code').textContent = code;
     $('#pair-url').textContent = `${location.origin}/admin/`;
-    $('#pair-info').textContent = `Eszköz: ${DEVICE.slice(0, 8)} · ${screen.width}×${screen.height}`;
+    $('#pair-info').textContent = `${tr('Eszköz')}: ${DEVICE.slice(0, 8)} · ${screen.width}×${screen.height}`;
   }
 
   async function hello() {
@@ -1152,12 +1176,13 @@
         body: JSON.stringify({ device: DEVICE, info: { ua: navigator.userAgent, w: screen.width, h: screen.height, platform: navigator.platform, lang: navigator.language } }),
       });
       setOnline(true);
+      setLang(r.lang);
       showStatus(null);
       if (!r.paired) showPairing(r.code);
       return r;
     } catch (e) {
       setOnline(false);
-      state.lastError = e.status ? `${e.status}: ${e.message}` : 'a szerver nem érhető el';
+      state.lastError = e.status ? `${e.status}: ${e.message}` : tr('a szerver nem érhető el');
       return null;
     }
   }
@@ -1168,7 +1193,7 @@
       const r = await hello();
       if (r) return r;
       // az első sikertelen próbánál még a logós indulókép marad, utána kiírjuk a hibát
-      if (!state.cfg && attempt >= 2) showStatus('Kapcsolódás a szerverhez…', `${location.origin} – ${state.lastError} (${attempt}. próbálkozás, újra 5 mp múlva)`);
+      if (!state.cfg && attempt >= 2) showStatus(tr('Kapcsolódás a szerverhez…'), `${location.origin} – ${state.lastError} (` + tr('{n}. próbálkozás, újra 5 mp múlva', { n: attempt }) + ')');
       await new Promise((ok) => setTimeout(ok, 5000));
     }
   }
@@ -1186,7 +1211,7 @@
     if (!title) { el.hidden = true; return; }
     $('#status-title').textContent = title;
     $('#status-detail').textContent = detail || '';
-    $('#status-info').textContent = `Eszköz: ${DEVICE.slice(0, 14)} · ${screen.width}×${screen.height}`;
+    $('#status-info').textContent = `${tr('Eszköz')}: ${DEVICE.slice(0, 14)} · ${screen.width}×${screen.height}`;
     el.hidden = false;
   }
 

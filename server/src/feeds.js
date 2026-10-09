@@ -1,5 +1,6 @@
 // Külső adatforrások: iCal naptár, RSS hírfolyam, időjárás (Open-Meteo, kulcs nélkül)
 import { all, run } from './db.js';
+import { lang, tr } from './i18n.js';
 
 const cache = new Map();
 async function cached(key, ttlMs, fn) {
@@ -67,7 +68,7 @@ export function parseIcal(text) {
       }
     }
   }
-  return events.map((e) => ({ title: e.title || '(névtelen)', description: e.description || '', location: e.location || '', start: e.start, end: e.end || e.start, all_day: e.all_day }));
+  return events.map((e) => ({ title: e.title || tr('(névtelen)'), description: e.description || '', location: e.location || '', start: e.start, end: e.end || e.start, all_day: e.all_day }));
 }
 
 export async function refreshIcal(calendar) {
@@ -124,8 +125,8 @@ export function fetchWeather(lat, lon) {
 }
 
 export function geocode(q) {
-  return cached('geo:' + q.toLowerCase(), 24 * 3600e3, async () => {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=hu&format=json`;
+  return cached(`geo:${lang()}:` + q.toLowerCase(), 24 * 3600e3, async () => {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${lang()}&format=json`;
     const j = JSON.parse(await fetchText(url));
     return (j.results || []).map((r) => ({ name: r.name, country: r.country, admin: r.admin1, lat: r.latitude, lon: r.longitude }));
   });

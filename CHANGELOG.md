@@ -7,6 +7,18 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.7.0] – 2026-10-09
+
+### Új
+- Választható nyelv: Beállítások → Nyelv (English / Magyar), **alapértelmezés: angol**. A beállítás az egész rendszerre érvényes: admin felület, belépés, a kijelzők feliratai (dátumok, napok, hónapok, Ma/Holnap, időjárás, visszaszámláló, űrlap üzenetek, párosító és indulóképernyő), a szerver hibaüzenetei, a CSV export fejléce és az arculat bemutató
+- Az új tartalmak, űrlapsablonok és vészjelzés sablonok mintaszövegei a kiválasztott nyelven jönnek létre (a meglévő tartalmak szövege nem változik)
+- Angol virtuális billentyűzet kiosztás (QWERTY) az érintőképernyős űrlapokhoz
+- A település keresés (időjárás) a kiválasztott nyelven adja a neveket
+
+### Változott
+- A felület szövegei közös fordítási modulban (`public/shared/i18n.js`, a kulcs a magyar eredeti), a szerver üzenetei a `src/i18n.js`-ben
+- Nyelvváltáskor a kijelzők azonnal frissülnek, az admin oldal újratöltődik
+
 ## [1.6.3] – 2026-10-09
 
 ### Javítva
