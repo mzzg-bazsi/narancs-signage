@@ -39,6 +39,6 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
 - `LICENSE`: saját „Narancs Signage License” (szerző: Balázs Mazzag). Az admin felület `COPYRIGHT` felirata (belépő + oldalmenü) a licenc része, ne távolítsd el; a lejátszóra nem kerül felirat.
 
 ## Verziókezelés
-- GitHub: https://github.com/mzzg-bazsi/narancs-signage (privát, `main`). `gh` be van jelentkezve (`mzzg-bazsi`).
+- GitHub: https://github.com/mzzg-bazsi/narancs-signage (**publikus**, `main`; commit e-mail: GitHub noreply álcím, a repo helyi git beállításában). `gh` be van jelentkezve (`mzzg-bazsi`).
 - Minden lezárt módosítás után: bejegyzés a `CHANGELOG.md` tetejére (`## [X.Y.Z] – dátum`, Új / Javítva / Változott), commit (magyar üzenet), majd `./scripts/release.sh patch|minor|major` (verzió emelés, tag, push).
 - A kijelzőt érintő változás után a felhasználónak újra kell futtatnia a lejátszó telepítőt a VM-en; a lejátszó oldali (böngésző) változásokhoz elég egy távoli `reload` parancs.
