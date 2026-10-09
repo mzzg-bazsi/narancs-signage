@@ -19,6 +19,7 @@ h1, h2, h3, .htitle, .clock-wrap .big, .countdown .u b { font-family: var(--font
 .subtitle, .cal-ev .meta, .rss-item p, .card p { color: var(--muted); opacity: 1 !important; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+.emoji { font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Twemoji Mozilla", sans-serif; font-style: normal; font-weight: 400; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--fg); cursor: none; -webkit-user-select: none; user-select: none; }
 /* egérmutató: csak egérmozgatáskor (pár mp-ig) vagy ha a képernyőn mindig látszik be van kapcsolva */
 body:not(.cursor-on):not(.preview), body:not(.cursor-on):not(.preview) * { cursor: none !important; }

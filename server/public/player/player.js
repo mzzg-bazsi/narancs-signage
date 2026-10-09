@@ -901,6 +901,48 @@
   //  Átfedések: óra, hírszalag, riasztások, tájolás, kikapcsolás
   // ------------------------------------------------------------------
   // ------------------------------------------------------------------
+  //  Emojik: mindig a színes emoji betűtípussal (Linuxon a DejaVu Sans egyes
+  //  hangulatjeleket – pl. 🙂 😐 – egyszínű körvonalként rajzolna ki)
+  // ------------------------------------------------------------------
+  const EMOJI_RE = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)(?:\uFE0F|\p{Emoji_Modifier})*(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})*)*/gu;
+  const KEEP_TEXT = new Set(['★', '☆']); // a csillagos értékelés a téma színét veszi fel
+  function fixEmoji(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (n.parentElement?.closest('.emoji, script, style, textarea, input, select')) continue;
+      EMOJI_RE.lastIndex = 0;
+      if (EMOJI_RE.test(n.data)) nodes.push(n);
+    }
+    for (const n of nodes) {
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      for (const m of n.data.matchAll(EMOJI_RE)) {
+        if (KEEP_TEXT.has(m[0])) continue;
+        if (m.index > last) frag.append(n.data.slice(last, m.index));
+        const sp = document.createElement('span');
+        sp.className = 'emoji';
+        sp.textContent = m[0];
+        frag.append(sp);
+        last = m.index + m[0].length;
+      }
+      if (last === 0) continue;
+      if (last < n.data.length) frag.append(n.data.slice(last));
+      n.replaceWith(frag);
+    }
+  }
+  // minden később megjelenő tartalomra is (diák, hírfolyam, időjárás, fejléc, hírszalag, riasztás)
+  new MutationObserver((muts) => {
+    for (const mu of muts) for (const node of mu.addedNodes) {
+      if (node.nodeType === 1) fixEmoji(node);
+      else if (node.nodeType === 3 && node.parentElement) fixEmoji(node.parentElement);
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  fixEmoji(document.body);
+
+  // ------------------------------------------------------------------
   //  Arculat: színek, betűk, lekerekítés, logó vízjel, fejléc sáv
   // ------------------------------------------------------------------
   const COLOR_VARS = { accent: '--accent', accent_fg: '--accent-fg', bg: '--bg', bg2: '--bg2', fg: '--fg', surface: '--surface', muted: '--muted' };

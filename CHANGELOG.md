@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.6.2] – 2026-10-09
+
+### Javítva
+- Egyes emojik (pl. 🙂 😐 🙁 az elégedettségi űrlapon) a kijelzőn egyszínű körvonalként jelentek meg: Linuxon a DejaVu Sans saját rajzát használta a böngésző. Most minden emoji – diákon, űrlapokon, menükben, fejlécben, hírszalagon, hírfolyamban – a színes emoji betűtípussal jelenik meg (a csillagos értékelés ★ jele kivétel, az a téma színét kapja)
+
 ## [1.6.1] – 2026-10-09
 
 ### Javítva
