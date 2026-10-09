@@ -14,6 +14,7 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
 - `server/src/` – Node.js (≥22.13) szerver, **nulla külső függőség** (beépített `node:sqlite`, `http`, `crypto`). Nincs `npm install` – ne vezess be függőséget.
   - `server.js` REST API + SSE (`/api/player/stream`; `?agent=1` = kijelző ügynök csatorna), lejátszó-konfiguráció (`playerConfig`, `buildBundle`), arculat (`orgInfo`, `brandDemo`)
   - `db.js` SQLite séma, JSON oszlopok automatikus kezelése, `crud()` segéd
+  - `seed.js` minta tartalmak (alap lejátszási lista): első beállításkor és `POST /api/samples`
 - `server/public/admin/` – admin SPA (vanilla JS, build nélkül). Halvány narancs téma. `F.*` űrlap-segédek, `TYPES` = 14 tartalomtípus.
 - `server/public/player/` – lejátszó (kioszk böngészőben fut). Renderelők a `renderers` objektumban; `fixEmoji` minden emojit színes betűtípusba tesz; `#boot` indulókép.
 - `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (10 arculati téma, admin + lejátszó közös), `splash/` (logó: félnap egy tévén, bootképkockák).

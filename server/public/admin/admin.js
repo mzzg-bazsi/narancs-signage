@@ -445,7 +445,7 @@
   // =====================================================================
   let ME = null;
   function authScreen(setup) {
-    const data = { username: setup ? 'admin' : '', password: '', password2: '', org_name: '' };
+    const data = { username: setup ? 'admin' : '', password: '', password2: '', org_name: '', language: I18N.lang };
     const err = h('div', { class: 'err' });
     const submit = async (e) => {
       e.preventDefault();
@@ -461,12 +461,17 @@
     $('#app').replaceChildren(h('div', { class: 'auth' }, h('form', { class: 'card stack', onsubmit: submit },
       h('div', { class: 'brand' }, h('div', { class: 'logo' }, h('img', { src: '/shared/splash/logo.svg', alt: '' })), 'Narancs Signage'),
       h('p', { class: 'lead' }, setup ? tr('Üdv! Hozd létre az első adminisztrátor fiókot.') : tr('Jelentkezz be a vezérlőpulthoz.')),
+      // nyelvválasztás még a fiók létrehozása előtt (a szerver csak beállítás nélküli rendszeren engedi)
+      setup ? F.select('Language / Nyelv', data, 'language', Object.entries(I18N.LANGS), { onchange: async (v) => {
+        try { await POST('/api/auth/language', { language: v }); location.reload(); } catch (ex) { err.textContent = ex.message; }
+      } }) : null,
       setup ? F.text(tr('Szervezet neve'), data, 'org_name', { placeholder: tr('pl. Narancs Kft.') }) : null,
       F.text(tr('Felhasználónév'), data, 'username', { placeholder: 'admin' }),
       F.text(tr('Jelszó'), data, 'password', { type: 'password', placeholder: setup ? tr('legalább 6 karakter') : '' }),
       setup ? F.text(tr('Jelszó újra'), data, 'password2', { type: 'password' }) : null,
       err,
-      h('button', { class: 'btn primary', type: 'submit', style: { padding: '11px' } }, setup ? tr('Fiók létrehozása') : tr('Belépés')))));
+      h('button', { class: 'btn primary', type: 'submit', style: { padding: '11px' } }, setup ? tr('Fiók létrehozása') : tr('Belépés')),
+      setup ? h('p', { class: 'small muted', style: { margin: 0, textAlign: 'center' } }, tr('Indulásként létrehozunk egy alap lejátszási listát néhány minta tartalommal – bármikor szerkesztheted vagy törölheted őket.')) : null)));
   }
 
   // =====================================================================
@@ -1731,6 +1736,12 @@
           h('div', { class: 'card-body row', style: { borderTop: '1px solid var(--border)', alignItems: 'flex-end' } },
             h('div', { class: 'grow' }, F.text(tr('Felhasználónév'), nu, 'username')), h('div', { class: 'grow' }, F.text(tr('Jelszó'), nu, 'password', { type: 'password' })),
             btn(tr('Hozzáadás'), async () => { try { drawUsers(await POST('/api/users', nu)); toast(tr('Felhasználó létrehozva')); } catch (e) { fail(e); } }, { cls: 'primary', ic: 'plus' }))),
+        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Minta tartalmak'))),
+          h('div', { class: 'card-body stack' },
+            h('p', { class: 'small muted', style: { margin: 0 } }, tr('Egy új lejátszási lista bemutató tartalmakkal: üdvözlő hirdetmény, óra és időjárás, kártyák, naptár mintaeseményekkel, interaktív menü elégedettségi kérdőívvel és visszaszámláló. Az első telepítéskor ez automatikusan létrejön.')),
+            h('div', {}, btn(tr('Minta tartalmak létrehozása'), async () => {
+              try { const r = await POST('/api/samples'); invalidate('playlists', 'slides', 'forms', 'calendars'); toast(tr('Minta tartalmak létrehozva')); location.hash = `#/playlists/${r.playlist_id}`; } catch (e) { fail(e); }
+            }, { ic: 'plus' })))),
         h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer és mentés'))),
           h('div', { class: 'card-body stack' },
             h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)),

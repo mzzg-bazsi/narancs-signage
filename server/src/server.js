@@ -11,6 +11,7 @@ import { Router, HttpError, send, readBody, serveFile, serveStatic, MIME } from 
 import { createUser, login, sessionCookie, currentUser, requireAuth, userCount, listUsers, verifyPassword, hashPassword } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal } from './feeds.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
+import { seedSamples } from './seed.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
@@ -326,11 +327,23 @@ r.get('/api/lang.js', (req, res) => {
 
 r.post('/api/auth/setup', async (req, res) => {
   if (userCount() > 0) throw new HttpError(403, 'A rendszer már be van állítva');
-  const { username, password, org_name } = await readBody(req);
+  const { username, password, org_name, language } = await readBody(req);
   createUser(username, password);
   if (org_name) setSetting('org_name', String(org_name).slice(0, 80));
+  if (LANGS.includes(language)) setSetting('language', language);
+  // első indítás: alap lejátszási lista minta tartalmakkal
+  try { seedSamples(); } catch (e) { console.error('[minta tartalmak]', e); }
   const token = login(username, password);
   send(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(token, req) });
+});
+
+// Nyelvválasztás az első beállítás képernyőn (csak amíg nincs felhasználó)
+r.post('/api/auth/language', async (req, res) => {
+  if (userCount() > 0) throw new HttpError(403, 'A rendszer már be van állítva');
+  const { language } = await readBody(req);
+  if (!LANGS.includes(language)) throw new HttpError(400, 'Érvénytelen nyelv');
+  setSetting('language', language);
+  send(res, 200, { ok: true });
 });
 
 const loginAttempts = new Map();
@@ -645,6 +658,7 @@ r.put('/api/settings', A, async (req, res) => {
   notifyChange();
   send(res, 200, { ok: true });
 });
+r.post('/api/samples', A, (req, res) => { const out = seedSamples(); notifyChange(); send(res, 200, out); });
 r.get('/api/users', A, (req, res) => send(res, 200, listUsers()));
 r.post('/api/users', A, async (req, res) => { const b = await readBody(req); createUser(b.username, b.password); send(res, 200, listUsers()); });
 r.del('/api/users/:id', A, (req, res) => {

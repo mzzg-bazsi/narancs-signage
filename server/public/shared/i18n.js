@@ -733,6 +733,13 @@
     'Következő minta': 'Next sample',
     'A változások azonnal látszanak az előnézetben; a képernyőkre a Mentés után kerülnek ki. Képernyőnként eltérő téma a Képernyők → Szerkesztés → Megjelenés fülön állítható.': 'Changes show immediately in the preview and reach the screens after saving. A different theme per screen can be set under Screens → Edit → Appearance.',
 
+    // ---------- minta tartalmak ----------
+    'Indulásként létrehozunk egy alap lejátszási listát néhány minta tartalommal – bármikor szerkesztheted vagy törölheted őket.': 'To get you started, we create a default playlist with some sample content – you can edit or delete it at any time.',
+    'Minta tartalmak': 'Sample content',
+    'Egy új lejátszási lista bemutató tartalmakkal: üdvözlő hirdetmény, óra és időjárás, kártyák, naptár mintaeseményekkel, interaktív menü elégedettségi kérdőívvel és visszaszámláló. Az első telepítéskor ez automatikusan létrejön.': 'A new playlist with demo content: welcome announcement, clock & weather, cards, a calendar with sample events, an interactive menu with a satisfaction survey, and a countdown. This is created automatically on first install.',
+    'Minta tartalmak létrehozása': 'Create sample content',
+    'Minta tartalmak létrehozva': 'Sample content created',
+
     // ---------- beállítások ----------
     'A felület és a képernyők nyelve': 'Language of the interface and the screens',
     'Az admin felület, a kijelzők feliratai (dátumok, gombok, billentyűzet) és az új tartalmak mintaszövegei ezen a nyelven jelennek meg. A már létrehozott tartalmak szövege nem változik.': 'The admin panel, the labels on the displays (dates, buttons, keyboard) and the sample texts of new content appear in this language. The text of existing content does not change.',

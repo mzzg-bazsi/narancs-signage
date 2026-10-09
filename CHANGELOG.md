@@ -7,6 +7,13 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.8.0] – 2026-10-09
+
+### Új
+- Első telepítéskor automatikusan létrejön egy **alap lejátszási lista** minta tartalmakkal (a kiválasztott nyelven): üdvözlő hirdetmény a szervezet nevével, óra és időjárás, szolgáltatás kártyák, naptár mintaeseményekkel, interaktív menü (Programok → naptár, Szolgáltatások → kártyák, Visszajelzés → elégedettségi kérdőív) és visszaszámláló újévig. A párosított képernyők alapból ezt a listát kapják
+- Nyelvválasztó az első beállítás képernyőn (Language / Nyelv), így a minta tartalmak már a választott nyelven készülnek
+- Beállítások → Minta tartalmak: meglévő rendszeren is létrehozható ugyanez a bemutató csomag (új listaként, a meglévő tartalmak érintetlenek maradnak)
+
 ## [1.7.0] – 2026-10-09
 
 ### Új
