@@ -7,6 +7,16 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.0] – 2026-10-09
+
+### Új
+- Licenc: `LICENSE` – Narancs Signage License 1.0 (forrás elérhető). Ingyenes használat magánszemélyeknek és kis- és középvállalkozásoknak, kötelező névfeltüntetéssel; nagyvállalatoknak (250+ fő vagy 50 M€+ árbevétel) fizetős kereskedelmi licenc; a szoftver eladása csak a szerző engedélyével
+- Szerzői jogi megjegyzés („© 2026 Balázs Mazzag”) az admin felületen: belépő képernyő és oldalmenü alja (a lejátszón nincs)
+
+### Változott
+- `package.json`: a korábbi „MIT” licencjelölés helyett a saját licencre hivatkozik, szerző megadva
+- README: Licenc fejezet
+
 ## [1.8.1] – 2026-10-09
 
 ### Változott

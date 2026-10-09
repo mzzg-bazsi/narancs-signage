@@ -11,5 +11,6 @@
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
     "dev": "SIGNAGE_DATA=./data node --disable-warning=ExperimentalWarning --watch src/server.js"
   },
-  "license": "MIT"
+  "license": "SEE LICENSE IN ../LICENSE",
+  "author": "Balázs Mazzag"
 }

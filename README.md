@@ -154,3 +154,14 @@ Frissítés később: `git pull && sudo ./install/install-server.sh`. Egy adott 
 **Új verzió kiadása:**
 1. Írd le a változásokat a `CHANGELOG.md` tetejére egy új `## [X.Y.Z] – dátum` szakaszba, és commitold.
 2. `./scripts/release.sh patch` (hibajavítás), `minor` (új funkció) vagy `major` (nem kompatibilis változás) – emeli a verziószámot, commitol, címkét (tag) készít és feltölti.
+
+## Licenc
+
+© 2026 Balázs Mazzag – [Narancs Signage License](LICENSE) (forrás elérhető, nem nyílt forráskódú).
+
+- **Ingyenes** magánszemélyeknek, kis- és középvállalkozásoknak, iskoláknak, egyesületeknek – üzleti célra is.
+- **Névfeltüntetés kötelező:** a licencfájl és a szerzői jogi megjegyzés maradjon meg, az admin felületen látható „© 2026 Balázs Mazzag” felirat nem távolítható el. A kijelzőkön nem jelenik meg felirat.
+- **Nagyvállalatoknak** (legalább 250 fő vagy 50 M€ feletti árbevétel) fizetős kereskedelmi licenc szükséges – egyedi megállapodás alapján.
+- A szoftver eladása vagy fizetős felhőszolgáltatásként való árulása csak a szerző engedélyével lehetséges.
+
+Kereskedelmi licenc: [github.com/mzzg-bazsi](https://github.com/mzzg-bazsi)

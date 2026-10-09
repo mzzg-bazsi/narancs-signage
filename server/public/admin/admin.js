@@ -443,6 +443,9 @@
   // =====================================================================
   //  Belépés / első indítás
   // =====================================================================
+  // Szerzői jogi megjegyzés – a licenc (LICENSE, 3. pont) szerint nem távolítható el. A lejátszón nincs.
+  const COPYRIGHT = '© 2026 Balázs Mazzag';
+
   let ME = null;
   function authScreen(setup) {
     const data = { username: setup ? 'admin' : '', password: '', password2: '', org_name: '', language: I18N.lang };
@@ -471,7 +474,8 @@
       setup ? F.text(tr('Jelszó újra'), data, 'password2', { type: 'password' }) : null,
       err,
       h('button', { class: 'btn primary', type: 'submit', style: { padding: '11px' } }, setup ? tr('Fiók létrehozása') : tr('Belépés')),
-      setup ? h('p', { class: 'small muted', style: { margin: 0, textAlign: 'center' } }, tr('Indulásként létrehozunk egy alap lejátszási listát néhány minta tartalommal – bármikor szerkesztheted vagy törölheted őket.')) : null)));
+      setup ? h('p', { class: 'small muted', style: { margin: 0, textAlign: 'center' } }, tr('Indulásként létrehozunk egy alap lejátszási listát néhány minta tartalommal – bármikor szerkesztheted vagy törölheted őket.')) : null,
+      h('div', { class: 'copyright' }, `Narancs Signage ${COPYRIGHT}`))));
   }
 
   // =====================================================================
@@ -490,7 +494,8 @@
       nav,
       h('div', { class: 'bottom' }, h('div', { class: 'avatar' }, ME.username[0].toUpperCase()), h('div', { class: 'who' }, ME.username, h('small', {}, tr('Adminisztrátor'))),
         btn('', toggleTheme, { cls: 'ghost icon', ic: 'moon', title: tr('Sötét/világos mód') }),
-        btn('', async () => { await POST('/api/auth/logout'); boot(); }, { cls: 'ghost icon', ic: 'logout', title: tr('Kijelentkezés') })));
+        btn('', async () => { await POST('/api/auth/logout'); boot(); }, { cls: 'ghost icon', ic: 'logout', title: tr('Kijelentkezés') })),
+      h('div', { class: 'copyright' }, COPYRIGHT));
     nav.addEventListener('click', () => sidebar.classList.remove('open'));
     $('#app').replaceChildren(
       h('div', { class: 'mobile-bar' }, btn('', () => sidebar.classList.toggle('open'), { cls: 'ghost icon', ic: 'menu' }), 'Narancs Signage'),

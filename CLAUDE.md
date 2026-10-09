@@ -35,6 +35,9 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
 - Ubuntu 26.04 arm64, IP `192.168.64.3`, a Mac a VM felől `192.168.64.1`. Képernyő neve az adminban: „Teszt”.
 - Tanulságok: virgl/glamor alatt az X ablakai nem jutottak ki a képre → VM-ben szoftveres X (`AccelMethod none`) és `--disable-gpu`; az Openbox 1×1-es keretbe tette a Chromiumot → nincs ablakkezelő, `xdotool` igazítja az ablakot; a UTM egere `pointerType: 'pen'`-ként érkezik; a DejaVu Sans körvonalas emojikat rajzol.
 
+## Licenc
+- `LICENSE`: saját „Narancs Signage License” (szerző: Balázs Mazzag). Az admin felület `COPYRIGHT` felirata (belépő + oldalmenü) a licenc része, ne távolítsd el; a lejátszóra nem kerül felirat.
+
 ## Verziókezelés
 - GitHub: https://github.com/mzzg-bazsi/narancs-signage (privát, `main`). `gh` be van jelentkezve (`mzzg-bazsi`).
 - Minden lezárt módosítás után: bejegyzés a `CHANGELOG.md` tetejére (`## [X.Y.Z] – dátum`, Új / Javítva / Változott), commit (magyar üzenet), majd `./scripts/release.sh patch|minor|major` (verzió emelés, tag, push).

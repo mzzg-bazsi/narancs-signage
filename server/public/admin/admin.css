@@ -359,3 +359,7 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .pswatch:hover { transform: scale(1.15); }
 .pswatch.on { outline: 2px solid var(--primary-strong); outline-offset: 2px; }
 .brand .logo img { width: 72%; height: 72%; }
+
+/* Szerzői jogi megjegyzés (oldalmenü alja, belépő képernyő) */
+.copyright { font-size: 11px; color: var(--muted); text-align: center; padding-top: 10px; letter-spacing: .01em; }
+.auth .copyright { padding-top: 4px; }
