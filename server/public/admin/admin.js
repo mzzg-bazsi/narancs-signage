@@ -780,6 +780,7 @@
           F.select('Tájolás', st, 'orientation', [['landscape', 'Fekvő (alap)'], ['portrait', 'Álló (90°)'], ['portrait-flipped', 'Álló (270°)'], ['landscape-flipped', 'Fekvő fejjel lefelé (180°)']], { full: true, hint: 'A lejátszó szoftveresen forgatja a tartalmat – nem kell a rendszert átállítani.' }),
           F.toggle('Óra a sarokban', st, 'show_clock'),
           F.toggle('Folyamatjelző csík', st, 'show_progress'),
+          F.toggle('Egérmutató mindig látszik', st, 'show_cursor', { hint: 'Teszteléshez vagy egérrel kezelt kijelzőhöz. Alapból csak egérmozgatáskor látszik 3 mp-ig, érintésnél soha.' }),
           F.textarea('Hírszalag (soronként egy üzenet)', st, 'ticker', { rows: 3, placeholder: 'Pl. Ma 14:00-kor tűzriadó gyakorlat\nA kávézó ma 16:00-ig van nyitva', hint: 'Üresen hagyva nem jelenik meg.' }),
           F.number('Hírszalag sebesség (%)', st, 'ticker_speed', { min: 25, max: 400, placeholder: '100' }),
           F.color('Hírszalag színe', st, 'ticker_color'),

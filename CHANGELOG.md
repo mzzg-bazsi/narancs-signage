@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.5.0] – 2026-10-09
+
+### Új
+- Egérmutató a kijelzőn: egér mozgatásakor 3 másodpercig látszik, utána eltűnik (érintésnél nem jelenik meg)
+- Képernyők → Szerkesztés → Megjelenés: „Egérmutató mindig látszik” (teszteléshez, egérrel kezelt kijelzőhöz)
+
+### Változott
+- A kioszk X szervere már nem tiltja le teljesen az egérmutatót (`-nocursor` helyett üres háttér-mutató, a lejátszó kezeli a láthatóságot)
+
 ## [1.4.1] – 2026-10-09
 
 ### Új

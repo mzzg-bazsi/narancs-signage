@@ -266,7 +266,15 @@
     if (state.current?.slide) track(state.current.slide.id, 'touch');
     clearTimeout(state.idleTimer);
     state.idleTimer = setTimeout(() => { if (Date.now() >= state.interactUntil) advance(); }, idleMs() + 100);
-    document.body.classList.add('touch-cursor');
+  }, true);
+
+  // Egérmutató: egér mozgatásakor 3 mp-ig látszik (érintésnél soha), vagy mindig, ha a képernyőn be van kapcsolva
+  let cursorTimer = null;
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    document.body.classList.add('cursor-on');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(() => { if (!settings().show_cursor) document.body.classList.remove('cursor-on'); }, 3000);
   }, true);
 
   $('#nav').addEventListener('click', (e) => {
@@ -966,6 +974,8 @@
   function applyOverlays() {
     applyBranding();
     const st = settings();
+    if (st.show_cursor) document.body.classList.add('cursor-on');
+    else if (!cursorTimer) document.body.classList.remove('cursor-on');
     const rotor = $('#rotor');
     rotor.className = { portrait: 'rot-90', 'portrait-flipped': 'rot-270', 'landscape-flipped': 'rot-180' }[st.orientation] || '';
     const clock = $('#overlay-clock');

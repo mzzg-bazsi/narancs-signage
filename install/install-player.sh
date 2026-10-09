@@ -19,7 +19,7 @@
 #   - minimális grafikus környezet (X11, ablakkezelő nélkül) asztal nélkül
 #   - Chromium kioszk módban, automatikus újraindítással ha összeomlik
 #   - automatikus bejelentkezés a tty1-en egy dedikált "kiosk" felhasználóval
-#   - képernyőkímélő/energiatakarékos mód kikapcsolása, egérkurzor elrejtése (X -nocursor)
+#   - képernyőkímélő/energiatakarékos mód kikapcsolása; egérmutató csak egérmozgatáskor
 #   - monitor ki/bekapcsolás az admin felületen beállított üzemidő szerint
 # =============================================================================
 set -euo pipefail
@@ -217,7 +217,7 @@ cat > "$HOME_DIR/.bash_profile" <<'EOF'
 if [[ -z "$DISPLAY" && "$(tty)" == "/dev/tty1" ]]; then
   /usr/local/bin/signage-tty-colors "$(tty)"
   # -background none: az X a konzol (narancs) képét hagyja meg induláskor, nem villan fekete
-  exec startx -- -nocursor -background none >"$HOME/.signage-x.log" 2>&1
+  exec startx -- -background none >"$HOME/.signage-x.log" 2>&1
 fi
 EOF
 touch "$HOME_DIR/.hushlogin"   # nincs „Last login” és MOTD szöveg
@@ -259,6 +259,10 @@ set_splash() {
   if [[ -f "$f" ]] && command -v feh >/dev/null; then feh --no-fehbg --bg-fill "$f"; else xsetroot -solid '#f59e5b'; fi 2>/dev/null || true
 }
 set_splash 1
+# az X saját (kereszt alakú) mutatója helyett üres mutató a háttéren; a lejátszó maga kezeli,
+# mikor látszik az egérmutató (egérmozgatáskor, vagy ha az admin felületen mindig látszik)
+printf '#define b_width 1\n#define b_height 1\nstatic unsigned char b_bits[] = { 0x00 };\n' > /tmp/signage-blank.xbm
+xsetroot -cursor /tmp/signage-blank.xbm /tmp/signage-blank.xbm 2>/dev/null || true
 set_splash 2
 for i in $(seq 1 90); do
   curl -fs --max-time 3 "$ORIGIN/healthz" >/dev/null 2>&1 && break
