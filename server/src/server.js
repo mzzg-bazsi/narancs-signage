@@ -25,10 +25,13 @@ const id = (req) => +req.params.id;
 // =====================================================================
 //  Valós idejű kapcsolat a lejátszókkal (Server-Sent Events)
 // =====================================================================
-const streams = new Map(); // device_id -> Set<res>
+const streams = new Map(); // device_id -> Set<res>  (böngésző lejátszók)
+const agents = new Map();  // device_id -> Set<res>  (kijelző ügynök: lejátszó/eszköz újraindítás)
+// Ezeket a parancsokat az eszközön futó ügynök hajtja végre, nem a böngésző
+const AGENT_COMMANDS = ['restart', 'reboot'];
 
-function pushTo(deviceId, event, data = {}) {
-  for (const res of streams.get(deviceId) || []) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+function pushTo(deviceId, event, data = {}, map = streams) {
+  for (const res of map.get(deviceId) || []) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 function pushAll(event, data = {}) {
   for (const devId of streams.keys()) pushTo(devId, event, data);
@@ -40,7 +43,7 @@ function notifyChange() {
   refreshTimer = setTimeout(() => pushAll('refresh'), 400);
 }
 setInterval(() => {
-  for (const set of streams.values()) for (const res of set) res.write(': ping\n\n');
+  for (const map of [streams, agents]) for (const set of map.values()) for (const res of set) res.write(': ping\n\n');
 }, 25000);
 
 // =====================================================================
@@ -198,13 +201,14 @@ r.get('/api/player/stream', (req, res) => {
   if (!s) throw new HttpError(404, 'Ismeretlen eszköz');
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
   res.write('retry: 5000\n\nevent: hello\ndata: {}\n\n');
-  if (!streams.has(deviceId)) streams.set(deviceId, new Set());
-  streams.get(deviceId).add(res);
+  const map = req.query.get('agent') === '1' ? agents : streams;
+  if (!map.has(deviceId)) map.set(deviceId, new Set());
+  map.get(deviceId).add(res);
   run('UPDATE screens SET last_seen = ? WHERE id = ?', now(), s.id);
   req.on('close', () => {
-    const set = streams.get(deviceId);
+    const set = map.get(deviceId);
     set?.delete(res);
-    if (set && !set.size) streams.delete(deviceId);
+    if (set && !set.size) map.delete(deviceId);
   });
 });
 
@@ -212,7 +216,8 @@ r.post('/api/player/heartbeat', async (req, res) => {
   const body = await readBody(req);
   const s = screenByDevice(body.device);
   if (!s) throw new HttpError(404, 'Ismeretlen eszköz');
-  const info = { ...(s.info || {}), ...(body.info || {}), current: body.current || null };
+  // az ügynök is küld heartbeatet (current nélkül) – ilyenkor a futó tartalom adata megmarad
+  const info = { ...(s.info || {}), ...(body.info || {}), current: 'current' in body ? body.current || null : s.info?.current || null };
   run('UPDATE screens SET last_seen = ?, info = ? WHERE id = ?', now(), JSON.stringify(info), s.id);
   if (Array.isArray(body.stats)) {
     const ins = db.prepare('INSERT INTO stats (screen_id, slide_id, kind, created_at) VALUES (?, ?, ?, ?)');
@@ -354,7 +359,7 @@ const A = requireAuth;
 function isOnline(s) { return streams.has(s.device_id) || (s.last_seen && now() - s.last_seen < 90e3); }
 function screenOut(s) {
   const { device_id, ...rest } = s;
-  return { ...rest, online: isOnline(s), device_short: device_id.slice(0, 8) };
+  return { ...rest, online: isOnline(s), agent_online: agents.has(device_id), device_short: device_id.slice(0, 8) };
 }
 
 r.get('/api/dashboard', A, (req, res) => {
@@ -578,15 +583,19 @@ r.post('/api/screens/:id/command', A, async (req, res) => {
   const s = Screens.get(id(req));
   if (!s) throw new HttpError(404, 'Nem található');
   const { command, args } = await readBody(req);
-  if (!['reload', 'identify', 'next', 'prev', 'goto', 'refresh', 'clear-cache', 'diag'].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
-  pushTo(s.device_id, 'command', { command, args });
-  send(res, 200, { ok: true, delivered: streams.has(s.device_id) });
+  if (!['reload', 'identify', 'next', 'prev', 'goto', 'refresh', 'clear-cache', 'diag', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
+  const map = AGENT_COMMANDS.includes(command) ? agents : streams;
+  pushTo(s.device_id, 'command', { command, args }, map);
+  if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → ${s.name} (${req.user.username})`);
+  send(res, 200, { ok: true, delivered: map.has(s.device_id) });
 });
 r.post('/api/screens/broadcast', A, async (req, res) => {
   const { command } = await readBody(req);
-  if (!['reload', 'refresh', 'identify'].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
-  pushAll('command', { command });
-  send(res, 200, { ok: true, count: streams.size });
+  if (!['reload', 'refresh', 'identify', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
+  const map = AGENT_COMMANDS.includes(command) ? agents : streams;
+  for (const devId of map.keys()) pushTo(devId, 'command', { command }, map);
+  if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → minden képernyő (${req.user.username})`);
+  send(res, 200, { ok: true, count: map.size });
 });
 
 // ---------- Vészjelzések / közlemények ----------

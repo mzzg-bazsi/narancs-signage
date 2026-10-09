@@ -7,6 +7,20 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.2.0] – 2026-10-09
+
+### Új
+- **Távoli újraindítás** az admin felületről (Képernyők → ⏻ gomb, vagy „Újraindítás…” az összes képernyőre):
+  - *Oldal újratöltése* – a lejátszó oldal frissül
+  - *Lejátszó újraindítása* – a böngésző és a grafikus felület teljes újraindítása
+  - *Eszköz újraindítása* – a kijelző számítógép újraindítása (megerősítéssel)
+- Kijelző ügynök (`narancs-signage-agent` szolgáltatás) a telepített lejátszókon: élő kapcsolaton fogadja a parancsokat, percenként jelenti az eszköz adatait (gépnév, IP, OS, futásidő)
+- Képernyő → Eszköz fül: ügynök állapota és eszközadatok
+- `signage-diag` az ügynök állapotát is mutatja
+
+### Javítva
+- Az ügynök heartbeatje nem törli a „most játszott” tartalom adatát
+
 ## [1.1.0] – 2026-10-09
 
 ### Új

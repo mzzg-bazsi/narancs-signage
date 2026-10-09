@@ -58,6 +58,7 @@
     menu: '<path d="M3 12h18M3 6h18M3 18h18"/>',
     external: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/>',
     touch: '<path d="M9 11V5a2 2 0 1 1 4 0v6M13 10a2 2 0 1 1 4 0v2M17 11a2 2 0 1 1 4 0v4a7 7 0 0 1-7 7h-2a7 7 0 0 1-5.6-2.8L3 15.5a2 2 0 0 1 3-2.6L9 15"/>',
+    power: '<path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"/>',
     moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
     palette: '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7h2A5.5 5.5 0 0 0 22 11c0-5-4.5-9-10-9z"/>',
   };
@@ -655,6 +656,33 @@
       h('div', { class: 'muted', style: { marginTop: '6px' } }, 'Vagy nyisd meg bármely böngészőben: ', h('span', { class: 'code-pill' }, `${location.origin}/player/`)));
   }
 
+  // Újraindítási lehetőségek egy képernyőre (screen) vagy az összesre (null)
+  function restartDialog(screen) {
+    const all = !screen;
+    const agentOk = all || screen.agent_online;
+    const send = async (command, label) => {
+      if (command === 'reboot' && !(await confirmBox(all ? 'Minden kijelző eszköz újraindul. Kb. 1 percig nem lesz kép. Folytatod?' : `A(z) „${screen.name}” eszköz újraindul, kb. 1 percig nem lesz kép. Folytatod?`, { ok: 'Újraindítás' }))) return;
+      try {
+        if (all) { const r = await POST('/api/screens/broadcast', { command }); toast(`${label}: ${r.count} képernyő`); }
+        else { const r = await POST(`/api/screens/${screen.id}/command`, { command }); toast(r.delivered ? `${label} elküldve` : 'A képernyő jelenleg nem érhető el', r.delivered ? 'ok' : 'err'); }
+        m.close();
+      } catch (e) { fail(e); }
+    };
+    const option = (ic, title, desc, command, enabled = true, note) => h('div', { class: 'list-item', style: { opacity: enabled ? 1 : 0.55 } },
+      h('div', { class: 'stat', style: { padding: 0 } }, h('div', { class: 'ic' }, icon(ic))),
+      h('div', { class: 'grow' }, h('b', {}, title), h('div', { class: 'small muted' }, desc), note ? h('div', { class: 'small', style: { color: 'var(--danger)' } }, note) : null),
+      btn('Indítás', () => send(command, title), { cls: command === 'reboot' ? 'sm danger' : 'sm primary', disabled: !enabled }));
+    const noAgent = 'Ehhez a telepített lejátszó ügynöke szükséges (install-player.sh). Futtasd újra a telepítőt a kijelzőn.';
+    const m = modal({
+      title: all ? 'Összes képernyő újraindítása' : `Újraindítás: ${screen.name}`,
+      body: h('div', { class: 'card' },
+        option('refresh', 'Oldal újratöltése', 'A lejátszó oldal frissül, a böngésző fut tovább. Pár másodperc.', 'reload', all || screen.online),
+        option('screen', 'Lejátszó újraindítása', 'A böngésző és a grafikus felület teljesen újraindul. Kb. 10–20 másodperc.', 'restart', agentOk, agentOk ? null : noAgent),
+        option('power', 'Eszköz újraindítása', 'A teljes kijelző eszköz (számítógép) újraindul. Kb. 1 perc.', 'reboot', agentOk, agentOk ? null : noAgent)),
+      foot: [btn('Bezárás', () => m.close())],
+    });
+  }
+
   async function pageScreens(view) {
     const [{ screens, pending }, pls] = await Promise.all([GET('/api/screens'), load('playlists', true)]);
     const plName = (id) => pls.find((p) => p.id === id)?.name;
@@ -680,13 +708,14 @@
           btn('', () => cmd(s, 'identify', 'Azonosítás elküldve'), { cls: 'sm icon', ic: 'target', title: 'Azonosítás (név megjelenítése)' }),
           btn('', () => cmd(s, 'prev', 'Előző tartalom'), { cls: 'sm icon', ic: 'prev', title: 'Előző' }),
           btn('', () => cmd(s, 'next', 'Következő tartalom'), { cls: 'sm icon', ic: 'next', title: 'Következő' }),
-          btn('', () => cmd(s, 'reload', 'Újratöltés elküldve'), { cls: 'sm icon', ic: 'refresh', title: 'Lejátszó újratöltése' }),
+          btn('', () => cmd(s, 'reload', 'Újratöltés elküldve'), { cls: 'sm icon', ic: 'refresh', title: 'Oldal újratöltése' }),
+          btn('', () => restartDialog(s), { cls: 'sm icon', ic: 'power', title: 'Újraindítás (lejátszó / eszköz)' }),
           btn('', () => window.open(`/player/?preview=screen:${s.id}`, '_blank'), { cls: 'sm icon', ic: 'eye', title: 'Előnézet új lapon' })));
     }));
     draw();
     const liveTog = F.toggle('Élő előnézet', { v: live }, 'v', { onchange: (v) => { live = v; try { localStorage.setItem('signage.livepreview', v ? '1' : '0'); } catch { /* */ } draw(); } });
     view.replaceChildren(
-      head('Képernyők', `${screens.length} párosított képernyő, ${screens.filter((s) => s.online).length} online`, [liveTog, btn('Új képernyő', () => pairDialog(), { ic: 'plus', cls: 'primary' })]),
+      head('Képernyők', `${screens.length} párosított képernyő, ${screens.filter((s) => s.online).length} online`, [liveTog, screens.length ? btn('Újraindítás…', () => restartDialog(null), { ic: 'power' }) : null, btn('Új képernyő', () => pairDialog(), { ic: 'plus', cls: 'primary' })]),
       pending.length ? h('div', { class: 'card mt', style: { marginBottom: '18px', borderColor: 'var(--primary)' } },
         h('div', { class: 'card-head' }, h('h3', {}, `⏳ Párosításra váró eszközök (${pending.length})`)),
         pending.map((p) => h('div', { class: 'list-item' }, h('span', { class: 'dot on' }), h('div', { class: 'grow' }, h('b', {}, `Eszköz ${p.device_short}`), h('div', { class: 'small muted' }, `${p.info?.w ? `${p.info.w}×${p.info.h} · ` : ''}${p.info?.platform || ''} · ${ago(p.last_seen)}`)),
@@ -760,10 +789,14 @@
       } else {
         const i = s.info || {};
         content = h('div', { class: 'stack' },
-          h('table', { class: 'table' }, [['Eszköz ID', s.device_short + '…'], ['Felbontás', i.w ? `${i.w}×${i.h}` : '—'], ['Platform', i.platform || '—'], ['Böngésző', i.ua || '—'], ['Nyelv', i.lang || '—'], ['Futásidő', i.uptime ? fmtDur(i.uptime) : '—'], ['Offline gyorsítótár', i.offline_cache ? 'aktív' : 'nem elérhető'], ['Utoljára látva', fmtDate(s.last_seen)], ['Párosítva', fmtDate(s.created_at)]]
+          h('table', { class: 'table' }, [['Eszköz ID', s.device_short + '…'], ['Felbontás', i.w ? `${i.w}×${i.h}` : '—'], ['Platform', i.platform || '—'], ['Böngésző', i.ua || '—'], ['Nyelv', i.lang || '—'], ['Futásidő', i.uptime ? fmtDur(i.uptime) : '—'], ['Offline gyorsítótár', i.offline_cache ? 'aktív' : 'nem elérhető'], ['Utoljára látva', fmtDate(s.last_seen)],
+              ['Távvezérlő ügynök', s.agent_online ? `kapcsolódva (v${i.agent?.version || '?'})` : i.agent ? `nem kapcsolódik (utoljára ${ago(i.agent.seen)})` : 'nincs telepítve'],
+              ['Eszköz', i.agent ? `${i.agent.host || '—'} · ${i.agent.ip || ''} · ${i.agent.os || ''}` : '—'],
+              ['Eszköz futásideje', i.agent?.sys_uptime ? fmtDur(i.agent.sys_uptime) : '—'], ['Párosítva', fmtDate(s.created_at)]]
             .map(([k, v]) => h('tr', {}, h('td', { class: 'muted', style: { width: '170px' } }, k), h('td', { style: { wordBreak: 'break-all' } }, v)))),
           h('div', { class: 'row' },
             btn('Gyorsítótár ürítése', async () => { await POST(`/api/screens/${s.id}/command`, { command: 'clear-cache' }); toast('Parancs elküldve'); }, { cls: 'sm' }),
+            btn('Újraindítás…', () => restartDialog(s), { cls: 'sm', ic: 'power' }),
             btn('Képernyő törlése', async () => {
               if (!(await confirmBox(`Biztosan törlöd a(z) „${s.name}” képernyőt? Újra párosítani kell majd.`, { ok: 'Törlés' }))) return;
               await DEL(`/api/screens/${s.id}`); toast('Képernyő törölve'); m.close(); route();

@@ -65,7 +65,9 @@ if [[ $UNINSTALL -eq 1 ]]; then
   fi
   rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
   rmdir /etc/systemd/system/getty@tty1.service.d 2>/dev/null || true
-  rm -f /usr/local/bin/signage-kiosk /usr/local/bin/signage-power /usr/local/bin/signage-diag
+  systemctl disable --now narancs-signage-agent.service >/dev/null 2>&1 || true
+  rm -f /etc/systemd/system/narancs-signage-agent.service
+  rm -f /usr/local/bin/signage-kiosk /usr/local/bin/signage-power /usr/local/bin/signage-diag /usr/local/bin/signage-agent
   rm -f /etc/cron.d/narancs-signage-reboot
   rm -rf /etc/narancs-signage
   rm -f /etc/X11/xorg.conf.d/20-signage-vm.conf
@@ -329,6 +331,7 @@ if [[ -n "$r" ]]; then
 else bad "Az eszköz még nincs regisztrálva a szerveren (a lejátszó még nem kapcsolódott)"; fi
 pgrep -f signage-kiosk >/dev/null && ok "Kioszk fut" || bad "A kioszk nem fut (nincs automatikus bejelentkezés a tty1-en?)"
 pgrep -f -- "--kiosk" >/dev/null && ok "Chromium fut" || bad "A Chromium nem fut"
+systemctl is-active -q narancs-signage-agent && ok "Távvezérlő ügynök fut" || bad "A távvezérlő ügynök nem fut (systemctl status narancs-signage-agent)"
 echo "Virtualizáció: $(systemd-detect-virt 2>/dev/null || echo none)   Kapcsolók: ${EXTRA_FLAGS:-(nincs)}"
 echo "GPU eszközök: $(ls /dev/dri 2>/dev/null | tr '\n' ' ')"
 if command -v xdpyinfo >/dev/null; then
@@ -342,6 +345,69 @@ echo "--- X napló (utolsó 15 sor): $KH/.signage-x.log"
 tail -n 15 "$KH/.signage-x.log" 2>/dev/null
 EOF
 chmod +x /usr/local/bin/signage-diag
+
+# ---------- Távvezérlő ügynök (lejátszó / eszköz újraindítás az admin felületről) ----------
+cat > /usr/local/bin/signage-agent <<'EOF'
+#!/usr/bin/env bash
+# Narancs Signage ügynök: a szerver élő csatornáján (SSE) érkező parancsokat hajtja végre.
+#   restart – a lejátszó (X + Chromium kioszk) teljes újraindítása
+#   reboot  – az eszköz újraindítása
+. /etc/narancs-signage/player.conf
+AGENT_VERSION=1
+
+report() {
+  local up ip os
+  up="$(cut -d. -f1 /proc/uptime)"
+  ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  os="$(. /etc/os-release; echo "$PRETTY_NAME")"
+  curl -fs --max-time 10 -H 'Content-Type: application/json' -X POST "$SERVER/api/player/heartbeat" \
+    -d "$(jq -nc --arg d "$DEVICE" --arg h "$(hostname)" --arg os "$os" --arg ip "$ip" --argjson up "${up:-0}" --argjson v "$AGENT_VERSION" \
+      '{device: $d, info: {agent: {version: $v, seen: (now * 1000 | floor), host: $h, os: $os, ip: $ip, sys_uptime: $up}}}')" >/dev/null 2>&1 || true
+}
+
+handle() {
+  case "$1" in
+    restart)
+      logger -t signage-agent "Parancs: lejátszó újraindítása"
+      systemctl restart getty@tty1.service ;;
+    reboot)
+      logger -t signage-agent "Parancs: eszköz újraindítása"
+      sleep 2; systemctl reboot ;;
+  esac
+}
+
+# állapotjelentés percenként
+( while true; do report; sleep 60; done ) &
+
+while true; do
+  curl -sN --max-time 0 "$SERVER/api/player/stream?device=$DEVICE&agent=1" 2>/dev/null | while IFS= read -r line; do
+    [[ "$line" == data:* ]] || continue
+    cmd="$(printf '%s' "${line#data:}" | jq -r '.command // empty' 2>/dev/null)"
+    [[ -n "$cmd" ]] && handle "$cmd"
+  done
+  sleep 5   # kapcsolat megszakadt → újracsatlakozás
+done
+EOF
+chmod +x /usr/local/bin/signage-agent
+
+cat > /etc/systemd/system/narancs-signage-agent.service <<'EOF'
+[Unit]
+Description=Narancs Signage távvezérlő ügynök
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/signage-agent
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable narancs-signage-agent.service >/dev/null 2>&1
+systemctl restart narancs-signage-agent.service
+c_ok "Távvezérlő ügynök telepítve (újraindítás az admin felületről)"
 
 # Ablakkezelő nélkül: egyetlen teljes képernyős ablakhoz nem kell, és VM-ekben (hiányos monitor
 # információ mellett) az Openbox 1×1 pixeles keretbe tette a Chromiumot
