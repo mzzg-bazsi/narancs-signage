@@ -1,46 +1,18 @@
 Narancs Signage License
-Version 1.0
+Version 2.0
 
 Copyright (c) 2026 Balázs Mazzag
 https://github.com/mzzg-bazsi
 
-The Software is source-available. It is NOT open source software under the
-OSI definition. All rights not expressly granted below are reserved by the
-Licensor.
+Permission is hereby granted, free of charge, to any person or organization
+obtaining a copy of this software and associated files (the "Software"), to
+use, copy, modify, merge, publish, distribute, sublicense and/or sell copies of
+the Software, for any purpose including commercial use, subject to the
+following conditions.
 
-1. DEFINITIONS
+1. ATTRIBUTION (REQUIRED FOR EVERY USE)
 
-"Licensor" means Balázs Mazzag.
-
-"Software" means Narancs Signage, including its source code, documentation,
-installers, logos and all other files distributed with this License, and any
-part or modified version of them.
-
-"You" means the individual or legal entity exercising rights under this
-License. A legal entity includes all entities that control, are controlled by,
-or are under common control with it ("Affiliates").
-
-"Large Organization" means a legal entity that, together with its Affiliates,
-at any time during the current or the preceding financial year:
-  (a) has 250 or more employees, or
-  (b) has an annual turnover exceeding EUR 50 million, or
-  (c) has an annual balance sheet total exceeding EUR 43 million.
-
-"Commercial License" means a separate written license agreement between You
-and the Licensor, usually granted in exchange for a fee.
-
-2. FREE LICENSE
-
-If You are not a Large Organization, the Licensor grants You a worldwide,
-royalty-free, non-exclusive, non-transferable license to use, copy, modify and
-run the Software, including in your own business and for commercial purposes
-(for example to show content on your own screens or on your clients' screens),
-provided that You comply with Sections 3 and 4.
-
-3. ATTRIBUTION (REQUIRED FOR EVERY USE)
-
-Whoever uses the Software, under this License or under a Commercial License
-unless that agreement says otherwise, must name the author as follows:
+Whoever uses the Software must name the author, Balázs Mazzag, as follows:
 
   (a) Keep this License file and the copyright notice
       "Copyright (c) 2026 Balázs Mazzag" in all copies and in all
@@ -57,55 +29,22 @@ unless that agreement says otherwise, must name the author as follows:
 
 The display (player) screens are not required to show any notice.
 
-4. RESTRICTIONS
+2. TERMINATION
 
-Without a Commercial License You may not:
-  (a) sell, rent, lease or sublicense the Software or a modified version of
-      it, or charge a fee for a copy of it;
-  (b) offer the Software or a modified version of it to third parties as a
-      paid hosted, cloud or "software as a service" product whose main value
-      is the Software itself;
-  (c) use the Software if You are a Large Organization, except for a single
-      evaluation period of up to 30 days.
+The rights granted by this License end automatically for anyone who does not
+comply with Section 1. They are reinstated if the breach is cured within 30
+days after becoming aware of it.
 
-Charging for your own services (for example installation, content creation or
-screen management for a client) is permitted, as long as the client receives
-the Software under this License and Section 3 is respected.
-
-5. LARGE ORGANIZATIONS AND COMMERCIAL LICENSES
-
-Large Organizations, and anyone who wishes to act outside the scope of
-Section 2 or Section 4, must obtain a Commercial License from the Licensor.
-The terms and price of a Commercial License are agreed individually.
-Contact: https://github.com/mzzg-bazsi
-
-6. NAMES AND LOGOS
-
-This License does not grant permission to use the name "Narancs Signage", the
-Licensor's name or the logo, except as required for attribution under
-Section 3 and to truthfully describe the origin of the Software.
-
-7. TERMINATION
-
-Your rights under this License end automatically if You breach it. If it is
-your first breach and You cure it within 30 days after becoming aware of it,
-your rights are reinstated. Termination does not affect anyone who received
-the Software from You in compliance with this License.
-
-8. NO WARRANTY
+3. NO WARRANTY, NO LIABILITY
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-9. LIMITATION OF LIABILITY
-
-TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE LICENSOR BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-10. GOVERNING LAW
+4. GOVERNING LAW
 
 This License is governed by the laws of Hungary. If any provision is held
 unenforceable, the remaining provisions remain in effect.
@@ -114,16 +53,11 @@ unenforceable, the remaining provisions remain in effect.
 Magyar összefoglaló (tájékoztató jellegű; eltérés esetén az angol szöveg az
 irányadó):
 
-- Bárki (magánszemély, kis- és középvállalkozás, iskola, egyesület) ingyen
-  használhatja, módosíthatja és üzleti célra is futtathatja.
-- Minden használatnál fel kell tüntetni a szerző nevét: a licencfájl és a
-  szerzői jogi megjegyzés maradjon meg, az admin felületen látható
+- Bárki – magánszemély, cég, nagyvállalat, intézmény – ingyen használhatja,
+  másolhatja, módosíthatja, továbbadhatja és akár el is adhatja, üzleti célra
+  is.
+- Egyetlen feltétel a szerző nevének feltüntetése: a licencfájl és a szerzői
+  jogi megjegyzés maradjon meg, az admin felületen látható
   „© 2026 Balázs Mazzag” felirat nem távolítható el, továbbadáskor pedig
   jelezni kell, hogy a rendszer a „Narancs Signage by Balázs Mazzag”-on alapul.
 - A kijelzőkön (lejátszón) nem kell feliratot megjeleníteni.
-- Nagyvállalat (legalább 250 fő, vagy 50 millió eurót meghaladó éves
-  árbevétel, vagy 43 millió eurót meghaladó mérlegfőösszeg) csak fizetős
-  kereskedelmi licenccel használhatja (30 napos kipróbálás megengedett).
-- Magát a szoftvert eladni, bérbe adni vagy fizetős felhőszolgáltatásként
-  árulni csak a szerző engedélyével lehet. Telepítést, tartalomkészítést,
-  üzemeltetést szolgáltatásként díj ellenében lehet végezni.

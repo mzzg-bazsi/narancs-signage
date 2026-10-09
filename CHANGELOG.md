@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.1] – 2026-10-09
+
+### Változott
+- Licenc 2.0: a nagyvállalati és az eladási korlátozás megszűnt – bárki szabadon használhatja, módosíthatja, továbbadhatja és eladhatja, egyetlen feltétel a szerző (Balázs Mazzag) nevének feltüntetése
+
 ## [1.9.0] – 2026-10-09
 
 ### Új
