@@ -140,7 +140,7 @@ A forráskód a GitHubon van, a verziók [szemantikus verziózást](https://semv
 **Szerver telepítése / frissítése a GitHubról:**
 
 ```bash
-git clone https://github.com/<felhasznalo>/narancs-signage.git
+git clone https://github.com/mzzg-bazsi/narancs-signage.git
 cd narancs-signage
 sudo ./install/install-server.sh
 ```
