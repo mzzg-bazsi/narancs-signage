@@ -677,7 +677,7 @@
       title: all ? 'Összes képernyő újraindítása' : `Újraindítás: ${screen.name}`,
       body: h('div', { class: 'card' },
         option('refresh', 'Oldal újratöltése', 'A lejátszó oldal frissül, a böngésző fut tovább. Pár másodperc.', 'reload', all || screen.online),
-        option('screen', 'Lejátszó újraindítása', 'A böngésző és a grafikus felület teljesen újraindul. Kb. 10–20 másodperc.', 'restart', agentOk, agentOk ? null : noAgent),
+        option('screen', 'Lejátszó újraindítása', 'A böngésző teljesen újraindul, közben a logós indulóképernyő látszik. Kb. 10 másodperc.', 'restart', agentOk, agentOk ? null : noAgent),
         option('power', 'Eszköz újraindítása', 'A teljes kijelző eszköz (számítógép) újraindul. Kb. 1 perc.', 'reboot', agentOk, agentOk ? null : noAgent)),
       foot: [btn('Bezárás', () => m.close())],
     });

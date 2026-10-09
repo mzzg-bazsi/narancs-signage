@@ -70,7 +70,17 @@ if [[ $UNINSTALL -eq 1 ]]; then
   rm -f /usr/local/bin/signage-kiosk /usr/local/bin/signage-power /usr/local/bin/signage-diag /usr/local/bin/signage-agent
   rm -f /etc/cron.d/narancs-signage-reboot
   rm -rf /etc/narancs-signage
-  rm -f /etc/X11/xorg.conf.d/20-signage-vm.conf
+  rm -f /etc/X11/xorg.conf.d/20-signage-vm.conf /usr/local/bin/signage-tty-colors
+  # bootkép és csendes indulás visszaállítása
+  if [[ -d /usr/share/plymouth/themes/narancs ]]; then
+    update-alternatives --remove default.plymouth /usr/share/plymouth/themes/narancs/narancs.plymouth >/dev/null 2>&1 || true
+    rm -rf /usr/share/plymouth/themes/narancs /usr/share/narancs-signage /etc/initramfs-tools/conf.d/narancs-signage-splash
+    update-initramfs -u >/dev/null 2>&1 || true
+  fi
+  if [[ -f /etc/default/grub.d/90-narancs-signage.cfg ]]; then rm -f /etc/default/grub.d/90-narancs-signage.cfg; update-grub >/dev/null 2>&1 || true; fi
+  for cmdfile in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
+    [[ -f "$cmdfile.narancs-bak" ]] && mv "$cmdfile.narancs-bak" "$cmdfile"
+  done
   systemctl daemon-reload
   systemctl restart getty@tty1.service 2>/dev/null || true
   c_ok "Automatikus bejelentkezés, indítószkriptek és eszközazonosító törölve"
@@ -105,7 +115,7 @@ apt-get update -qq
 c_info "Grafikus környezet telepítése (X11)…"
 apt-get install -y -qq --no-install-recommends \
   xserver-xorg xserver-xorg-input-libinput x11-xserver-utils x11-utils xdotool xinit \
-  curl jq ca-certificates fonts-noto-color-emoji fonts-dejavu-core dbus-x11 >/dev/null
+  curl jq ca-certificates fonts-noto-color-emoji fonts-dejavu-core dbus-x11 feh plymouth plymouth-themes >/dev/null
 
 c_info "Chromium telepítése…"
 CHROMIUM=""
@@ -175,10 +185,22 @@ EOF
 
 # ---------- Automatikus bejelentkezés a tty1-en ----------
 install -d /etc/systemd/system/getty@tty1.service.d
+cat > /usr/local/bin/signage-tty-colors <<'EOF'
+#!/bin/sh
+# A tty1 konzol minden színét narancsra állítja és elrejti a kurzort: ha a grafikus felület
+# éppen nem fut (indulás, újraindítás), szöveg helyett egyszínű narancs képernyő látszik
+TTY=${1:-/dev/tty1}
+for i in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do printf '\033]P%sf59e5b' "$i"; done > "$TTY" 2>/dev/null
+printf '\033[?25l\033[2J\033[H' > "$TTY" 2>/dev/null
+exit 0
+EOF
+chmod +x /usr/local/bin/signage-tty-colors
+
 cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
 [Service]
+ExecStartPre=-/usr/local/bin/signage-tty-colors /dev/tty1
 ExecStart=
-ExecStart=-/sbin/agetty --autologin $KIOSK_USER --noclear %I \$TERM
+ExecStart=-/sbin/agetty --autologin $KIOSK_USER --noclear --noissue --nohostname --nonewline %I \$TERM
 EOF
 
 # Csak X engedélyezése nem-konzol felhasználónak
@@ -193,9 +215,12 @@ fi
 cat > "$HOME_DIR/.bash_profile" <<'EOF'
 # Narancs Signage: a tty1-en automatikusan elindul a kioszk
 if [[ -z "$DISPLAY" && "$(tty)" == "/dev/tty1" ]]; then
-  exec startx -- -nocursor >"$HOME/.signage-x.log" 2>&1
+  /usr/local/bin/signage-tty-colors "$(tty)"
+  # -background none: az X a konzol (narancs) képét hagyja meg induláskor, nem villan fekete
+  exec startx -- -nocursor -background none >"$HOME/.signage-x.log" 2>&1
 fi
 EOF
+touch "$HOME_DIR/.hushlogin"   # nincs „Last login” és MOTD szöveg
 
 cat > /usr/local/bin/signage-kiosk <<'EOF'
 #!/usr/bin/env bash
@@ -226,13 +251,14 @@ screen_size() { xrandr 2>/dev/null | sed -n 's/.*current \([0-9]*\) x \([0-9]*\)
 # Várakozás a hálózatra és a szerverre (VM-en / Wi-Fi-n a hálózat később áll fel, mint az X).
 # Közben narancs háttér jelzi, hogy az eszköz él. Max. 3 perc, utána mindenképp indul
 # (a lejátszó maga is újrapróbálkozik és kiírja a hibát).
-xsetroot -solid '#f59e5b' 2>/dev/null || true
+# háttér: ugyanaz a logós kép, mint a bootképernyő – böngésző újraindításkor is ez látszik
+SPLASH=/usr/share/narancs-signage/splash.png
+set_splash() { if [[ -f "$SPLASH" ]] && command -v feh >/dev/null; then feh --no-fehbg --bg-fill "$SPLASH"; else xsetroot -solid '#f59e5b'; fi 2>/dev/null || true; }
+set_splash
 for i in $(seq 1 90); do
   curl -fs --max-time 3 "$ORIGIN/healthz" >/dev/null 2>&1 && break
   sleep 2
 done
-# a böngésző alatt fekete háttér (ha bármi kilógna, ne narancs legyen)
-xsetroot -solid '#000000' 2>/dev/null || true
 
 # Ablakkezelő nélkül a Chromium ablaka néha 1 pixellel kisebb a képernyőnél:
 # az indulás után pontosan a képernyő méretére igazítjuk
@@ -369,7 +395,8 @@ handle() {
   case "$1" in
     restart)
       logger -t signage-agent "Parancs: lejátszó újraindítása"
-      systemctl restart getty@tty1.service ;;
+      # ha fut a grafikus felület, csak a böngészőt indítjuk újra (közben a logós háttér látszik)
+      if pgrep -f -- '--kiosk' >/dev/null; then pkill -f -- '--kiosk'; else systemctl restart getty@tty1.service; fi ;;
     reboot)
       logger -t signage-agent "Parancs: eszköz újraindítása"
       sleep 2; systemctl reboot ;;
@@ -426,10 +453,78 @@ if [[ $NIGHTLY_REBOOT -eq 1 ]]; then
   c_ok "Éjszakai újraindítás beállítva (04:30)"
 fi
 
+# ---------- Bootképernyő: logó narancs háttéren, szöveges üzenetek nélkül ----------
+install -d /usr/share/narancs-signage
+for f in splash.png logo.png; do
+  curl -fsS --max-time 20 "${SERVER%/}/shared/splash/$f" -o "/usr/share/narancs-signage/$f" 2>/dev/null \
+    || c_info "A bootkép ($f) nem tölthető le most – a telepítő újrafuttatásakor pótolható"
+done
+THEME_DIR=/usr/share/plymouth/themes/narancs
+if [[ -f /usr/share/narancs-signage/logo.png ]]; then
+  install -d "$THEME_DIR"
+  cp /usr/share/narancs-signage/logo.png "$THEME_DIR/logo.png"
+  cat > "$THEME_DIR/narancs.plymouth" <<'EOF'
+[Plymouth Theme]
+Name=Narancs Signage
+Description=Narancs Signage bootképernyő
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/narancs
+ScriptFile=/usr/share/plymouth/themes/narancs/narancs.script
+EOF
+  cat > "$THEME_DIR/narancs.script" <<'EOF'
+# Narancs háttér (felül #f59e5b, alul #e07a35), középen a félnap logó
+Window.SetBackgroundTopColor(0.961, 0.620, 0.357);
+Window.SetBackgroundBottomColor(0.878, 0.478, 0.208);
+logo = Image("logo.png");
+size = Math.Min(Window.GetWidth(), Window.GetHeight()) * 0.32;
+logo = logo.Scale(size, size);
+sprite = Sprite(logo);
+sprite.SetX(Window.GetX() + Window.GetWidth() / 2 - size / 2);
+sprite.SetY(Window.GetY() + Window.GetHeight() / 2 - size / 2);
+# jelszó/üzenet kérések elrejtése (kioszkon nincs mit beírni)
+fun message_callback(text) { }
+Plymouth.SetMessageFunction(message_callback);
+EOF
+  if update-alternatives --list default.plymouth >/dev/null 2>&1; then
+    update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth "$THEME_DIR/narancs.plymouth" 200 >/dev/null
+    update-alternatives --set default.plymouth "$THEME_DIR/narancs.plymouth" >/dev/null
+  elif command -v plymouth-set-default-theme >/dev/null; then
+    plymouth-set-default-theme narancs
+  fi
+  install -d /etc/initramfs-tools/conf.d
+  echo "FRAMEBUFFER=y" > /etc/initramfs-tools/conf.d/narancs-signage-splash
+  c_info "Bootképernyő beállítása (initramfs frissítése, ez eltarthat egy percig)…"
+  update-initramfs -u >/dev/null 2>&1 || c_info "Az initramfs frissítése nem sikerült – a bootkép a rendszer betöltése után jelenik meg"
+fi
+QUIET_ARGS="quiet splash loglevel=3 systemd.show_status=false rd.systemd.show_status=false udev.log_level=3 rd.udev.log_level=3 vt.global_cursor_default=0 plymouth.ignore-serial-consoles"
+if command -v update-grub >/dev/null && [[ -d /etc/default ]]; then
+  install -d /etc/default/grub.d
+  cat > /etc/default/grub.d/90-narancs-signage.cfg <<EOF
+# Narancs Signage: rejtett GRUB menü (Shift/Esc lenyomva előhozható), csendes indulás bootképpel
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_TIMEOUT=0
+GRUB_RECORDFAIL_TIMEOUT=0
+GRUB_GFXPAYLOAD_LINUX=keep
+GRUB_CMDLINE_LINUX_DEFAULT="$QUIET_ARGS"
+EOF
+  update-grub >/dev/null 2>&1 && c_ok "Csendes indulás bootképpel beállítva (GRUB)"
+fi
+for cmdfile in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
+  if [[ -f "$cmdfile" ]]; then
+    [[ -f "$cmdfile.narancs-bak" ]] || cp "$cmdfile" "$cmdfile.narancs-bak"
+    line="$(tr -d '\n' < "$cmdfile.narancs-bak")"
+    echo "$line $QUIET_ARGS logo.nologo" > "$cmdfile"
+    c_ok "Csendes indulás bootképpel beállítva (Raspberry Pi)"
+    break
+  fi
+done
+
 # Raspberry Pi: GPU memória és képernyő-kitöltés
 for cfgfile in /boot/firmware/config.txt /boot/config.txt; do
   if [[ -f "$cfgfile" ]] && ! grep -q "narancs-signage" "$cfgfile"; then
-    printf '\n# narancs-signage\ndisable_overscan=1\n' >> "$cfgfile"
+    printf '\n# narancs-signage\ndisable_overscan=1\ndisable_splash=1\n' >> "$cfgfile"
     c_ok "Raspberry Pi beállítások: $cfgfile"
     break
   fi

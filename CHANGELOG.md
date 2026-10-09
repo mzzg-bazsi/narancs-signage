@@ -7,6 +7,19 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.3.0] – 2026-10-09
+
+### Új
+- **Bootképernyő**: induláskor és leállításkor a félnap logó látszik narancs háttéren (Plymouth téma) a szöveges `[ OK ]` sorok helyett
+- Csendes indulás: rejtett GRUB menü (Shift/Esc lenyomva előhozható), kernel- és systemd-üzenetek elrejtve, kurzor nélkül; Raspberry Pi-n a `cmdline.txt`-ben
+- A konzol (tty1) sosem mutat szöveget: minden színe narancsra áll, nincs bejelentkezési üzenet
+- A lejátszó indulóképe és a böngésző mögötti háttér ugyanaz a logós kép, így a boot → lejátszás átmenet folyamatos
+- `server/public/shared/splash/`: logó (SVG, PNG) és teljes képernyős bootkép
+
+### Változott
+- „Lejátszó újraindítása” már csak a böngészőt indítja újra (a grafikus felület fut tovább, közben a logó látszik)
+- Az eltávolító (`--uninstall`) a bootképet és a GRUB / cmdline beállításokat is visszaállítja
+
 ## [1.2.0] – 2026-10-09
 
 ### Új

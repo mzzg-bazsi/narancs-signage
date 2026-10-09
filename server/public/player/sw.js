@@ -1,7 +1,7 @@
 // Service worker: offline lejátszás – a médiafájlok és a lejátszó gyorsítótárazása
-const SHELL = 'signage-shell-v2';
+const SHELL = 'signage-shell-v3';
 const MEDIA = 'signage-media';
-const SHELL_FILES = ['./', 'index.html', 'player.css', 'player.js', 'manifest.webmanifest', '/shared/themes.js'];
+const SHELL_FILES = ['./', 'index.html', 'player.css', 'player.js', 'manifest.webmanifest', '/shared/themes.js', '/shared/splash/logo.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));

@@ -1036,6 +1036,7 @@
     $('#pairing').hidden = true;
     showStatus(null);
     applyOverlays();
+    setTimeout(hideBoot, 300); // az első tartalom már a háttérben rajzolódik
     if (changed) {
       if (state.current?.slide && cfg.slides[state.current.slide.id] && JSON.stringify(cfg.slides[state.current.slide.id]) !== JSON.stringify(state.current.slide)) {
         // az éppen látható dia megváltozott → azonnal újrarajzoljuk
@@ -1080,6 +1081,7 @@
     clearTimeout(state.timer);
     $('#stage').replaceChildren();
     showStatus(null);
+    hideBoot();
     $('#pairing').hidden = false;
     $('#pair-code').textContent = code;
     $('#pair-url').textContent = `${location.origin}/admin/`;
@@ -1108,12 +1110,21 @@
     for (let attempt = 1; ; attempt++) {
       const r = await hello();
       if (r) return r;
-      if (!state.cfg) showStatus('Kapcsolódás a szerverhez…', `${location.origin} – ${state.lastError} (${attempt}. próbálkozás, újra 5 mp múlva)`);
+      // az első sikertelen próbánál még a logós indulókép marad, utána kiírjuk a hibát
+      if (!state.cfg && attempt >= 2) showStatus('Kapcsolódás a szerverhez…', `${location.origin} – ${state.lastError} (${attempt}. próbálkozás, újra 5 mp múlva)`);
       await new Promise((ok) => setTimeout(ok, 5000));
     }
   }
 
+  function hideBoot() {
+    const b = $('#boot');
+    if (!b || b.classList.contains('gone')) return;
+    b.classList.add('gone');
+    setTimeout(() => b.remove(), 700);
+  }
+
   function showStatus(title, detail) {
+    if (title) hideBoot();
     const el = $('#status');
     if (!title) { el.hidden = true; return; }
     $('#status-title').textContent = title;
@@ -1183,11 +1194,11 @@
   //  Indítás
   // ------------------------------------------------------------------
   async function boot() {
+    if (PREVIEW) $('#boot')?.remove(); // az admin előnézetben nem kell indulási kép
     if ('serviceWorker' in navigator && !PREVIEW) navigator.serviceWorker.register('sw.js').catch(() => {});
     if (!PREVIEW) {
       const cached = LS.get('config:' + DEVICE);
       if (cached) applyConfig(cached, true); // offline indulás: a tárolt tartalom azonnal megy
-      else showStatus('Kapcsolódás a szerverhez…', location.origin);
       await helloUntilOk();
       connectStream();
     }
