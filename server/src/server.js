@@ -715,6 +715,13 @@ server.listen(PORT, HOST, () => {
 // iCal naptárak frissítése 15 percenként
 setTimeout(refreshAllIcal, 5000);
 setInterval(async () => { await refreshAllIcal(); notifyChange(); }, 15 * 60e3);
+// elhagyott, párosítatlan eszközök törlése (24 órája nem jelentkeztek)
+const cleanupPending = () => {
+  const r = run('DELETE FROM screens WHERE approved = 0 AND (last_seen IS NULL OR last_seen < ?)', now() - 24 * 3600e3);
+  if (r.changes) console.log(`[takarítás] ${r.changes} elhagyott párosítatlan eszköz törölve`);
+};
+cleanupPending();
+setInterval(cleanupPending, 3600e3);
 // régi statisztikák törlése (90 nap)
 setInterval(() => run('DELETE FROM stats WHERE created_at < ?', now() - 90 * 864e5), 6 * 3600e3);
 // lejárt riasztások után frissítés

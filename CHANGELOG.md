@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.6.3] – 2026-10-09
+
+### Javítva
+- Az elhagyott, párosítatlan eszközök örökre az adatbázisban maradtak: a szerver indításkor és óránként törli azokat, amelyek 24 órája nem jelentkeztek
+
 ## [1.6.2] – 2026-10-09
 
 ### Javítva
