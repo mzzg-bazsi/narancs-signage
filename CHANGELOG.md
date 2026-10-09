@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.6.0] – 2026-10-09
+
+### Új
+- **Tablet mód** képernyőnként (Képernyők → Szerkesztés → Általános): bekapcsolva soha nincs egérmutató, csak érintés; kikapcsolva (egér mód) egér mozgatásakor 3 másodpercig látszik a mutató
+- A képernyő kártyáján látszik, hogy tablet vagy egér módban van
+
+### Eltávolítva
+- Az „Egérmutató mindig látszik” kapcsoló (a Tablet mód váltja ki)
+
 ## [1.5.0] – 2026-10-09
 
 ### Új

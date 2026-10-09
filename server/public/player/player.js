@@ -268,13 +268,13 @@
     state.idleTimer = setTimeout(() => { if (Date.now() >= state.interactUntil) advance(); }, idleMs() + 100);
   }, true);
 
-  // Egérmutató: egér mozgatásakor 3 mp-ig látszik (érintésnél soha), vagy mindig, ha a képernyőn be van kapcsolva
+  // Egérmutató: tablet módban soha (csak érintés); egyébként egér mozgatásakor 3 mp-ig látszik
   let cursorTimer = null;
   document.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse') return;
+    if (e.pointerType !== 'mouse' || settings().tablet) return;
     document.body.classList.add('cursor-on');
     clearTimeout(cursorTimer);
-    cursorTimer = setTimeout(() => { if (!settings().show_cursor) document.body.classList.remove('cursor-on'); }, 3000);
+    cursorTimer = setTimeout(() => document.body.classList.remove('cursor-on'), 3000);
   }, true);
 
   $('#nav').addEventListener('click', (e) => {
@@ -974,8 +974,7 @@
   function applyOverlays() {
     applyBranding();
     const st = settings();
-    if (st.show_cursor) document.body.classList.add('cursor-on');
-    else if (!cursorTimer) document.body.classList.remove('cursor-on');
+    if (st.tablet) { clearTimeout(cursorTimer); document.body.classList.remove('cursor-on'); }
     const rotor = $('#rotor');
     rotor.className = { portrait: 'rot-90', 'portrait-flipped': 'rot-270', 'landscape-flipped': 'rot-180' }[st.orientation] || '';
     const clock = $('#overlay-clock');

@@ -701,6 +701,7 @@
         h('div', { class: 'body' },
           h('h3', {}, s.name),
           h('div', { class: 'kv' }, '▶ Lista: ', h('b', {}, plName(s.playlist_id) || '—'), s.schedule?.length ? h('span', { class: 'badge orange' }, `+${s.schedule.length} ütemezés`) : null),
+          h('div', { class: 'kv' }, s.settings?.tablet ? h('span', { class: 'badge blue' }, '👆 Tablet mód') : h('span', { class: 'badge' }, '🖱 Egér mód')),
           h('div', { class: 'kv' }, '🖥 ', h('b', {}, s.info?.w ? `${s.info.w}×${s.info.h}` : '—'), ' · ', s.online ? 'most aktív' : ago(s.last_seen)),
           s.info?.current ? h('div', { class: 'kv' }, '🎞 Most: ', h('b', {}, s.info.current.name)) : null),
         h('div', { class: 'foot' },
@@ -758,7 +759,8 @@
           F.text('Név', s, 'name', { full: true }),
           F.select('Alapértelmezett lejátszási lista', s, 'playlist_id', plOpts, { number: true, full: true, hint: 'Ez fut, ha egyik ütemezési szabály sem aktív.' }),
           F.number('Visszatérés érintés után (mp)', st, 'idle_return', { min: 10, max: 600, placeholder: '45', hint: 'Ennyi tétlenség után folytatódik az automatikus lejátszás.' }),
-          F.toggle('Virtuális billentyűzet űrlapokhoz', st, 'virtual_keyboard', { defaultOn: true, hint: 'Érintőképernyőhöz, ha nincs fizikai billentyűzet' }));
+          F.toggle('Virtuális billentyűzet űrlapokhoz', st, 'virtual_keyboard', { defaultOn: true, hint: 'Érintőképernyőhöz, ha nincs fizikai billentyűzet' }),
+          F.toggle('Tablet mód (érintőképernyő)', st, 'tablet', { full: true, hint: 'Bekapcsolva soha nem jelenik meg egérmutató, csak érinteni lehet. Kikapcsolva egér mozgatásakor 3 másodpercig látszik a mutató, utána eltűnik.' }));
       } else if (tab === 'schedule') {
         const list = h('div');
         const drawRules = () => list.replaceChildren(...(s.schedule.length ? s.schedule.map((r, i) => h('div', { class: 'sched-row' },
@@ -780,7 +782,6 @@
           F.select('Tájolás', st, 'orientation', [['landscape', 'Fekvő (alap)'], ['portrait', 'Álló (90°)'], ['portrait-flipped', 'Álló (270°)'], ['landscape-flipped', 'Fekvő fejjel lefelé (180°)']], { full: true, hint: 'A lejátszó szoftveresen forgatja a tartalmat – nem kell a rendszert átállítani.' }),
           F.toggle('Óra a sarokban', st, 'show_clock'),
           F.toggle('Folyamatjelző csík', st, 'show_progress'),
-          F.toggle('Egérmutató mindig látszik', st, 'show_cursor', { hint: 'Teszteléshez vagy egérrel kezelt kijelzőhöz. Alapból csak egérmozgatáskor látszik 3 mp-ig, érintésnél soha.' }),
           F.textarea('Hírszalag (soronként egy üzenet)', st, 'ticker', { rows: 3, placeholder: 'Pl. Ma 14:00-kor tűzriadó gyakorlat\nA kávézó ma 16:00-ig van nyitva', hint: 'Üresen hagyva nem jelenik meg.' }),
           F.number('Hírszalag sebesség (%)', st, 'ticker_speed', { min: 25, max: 400, placeholder: '100' }),
           F.color('Hírszalag színe', st, 'ticker_color'),
