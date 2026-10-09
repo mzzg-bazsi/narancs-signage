@@ -1,0 +1,8 @@
+{
+  "name": "Narancs Signage lejátszó",
+  "short_name": "Signage",
+  "start_url": "/player/",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#f59e5b"
+}
