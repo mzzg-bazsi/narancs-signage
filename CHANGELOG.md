@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.4] – 2026-10-09
+
+### Javítva
+- Raspberry Pi-n (egér nélkül) az egérmutató a kijelző közepén maradt, tablet módban is: a Chromium a rejtett mutatót csak egérmozgás után alkalmazza. A lejátszó telepítő most `unclutter`-t telepít, ami X szinten rejti el a mutatót (rejtve indul, mozgatáskor megjelenik, 3 mp után és érintéskor eltűnik), induláskor pedig a mutatót a képernyő sarkába mozgatja
+- `signage-diag`: jelzi, fut-e az egérmutató elrejtés
+
 ## [1.9.3] – 2026-10-09
 
 ### Változott

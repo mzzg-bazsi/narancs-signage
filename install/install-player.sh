@@ -116,6 +116,10 @@ c_info "Grafikus környezet telepítése (X11)…"
 apt-get install -y -qq --no-install-recommends \
   xserver-xorg xserver-xorg-input-libinput x11-xserver-utils x11-utils xdotool xinit \
   curl jq ca-certificates fonts-noto-color-emoji fonts-dejavu-core dbus-x11 feh plymouth plymouth-themes plymouth-label >/dev/null
+# Egérmutató elrejtése X szinten (az unclutter-xfixes az újabb változat; ha nincs, a régi unclutter)
+apt-get install -y -qq --no-install-recommends unclutter-xfixes >/dev/null 2>&1 \
+  || apt-get install -y -qq --no-install-recommends unclutter >/dev/null 2>&1 \
+  || c_info "Figyelem: az unclutter nem telepíthető – egér nélkül a mutató a képernyő sarkába kerül"
 
 c_info "Chromium telepítése…"
 CHROMIUM=""
@@ -263,6 +267,17 @@ set_splash 1
 # mikor látszik az egérmutató (egérmozgatáskor, vagy ha az admin felületen mindig látszik)
 printf '#define b_width 1\n#define b_height 1\nstatic unsigned char b_bits[] = { 0x00 };\n' > /tmp/signage-blank.xbm
 xsetroot -cursor /tmp/signage-blank.xbm /tmp/signage-blank.xbm 2>/dev/null || true
+# A Chromium a CSS „cursor: none”-t csak egérmozgás után alkalmazza: egér nélkül (pl. Raspberry Pi
+# érintőképernyővel) az X nyila a képernyő közepén maradna. Az unclutter X szinten rejti el:
+# rejtve indul, mozgatáskor megjelenik, 3 mp tétlenség és érintés után eltűnik. Tablet módban a
+# lejátszó CSS-e mozgatáskor is rejtve tartja.
+if command -v unclutter >/dev/null; then
+  if unclutter --help 2>&1 | grep -q -- '--start-hidden'; then
+    unclutter --timeout 3 --start-hidden --hide-on-touch --fork 2>/dev/null || true
+  else
+    unclutter -idle 3 -root >/dev/null 2>&1 &
+  fi
+fi
 set_splash 2
 for i in $(seq 1 90); do
   curl -fs --max-time 3 "$ORIGIN/healthz" >/dev/null 2>&1 && break
@@ -280,6 +295,9 @@ fit_window() {
     for win in $(xdotool search --onlyvisible --class chromium 2>/dev/null); do
       xdotool windowmove "$win" 0 0 windowsize "$win" "$w" "$h" 2>/dev/null
     done
+    # a mutató a jobb alsó sarokba: így a Chromium megkapja az első egérmozgást (érvényesül a
+    # rejtett mutató), és ha unclutter nélkül mégis látszana, nem a kép közepén van
+    [[ $i -eq 8 ]] && xdotool mousemove "$((w - 1))" "$((h - 1))" 2>/dev/null
   done
 }
 
@@ -369,6 +387,7 @@ if [[ -n "$r" ]]; then
 else bad "Az eszköz még nincs regisztrálva a szerveren (a lejátszó még nem kapcsolódott)"; fi
 pgrep -f signage-kiosk >/dev/null && ok "Kioszk fut" || bad "A kioszk nem fut (nincs automatikus bejelentkezés a tty1-en?)"
 pgrep -f -- "--kiosk" >/dev/null && ok "Chromium fut" || bad "A Chromium nem fut"
+pgrep -x unclutter >/dev/null && ok "Egérmutató elrejtés (unclutter) fut" || bad "Az unclutter nem fut – egér nélkül a mutató látszódhat (futtasd újra a telepítőt)"
 systemctl is-active -q narancs-signage-agent && ok "Távvezérlő ügynök fut" || bad "A távvezérlő ügynök nem fut (systemctl status narancs-signage-agent)"
 echo "Virtualizáció: $(systemd-detect-virt 2>/dev/null || echo none)   Kapcsolók: ${EXTRA_FLAGS:-(nincs)}"
 echo "GPU eszközök: $(ls /dev/dri 2>/dev/null | tr '\n' ' ')"
