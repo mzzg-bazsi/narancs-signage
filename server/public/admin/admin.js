@@ -452,7 +452,7 @@
       } catch (ex) { err.textContent = ex.message; }
     };
     $('#app').replaceChildren(h('div', { class: 'auth' }, h('form', { class: 'card stack', onsubmit: submit },
-      h('div', { class: 'brand' }, h('div', { class: 'logo' }, '◐'), 'Narancs Signage'),
+      h('div', { class: 'brand' }, h('div', { class: 'logo' }, h('img', { src: '/shared/splash/logo.svg', alt: '' })), 'Narancs Signage'),
       h('p', { class: 'lead' }, setup ? 'Üdv! Hozd létre az első adminisztrátor fiókot.' : 'Jelentkezz be a vezérlőpulthoz.'),
       setup ? F.text('Szervezet neve', data, 'org_name', { placeholder: 'pl. Narancs Kft.' }) : null,
       F.text('Felhasználónév', data, 'username', { placeholder: 'admin' }),
@@ -474,7 +474,7 @@
   function shell() {
     const nav = h('nav', { class: 'nav' }, NAV.map(([sec, items]) => [h('div', { class: 'nav-section' }, sec), items.map(([r, l, ic]) => h('a', { href: `#/${r}`, 'data-r': r }, icon(ic), l, h('span', { class: 'count hidden', 'data-count': r })))]));
     const sidebar = h('aside', { class: 'sidebar' },
-      h('div', { class: 'brand' }, ME.logo_url ? h('img', { class: 'logo-img', src: ME.logo_url, alt: '' }) : h('div', { class: 'logo' }, '◐'), h('div', {}, ME.org_name || 'Narancs Signage', h('small', {}, 'Narancs Signage'))),
+      h('div', { class: 'brand' }, ME.logo_url ? h('img', { class: 'logo-img', src: ME.logo_url, alt: '' }) : h('div', { class: 'logo' }, h('img', { src: '/shared/splash/logo.svg', alt: '' })), h('div', {}, ME.org_name || 'Narancs Signage', h('small', {}, 'Narancs Signage'))),
       nav,
       h('div', { class: 'bottom' }, h('div', { class: 'avatar' }, ME.username[0].toUpperCase()), h('div', { class: 'who' }, ME.username, h('small', {}, 'Adminisztrátor')),
         btn('', toggleTheme, { cls: 'ghost icon', ic: 'moon', title: 'Sötét/világos mód' }),

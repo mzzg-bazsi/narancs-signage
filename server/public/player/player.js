@@ -1036,7 +1036,10 @@
     $('#pairing').hidden = true;
     showStatus(null);
     applyOverlays();
-    setTimeout(hideBoot, 300); // az első tartalom már a háttérben rajzolódik
+    // folyamatjelző 100%, majd az első tartalom (ami már a háttérben rajzolódik) előtűnik
+    const bb = document.querySelector('#boot .bbar i');
+    if (bb) { bb.style.width = '100%'; document.querySelector('#boot .btxt').textContent = 'Kész'; }
+    setTimeout(hideBoot, 500);
     if (changed) {
       if (state.current?.slide && cfg.slides[state.current.slide.id] && JSON.stringify(cfg.slides[state.current.slide.id]) !== JSON.stringify(state.current.slide)) {
         // az éppen látható dia megváltozott → azonnal újrarajzoljuk

@@ -7,6 +7,17 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.4.0] – 2026-10-09
+
+### Új
+- **Új logó**: a félnap egy tévé képernyőjén – bootképernyőn, lejátszón (párosítás, kapcsolódás), admin felületen és a böngésző fülön (favicon)
+- **Folyamatjelző indulás közben** állapotszöveggel, végig egységes elrendezéssel:
+  - 0–60%: rendszer betöltése (Plymouth: „Rendszer betöltése… / Eszközök és szolgáltatások indítása… / Hálózat csatlakoztatása… / Kijelző indítása…”)
+  - 65–85%: grafikus felület („Grafikus felület indítása… / Kapcsolódás a szerverhez… / Lejátszó indítása…”)
+  - 90–100%: lejátszó („Tartalom betöltése… / Kész”)
+- Leállításkor / újraindításkor „Leállítás…” / „Újraindítás…” felirat, böngésző újraindításakor „Lejátszó újraindítása…”
+- `plymouth display-message --text=…` üzenetek megjelennek a bootképernyőn
+
 ## [1.3.0] – 2026-10-09
 
 ### Új

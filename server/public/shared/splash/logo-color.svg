@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Narancs Signage logó: félnap egy tévé képernyőjén (narancs, világos háttérre) -->
+  <rect x="16" y="30" width="168" height="114" rx="18" stroke="#e07a35" stroke-width="11"/>
+  <path d="M100 144 V164" stroke="#e07a35" stroke-width="11"/>
+  <path d="M64 169 H136" stroke="#e07a35" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="100" cy="87" r="32" stroke="#e07a35" stroke-width="7.5"/>
+  <path d="M100 55 A32 32 0 0 0 100 119 Z" fill="#e07a35"/>
+</svg>

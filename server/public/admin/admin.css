@@ -347,3 +347,4 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .pswatch { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgba(0,0,0,.15); cursor: pointer; padding: 0; transition: transform .1s; }
 .pswatch:hover { transform: scale(1.15); }
 .pswatch.on { outline: 2px solid var(--primary-strong); outline-offset: 2px; }
+.brand .logo img { width: 72%; height: 72%; }

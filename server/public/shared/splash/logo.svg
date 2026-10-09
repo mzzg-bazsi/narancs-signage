@@ -1,5 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <!-- Narancs Signage „félnap” logó -->
-  <circle cx="100" cy="100" r="84" fill="none" stroke="#ffffff" stroke-width="14"/>
-  <path d="M100 16 A84 84 0 0 0 100 184 Z" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Narancs Signage logó: félnap egy tévé képernyőjén (fehér, narancs háttérre) -->
+  <rect x="16" y="30" width="168" height="114" rx="18" stroke="#ffffff" stroke-width="11"/>
+  <path d="M100 144 V164" stroke="#ffffff" stroke-width="11"/>
+  <path d="M64 169 H136" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="100" cy="87" r="32" stroke="#ffffff" stroke-width="7.5"/>
+  <path d="M100 55 A32 32 0 0 0 100 119 Z" fill="#ffffff"/>
 </svg>
