@@ -7,6 +7,16 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.6.1] – 2026-10-09
+
+### Javítva
+- Egér módban nem jelent meg a mutató virtuális gépen: a UTM az egeret „pen” (toll) eszközként jelenti – most minden nem-érintéses mutatóeszköz megjeleníti
+
+### Változott
+- Képernyő kártya újratervezve: állapot és mód (Tablet/Egér) a kép sarkaiban, „Most játszik” középen, előző/következő gombok a képen; adatok rendezett táblázatban; alul két gomb: Szerkesztés és Vezérlés
+- Vezérlés ablak: azonosítás, előnézet, oldal újratöltése, lejátszó és eszköz újraindítása egy helyen („Összes vezérlése” az összes képernyőre)
+- Távoli diagnosztika: mutatóeszköz adatok (finom mutató, érintési pontok, utolsó mutatóesemény)
+
 ## [1.6.0] – 2026-10-09
 
 ### Új

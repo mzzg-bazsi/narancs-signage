@@ -673,12 +673,20 @@
       h('div', { class: 'grow' }, h('b', {}, title), h('div', { class: 'small muted' }, desc), note ? h('div', { class: 'small', style: { color: 'var(--danger)' } }, note) : null),
       btn('Indítás', () => send(command, title), { cls: command === 'reboot' ? 'sm danger' : 'sm primary', disabled: !enabled }));
     const noAgent = 'Ehhez a telepített lejátszó ügynöke szükséges (install-player.sh). Futtasd újra a telepítőt a kijelzőn.';
+    const quick = h('div', { class: 'row', style: { marginBottom: '14px' } },
+      btn('Azonosítás', async () => {
+        try {
+          if (all) { const r = await POST('/api/screens/broadcast', { command: 'identify' }); toast(`${r.count} képernyő mutatja a nevét 10 mp-ig`); }
+          else { const r = await POST(`/api/screens/${screen.id}/command`, { command: 'identify' }); toast(r.delivered ? 'A képernyő 10 mp-ig a nevét mutatja' : 'A képernyő jelenleg nem érhető el', r.delivered ? 'ok' : 'err'); }
+        } catch (e) { fail(e); }
+      }, { ic: 'target', title: 'A képernyő 10 másodpercig a nevét mutatja' }),
+      all ? null : btn('Előnézet új lapon', () => window.open(`/player/?preview=screen:${screen.id}`, '_blank'), { ic: 'eye' }));
     const m = modal({
-      title: all ? 'Összes képernyő újraindítása' : `Újraindítás: ${screen.name}`,
-      body: h('div', { class: 'card' },
+      title: all ? 'Összes képernyő vezérlése' : `Vezérlés: ${screen.name}`,
+      body: h('div', {}, quick, h('div', { class: 'card' },
         option('refresh', 'Oldal újratöltése', 'A lejátszó oldal frissül, a böngésző fut tovább. Pár másodperc.', 'reload', all || screen.online),
         option('screen', 'Lejátszó újraindítása', 'A böngésző teljesen újraindul, közben a logós indulóképernyő látszik. Kb. 10 másodperc.', 'restart', agentOk, agentOk ? null : noAgent),
-        option('power', 'Eszköz újraindítása', 'A teljes kijelző eszköz (számítógép) újraindul. Kb. 1 perc.', 'reboot', agentOk, agentOk ? null : noAgent)),
+        option('power', 'Eszköz újraindítása', 'A teljes kijelző eszköz (számítógép) újraindul. Kb. 1 perc.', 'reboot', agentOk, agentOk ? null : noAgent))),
       foot: [btn('Bezárás', () => m.close())],
     });
   }
@@ -694,29 +702,30 @@
     const grid = h('div', { class: 'grid auto' });
     const draw = () => grid.replaceChildren(...screens.map((s) => {
       const portrait = (s.settings?.orientation || '').startsWith('portrait');
+      const playing = s.online && s.info?.current;
       return h('div', { class: 'card screen-card' },
         h('div', { class: 'thumb' },
-          h('div', { class: 'st' }, h('span', { class: `dot ${s.online ? 'on' : ''}` }), s.online ? 'Online' : 'Offline'),
-          live ? h('iframe', { src: `/player/?preview=screen:${s.id}`, loading: 'lazy' }) : h('div', { class: 'off' }, s.online && s.info?.current ? `▶ ${s.info.current.name}` : portrait ? '▯ Álló' : '▭ Fekvő')),
+          h('div', { class: 'pill st' }, h('span', { class: `dot ${s.online ? 'on' : ''}` }), s.online ? 'Online' : 'Offline'),
+          h('div', { class: 'pill mode', title: s.settings?.tablet ? 'Csak érintés, egérmutató nélkül' : 'Egérmutató mozgatáskor 3 mp-ig' }, s.settings?.tablet ? '👆 Tablet' : '🖱 Egér'),
+          live ? h('iframe', { src: `/player/?preview=screen:${s.id}`, loading: 'lazy' })
+            : h('div', { class: 'now' }, playing ? [h('small', {}, 'Most játszik'), h('b', {}, s.info.current.name)] : h('small', {}, s.online ? 'Nincs adat' : portrait ? 'Álló kijelző' : 'Fekvő kijelző')),
+          s.online ? h('div', { class: 'ctl' },
+            h('button', { type: 'button', title: 'Előző tartalom', onclick: () => cmd(s, 'prev', 'Előző tartalom') }, icon('prev')),
+            h('button', { type: 'button', title: 'Következő tartalom', onclick: () => cmd(s, 'next', 'Következő tartalom') }, icon('next'))) : null),
         h('div', { class: 'body' },
-          h('h3', {}, s.name),
-          h('div', { class: 'kv' }, '▶ Lista: ', h('b', {}, plName(s.playlist_id) || '—'), s.schedule?.length ? h('span', { class: 'badge orange' }, `+${s.schedule.length} ütemezés`) : null),
-          h('div', { class: 'kv' }, s.settings?.tablet ? h('span', { class: 'badge blue' }, '👆 Tablet mód') : h('span', { class: 'badge' }, '🖱 Egér mód')),
-          h('div', { class: 'kv' }, '🖥 ', h('b', {}, s.info?.w ? `${s.info.w}×${s.info.h}` : '—'), ' · ', s.online ? 'most aktív' : ago(s.last_seen)),
-          s.info?.current ? h('div', { class: 'kv' }, '🎞 Most: ', h('b', {}, s.info.current.name)) : null),
+          h('h3', { title: s.name }, s.name),
+          h('dl', { class: 'meta' },
+            h('dt', {}, 'Lista'), h('dd', {}, plName(s.playlist_id) || '—', s.schedule?.length ? h('span', { class: 'badge orange', style: { marginLeft: '6px' } }, `+${s.schedule.length} ütemezés`) : null),
+            h('dt', {}, 'Felbontás'), h('dd', {}, s.info?.w ? `${s.info.w} × ${s.info.h}` : '—'),
+            h('dt', {}, 'Utolsó jel'), h('dd', {}, s.online ? 'most aktív' : ago(s.last_seen)))),
         h('div', { class: 'foot' },
           btn('Szerkesztés', () => editScreen(s, pls), { cls: 'sm primary', ic: 'edit' }),
-          btn('', () => cmd(s, 'identify', 'Azonosítás elküldve'), { cls: 'sm icon', ic: 'target', title: 'Azonosítás (név megjelenítése)' }),
-          btn('', () => cmd(s, 'prev', 'Előző tartalom'), { cls: 'sm icon', ic: 'prev', title: 'Előző' }),
-          btn('', () => cmd(s, 'next', 'Következő tartalom'), { cls: 'sm icon', ic: 'next', title: 'Következő' }),
-          btn('', () => cmd(s, 'reload', 'Újratöltés elküldve'), { cls: 'sm icon', ic: 'refresh', title: 'Oldal újratöltése' }),
-          btn('', () => restartDialog(s), { cls: 'sm icon', ic: 'power', title: 'Újraindítás (lejátszó / eszköz)' }),
-          btn('', () => window.open(`/player/?preview=screen:${s.id}`, '_blank'), { cls: 'sm icon', ic: 'eye', title: 'Előnézet új lapon' })));
+          btn('Vezérlés', () => restartDialog(s), { cls: 'sm', ic: 'power', title: 'Azonosítás, előnézet, újratöltés, újraindítás' })));
     }));
     draw();
     const liveTog = F.toggle('Élő előnézet', { v: live }, 'v', { onchange: (v) => { live = v; try { localStorage.setItem('signage.livepreview', v ? '1' : '0'); } catch { /* */ } draw(); } });
     view.replaceChildren(
-      head('Képernyők', `${screens.length} párosított képernyő, ${screens.filter((s) => s.online).length} online`, [liveTog, screens.length ? btn('Újraindítás…', () => restartDialog(null), { ic: 'power' }) : null, btn('Új képernyő', () => pairDialog(), { ic: 'plus', cls: 'primary' })]),
+      head('Képernyők', `${screens.length} párosított képernyő, ${screens.filter((s) => s.online).length} online`, [liveTog, screens.length ? btn('Összes vezérlése', () => restartDialog(null), { ic: 'power' }) : null, btn('Új képernyő', () => pairDialog(), { ic: 'plus', cls: 'primary' })]),
       pending.length ? h('div', { class: 'card mt', style: { marginBottom: '18px', borderColor: 'var(--primary)' } },
         h('div', { class: 'card-head' }, h('h3', {}, `⏳ Párosításra váró eszközök (${pending.length})`)),
         pending.map((p) => h('div', { class: 'list-item' }, h('span', { class: 'dot on' }), h('div', { class: 'grow' }, h('b', {}, `Eszköz ${p.device_short}`), h('div', { class: 'small muted' }, `${p.info?.w ? `${p.info.w}×${p.info.h} · ` : ''}${p.info?.platform || ''} · ${ago(p.last_seen)}`)),

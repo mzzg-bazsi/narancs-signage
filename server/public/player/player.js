@@ -268,10 +268,13 @@
     state.idleTimer = setTimeout(() => { if (Date.now() >= state.interactUntil) advance(); }, idleMs() + 100);
   }, true);
 
-  // Egérmutató: tablet módban soha (csak érintés); egyébként egér mozgatásakor 3 mp-ig látszik
+  // Egérmutató: tablet módban soha (csak érintés); egyébként egér/toll mozgatásakor 3 mp-ig látszik
   let cursorTimer = null;
+  let lastPointer = null; // diagnosztikához: érkezik-e egyáltalán egér esemény
+  document.addEventListener('pointermove', (e) => { lastPointer = { type: e.pointerType, t: new Date().toISOString() }; }, true);
   document.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse' || settings().tablet) return;
+    // VM-ekben (pl. UTM) az egér „pen” típusként érkezik → minden, ami nem érintés, mutatót kap
+    if (e.pointerType === 'touch' || settings().tablet) return;
     document.body.classList.add('cursor-on');
     clearTimeout(cursorTimer);
     cursorTimer = setTimeout(() => document.body.classList.remove('cursor-on'), 3000);
@@ -1182,7 +1185,9 @@
       t: new Date().toISOString(), visibility: document.visibilityState, hidden: document.hidden, focus: document.hasFocus(),
       inner: `${innerWidth}x${innerHeight}`, outer: `${outerWidth}x${outerHeight}`, screen: `${screen.width}x${screen.height}`, dpr: devicePixelRatio,
       raf_fps: frames, pairing_visible: !$('#pairing').hidden, status_visible: !$('#status').hidden, code: $('#pair-code').textContent,
-      fullscreen: !!document.fullscreenElement, sw: !!navigator.serviceWorker?.controller, ua: navigator.userAgent,
+      fullscreen: !!document.fullscreenElement,
+      pointer_fine: matchMedia('(any-pointer: fine)').matches, hover: matchMedia('(any-hover: hover)').matches, touch_points: navigator.maxTouchPoints,
+      last_pointer: lastPointer, cursor_on: document.body.classList.contains('cursor-on'), tablet: !!settings().tablet, sw: !!navigator.serviceWorker?.controller, ua: navigator.userAgent,
     };
     await api('/api/player/heartbeat', { method: 'POST', body: JSON.stringify({ device: DEVICE, info: { diag } }) }).catch(() => {});
   }
