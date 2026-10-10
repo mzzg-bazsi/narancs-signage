@@ -6,6 +6,8 @@
 
 <p align="center"><a href="README.md">English</a> · <b>Magyar</b></p>
 
+<p align="center"><a href="https://mzzg-bazsi.github.io/narancs-signage-website/"><b>🌐 Weboldal és interaktív bemutató</b></a></p>
+
 Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin felület (halvány narancs témával), böngészőalapú lejátszó, ami ARM-on is fut, és egyparancsos telepítők Ubuntu Serverre.
 
 ```

@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.7] – 2026-10-10
+
+### Új
+- Link a bemutató weboldalra (https://mzzg-bazsi.github.io/narancs-signage-website/) a README-ben (angol és magyar)
+
 ## [1.9.6] – 2026-10-09
 
 ### Új

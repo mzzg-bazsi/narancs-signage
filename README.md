@@ -6,6 +6,8 @@
 
 <p align="center"><b>English</b> · <a href="README.hu.md">Magyar</a></p>
 
+<p align="center"><a href="https://mzzg-bazsi.github.io/narancs-signage-website/"><b>🌐 Website &amp; interactive demo</b></a></p>
+
 A complete, self-hosted digital signage system: a central admin panel (with a soft orange theme), a browser-based player that also runs on ARM, and one-command installers for Ubuntu Server.
 
 ```
