@@ -39,6 +39,7 @@
   }
   const ICONS = {
     chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+    template: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>',
     camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     screen: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
@@ -490,7 +491,7 @@
   // =====================================================================
   const NAV = [
     [tr('Áttekintés'), [['dashboard', tr('Irányítópult'), 'dashboard'], ['screens', tr('Képernyők'), 'screen'], ['reports', tr('Riportok'), 'chart']]],
-    [tr('Tartalom'), [['playlists', tr('Lejátszási listák'), 'playlist'], ['slides', tr('Tartalmak'), 'slides'], ['media', tr('Médiatár'), 'media']]],
+    [tr('Tartalom'), [['playlists', tr('Lejátszási listák'), 'playlist'], ['slides', tr('Tartalmak'), 'slides'], ['templates', tr('Sablonok'), 'template'], ['media', tr('Médiatár'), 'media']]],
     [tr('Interaktív'), [['calendars', tr('Naptárak'), 'calendar'], ['forms', tr('Űrlapok'), 'form']]],
     [tr('Rendszer'), [['branding', tr('Arculat'), 'palette'], ['alerts', tr('Vészjelzés'), 'alert'], ['settings', tr('Beállítások'), 'settings']]],
   ];
@@ -520,7 +521,7 @@
 
   const ROUTES = {
     dashboard: pageDashboard, screens: pageScreens, playlists: pagePlaylists, slides: pageSlides, media: pageMedia,
-    calendars: pageCalendars, forms: pageForms, alerts: pageAlerts, settings: pageSettings, branding: pageBranding, reports: pageReports,
+    calendars: pageCalendars, forms: pageForms, alerts: pageAlerts, settings: pageSettings, branding: pageBranding, reports: pageReports, templates: pageTemplates,
   };
   let routeCleanup = null;
   let dirty = null; // nem mentett változások figyelése
@@ -624,6 +625,74 @@
         h('div', { class: 'card table-wrap' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Tartalmak szerint'))), table(d.by_slide, tr('Tartalom'), (x) => x.type ? h('a', { href: `#/slides/${x.slide_id}` }, `${TYPES[x.type]?.e || ''} ${x.name}`) : h('span', { class: 'muted' }, x.name))),
         h('div', { class: 'card table-wrap' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Képernyők szerint'))), table(d.by_screen, tr('Képernyő'), (x) => x.name))),
       h('p', { class: 'small muted mt' }, tr('A kijelzők minden tartalom megjelenését és minden érintést rögzítenek; az adatok 90 napig maradnak meg. A CSV export soronként egy eseményt tartalmaz időponttal.')));
+  }
+
+  // =====================================================================
+  //  Sablonok: beépített galéria élő előnézettel, import fájlból, export
+  // =====================================================================
+  let tplCategory = '';
+  async function pageTemplates(view) {
+    const { categories, templates } = await GET('/api/templates');
+    const fileIn = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: () => { const f = fileIn.files[0]; fileIn.value = ''; if (f) importFile(f); } });
+    const grid = h('div', { class: 'tpl-grid' });
+    const chips = h('div', { class: 'row tpl-chips' });
+    const draw = () => {
+      chips.replaceChildren(...[['', tr('Mind')], ...Object.entries(categories)].map(([k, l]) => h('button', { type: 'button', class: `chip${tplCategory === k ? ' on' : ''}`, onclick: () => { tplCategory = k; draw(); } }, l)));
+      grid.replaceChildren(...templates.filter((t) => !tplCategory || t.category === tplCategory).map((t) => h('div', { class: 'card tpl-card' },
+        h('div', { class: 'tpl-preview' }, h('iframe', { src: `/player/?preview=template:${t.id}`, loading: 'lazy', tabindex: -1, title: t.name })),
+        h('div', { class: 'tpl-body' },
+          h('div', { class: 'row', style: { gap: '8px', flexWrap: 'nowrap' } }, h('span', { class: 'tpl-icon' }, t.icon), h('b', { class: 'grow' }, t.name), h('span', { class: 'badge' }, categories[t.category] || '')),
+          h('p', { class: 'small muted' }, t.description),
+          h('div', { class: 'row between' },
+            h('span', { class: 'small muted' }, [tr('{n} tartalom', { n: t.slides }), t.forms ? tr('űrlap') : null, t.calendars ? tr('naptár') : null].filter(Boolean).join(' · ')),
+            h('div', { class: 'row', style: { gap: '6px' } },
+              btn('', () => window.open(`/player/?preview=template:${t.id}`, '_blank'), { cls: 'sm icon', ic: 'external', title: tr('Előnézet új lapon') }),
+              btn(tr('Telepítés'), () => install(t), { cls: 'sm primary', ic: 'plus' })))))));
+    };
+    const install = async (t) => {
+      if (!(await confirmBox(tr('Létrehozod a(z) „{name}” sablon tartalmait egy új lejátszási listában? A meglévő tartalmaid nem változnak.', { name: t.name }), { ok: tr('Telepítés') }))) return;
+      try { done(await POST(`/api/templates/${t.id}/install`)); } catch (e) { fail(e); }
+    };
+    draw();
+    view.replaceChildren(
+      head(tr('Sablonok'), tr('Kész tartalomcsomagok különféle helyekre – a saját arculatod színeivel. Telepítés után szabadon szerkesztheted őket.'),
+        [btn(tr('Importálás fájlból'), () => fileIn.click(), { ic: 'upload' }), fileIn]),
+      chips, grid,
+      h('p', { class: 'small muted mt' }, tr('Saját sablont bármelyik tartalom vagy lejátszási lista „Exportálás” gombjával készíthetsz (.narancs.json fájl), és egy másik Narancs Signage rendszerbe itt importálhatod.')));
+  }
+
+  // importálás/telepítés eredménye: a cache ürítése és ugrás a létrehozott listára vagy tartalomra
+  function done(r) {
+    invalidate('playlists', 'slides', 'forms', 'calendars', 'media');
+    const c = r.counts;
+    toast(tr('Kész: {s} tartalom, {f} űrlap, {c} naptár, {m} médiafájl', { s: c.slides, f: c.forms, c: c.calendars, m: c.media }));
+    location.hash = r.playlist_id ? `#/playlists/${r.playlist_id}` : `#/slides/${r.first_slide_id}`;
+  }
+  async function importFile(file) {
+    let data;
+    try { data = JSON.parse(await file.text()); } catch { return toast(tr('A fájl nem érvényes JSON'), 'err'); }
+    try { done(await POST('/api/templates/import', data)); } catch (e) { fail(e); }
+  }
+
+  async function exportDialog(what, defName) {
+    const { categories } = await GET('/api/templates');
+    const meta = { name: defName, description: '', category: 'other' };
+    const m = modal({
+      title: tr('Exportálás sablonként'),
+      body: h('div', { class: 'stack' },
+        h('p', { class: 'small muted', style: { margin: 0 } }, tr('A fájlba a tartalmak, a rájuk hivatkozó tartalmak (menü, kártyák, zónák), az űrlapok szerkezete és a képek kerülnek. Beküldött űrlapok, saját naptáresemények és iCal linkek nem.')),
+        F.text(tr('Név'), meta, 'name'), F.textarea(tr('Leírás'), meta, 'description', { rows: 2 }),
+        F.select(tr('Kategória'), meta, 'category', [...Object.entries(categories), ['other', tr('Egyéb')]])),
+      foot: [btn(tr('Mégse'), () => m.close()), btn(tr('Letöltés'), async () => {
+        try {
+          const t = await POST('/api/templates/export', { ...what, ...meta });
+          const slug = String(meta.name || 'sablon').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sablon';
+          const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(t, null, 1)], { type: 'application/json' })), download: `${slug}.narancs.json` });
+          document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+          m.close(); toast(tr('Sablon letöltve'));
+        } catch (e) { fail(e); }
+      }, { cls: 'primary', ic: 'download' })],
+    });
   }
 
   async function pageDashboard(view) {
@@ -1039,6 +1108,7 @@
 
     view.replaceChildren(
       head(p.name, null, [
+        btn(tr('Exportálás'), () => exportDialog({ playlist_id: p.id }, p.name), { ic: 'download', title: tr('Exportálás sablonként (.narancs.json)') }),
         btn(tr('Törlés'), async () => {
           if (!(await confirmBox(tr('Biztosan törlöd a(z) „{name}” listát?', { name: p.name }), { ok: tr('Törlés') }))) return;
           await DEL(`/api/playlists/${p.id}`); dirty = null; invalidate('playlists'); toast(tr('Lista törölve')); location.hash = '#/playlists';
@@ -1186,6 +1256,7 @@
           route();
         }, { ic: 'palette', title: tr('Az egyedi színek helyett az arculat színeit használja') }),
         btn(tr('Másolat'), async () => { const c = await POST(`/api/slides/${s.id}/duplicate`); invalidate('slides'); location.hash = `#/slides/${c.id}`; }, { ic: 'copy' }),
+        btn(tr('Exportálás'), () => exportDialog({ slide_ids: [s.id] }, s.name), { ic: 'download', title: tr('Exportálás sablonként (.narancs.json)') }),
         btn(tr('Törlés'), async () => {
           if (!(await confirmBox(tr('Biztosan törlöd a(z) „{name}” tartalmat? A lejátszási listákból is eltűnik.', { name: s.name }), { ok: tr('Törlés') }))) return;
           await DEL(`/api/slides/${s.id}`); dirty = null; invalidate('slides'); toast(tr('Tartalom törölve')); location.hash = '#/slides';

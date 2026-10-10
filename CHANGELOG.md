@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.16.0] – 2026-10-10
+
+### Új
+- **Sablonok** (új menüpont a Tartalom alatt): 10 beépített, kétnyelvű tartalomcsomag – étterem és kávézó, irodai előtér, üzlet, orvosi rendelő, iskola, szálloda recepció, edzőterem, konferencia, bár, szépségszalon. Élő előnézet, kategóriaszűrés, egy kattintással telepíthető (új lejátszási lista a tartalmakkal, űrlapokkal, naptárakkal); a saját arculat színeit és a szervezet nevét használják.
+- **Export sablonként**: bármely tartalom vagy lejátszási lista „Exportálás” gombja egy `.narancs.json` fájlt ad, benne a hivatkozott tartalmakkal (menü, kártyák, zónák), űrlapokkal és képekkel – beküldések, saját naptáresemények és iCal linkek nélkül.
+- **Import fájlból**: ellenőrzött betöltés (ismert típusok, hivatkozások, médiatípusok és méretkorlátok), egy tranzakcióban – hiba esetén semmi nem marad félkészen.
+- API: `GET /api/templates`, `POST /api/templates/export`, `POST /api/templates/import`, `POST /api/templates/:id/install`, előnézet: `/player/?preview=template:ID`.
+- Automatikus tesztek a sablonokhoz (minden beépített sablon importja, export–import körút, hibás fájlok).
+
 ## [1.15.1] – 2026-10-10
 
 ### Változott

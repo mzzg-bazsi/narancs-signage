@@ -8,6 +8,11 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  'Hibás sablon: {detail}': 'Invalid template: {detail}',
+  'Ez a fájl nem Narancs Signage sablon': 'This file is not a Narancs Signage template',
+  'Nem támogatott sablon verzió: {v}': 'Unsupported template version: {v}',
+  'A sablon médiafájljai együtt legfeljebb 40 MB-osak lehetnek': 'The media files of a template can be at most 40 MB together',
+  'Nincs exportálható tartalom': 'Nothing to export',
   'Csak JPEG kép tölthető fel': 'Only JPEG images can be uploaded',
   'Még nincs képernyőkép': 'No screenshot yet',
   'Ehhez nincs jogosultságod': 'You do not have permission for this',

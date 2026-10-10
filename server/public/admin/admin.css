@@ -393,3 +393,15 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 /* Képernyőkép */
 .shot-box { background: #111; border-radius: var(--radius-sm); min-height: 200px; display: grid; place-items: center; overflow: hidden; }
 .shot-box img { display: block; max-width: 100%; max-height: 70vh; }
+
+/* Sablonok */
+.tpl-chips { margin-bottom: 16px; gap: 6px; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.tpl-card { overflow: hidden; display: flex; flex-direction: column; }
+.tpl-preview { position: relative; aspect-ratio: 16 / 9; background: #120d0a; overflow: hidden; }
+.tpl-preview iframe { position: absolute; top: 0; left: 0; width: 400%; height: 400%; border: 0; transform: scale(.25); transform-origin: 0 0; pointer-events: none; }
+.tpl-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.tpl-body p { margin: 0; flex: 1; }
+.tpl-icon { font-size: 20px; }

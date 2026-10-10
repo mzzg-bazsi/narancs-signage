@@ -11,7 +11,7 @@ export const MIME = {
 };
 
 export class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, vars) { super(message); this.status = status; this.vars = vars; } // vars: a fordított üzenet paraméterei
 }
 
 export class Router {

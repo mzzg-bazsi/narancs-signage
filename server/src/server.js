@@ -10,6 +10,8 @@ import {
 import { Router, HttpError, send, readBody, readRaw, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, userCount, listUsers, verifyPassword, hashPassword, createToken, listTokens, setRole, ROLES } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
+import { exportTemplate, importTemplate, templatePreview, normalizeFormFields, localized } from './templates.js';
+import { BUILTIN_TEMPLATES, CATEGORIES } from './builtin-templates.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
 
@@ -313,6 +315,10 @@ r.get('/api/preview', (req, res) => {
   let cfg;
   if (req.query.get('brand')) {
     cfg = brandDemo();
+  } else if (req.query.get('template')) {
+    const b = BUILTIN_TEMPLATES.find((x) => x.id === req.query.get('template'));
+    if (!b) throw new HttpError(404, 'Nem található');
+    cfg = templatePreview(b.template, orgInfo());
   } else if (screenId) {
     const s = Screens.get(screenId);
     if (!s) throw new HttpError(404, 'Nincs ilyen képernyő');
@@ -559,18 +565,33 @@ r.del('/api/events/:id', A, (req, res) => { Events.remove(id(req)); notifyChange
 crudRoutes('forms', Forms, {
   order: 'name',
   validate(b) {
-    if (b.fields) {
-      const keys = new Set();
-      b.fields = b.fields.map((f, i) => {
-        let key = (f.key || f.label || `mezo${i}`).toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || `mezo${i}`;
-        while (keys.has(key)) key += '_';
-        keys.add(key);
-        return { ...f, key };
-      });
-    }
+    if (b.fields) b.fields = normalizeFormFields(b.fields);
     return b;
   },
 });
+// ---------- Sablonok: beépített galéria, export és import (.narancs.json) ----------
+r.get('/api/templates', A, (req, res) => send(res, 200, {
+  categories: localized(CATEGORIES),
+  templates: BUILTIN_TEMPLATES.map((b) => ({ id: b.id, icon: b.icon, category: b.category, ...localized({ name: b.template.meta.name, description: b.template.meta.description }),
+    slides: b.template.slides.length, items: b.template.playlist?.items.length || 0, forms: b.template.forms.length, calendars: b.template.calendars.length })),
+}));
+r.post('/api/templates/export', A, async (req, res) => {
+  const b = await readBody(req);
+  send(res, 200, exportTemplate({ slideIds: b.slide_ids || [], playlistId: +b.playlist_id || null, meta: b }, VERSION));
+});
+r.post('/api/templates/import', A, async (req, res) => {
+  const out = importTemplate(await readBody(req, 64 * 1024 * 1024));
+  notifyChange();
+  send(res, 200, out);
+});
+r.post('/api/templates/:id/install', A, (req, res) => {
+  const b = BUILTIN_TEMPLATES.find((x) => x.id === req.params.id);
+  if (!b) throw new HttpError(404, 'Nem található');
+  const out = importTemplate(b.template);
+  notifyChange();
+  send(res, 200, out);
+});
+
 r.get('/api/forms/:id/submissions', A, (req, res) => {
   send(res, 200, all(`SELECT sub.*, sc.name screen_name FROM submissions sub LEFT JOIN screens sc ON sc.id = sub.screen_id WHERE form_id = ? ORDER BY sub.id DESC`, id(req)));
 });
@@ -794,7 +815,7 @@ const server = http.createServer(async (req, res) => {
   } catch (e) {
     const status = e.status || 500;
     if (status === 500) console.error(e);
-    send(res, status, { error: tr(e.message || 'Szerverhiba') });
+    send(res, status, { error: tr(e.message || 'Szerverhiba', e.vars) });
   }
 });
 server.requestTimeout = 0; // nagy feltöltések és SSE miatt
