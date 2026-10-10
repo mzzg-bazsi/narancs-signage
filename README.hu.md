@@ -10,14 +10,7 @@
 
 Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin felület (halvány narancs témával), böngészőalapú lejátszó, ami ARM-on is fut, és egyparancsos telepítők Ubuntu Serverre.
 
-```
-┌──────────────────────────┐        HTTP + SSE (valós idejű push)       ┌───────────────────────────┐
-│  Szerver (Ubuntu)        │ ◄────────────────────────────────────────► │  Kijelző (ARM / x86)      │
-│  Node.js, SQLite         │                                            │  Chromium kioszk mód      │
-│  /admin   admin felület  │                                            │  /player  lejátszó        │
-│  /player  lejátszó app   │                                            │  offline gyorsítótár      │
-└──────────────────────────┘                                            └───────────────────────────┘
-```
+<p align="center"><img src="docs/architecture-hu.svg" alt="A Narancs Signage felépítése: admin felület, szerver és kijelzők" width="900"></p>
 
 <p align="center"><img src="docs/screenshots/admin-dashboard.png" alt="Irányítópult" width="900"></p>
 

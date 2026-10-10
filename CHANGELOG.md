@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.10] – 2026-10-10
+
+### Változott
+- A README-kben a karakteres ábra helyett rajzolt architektúra ábra (SVG, angol és magyar, világos/sötét mód): admin felület, szerver, kijelzők
+
 ## [1.9.9] – 2026-10-10
 
 ### Változott

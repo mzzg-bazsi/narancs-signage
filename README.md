@@ -10,14 +10,7 @@
 
 A complete, self-hosted digital signage system: a central admin panel (with a soft orange theme), a browser-based player that also runs on ARM, and one-command installers for Ubuntu Server.
 
-```
-┌──────────────────────────┐        HTTP + SSE (real-time push)         ┌───────────────────────────┐
-│  Server (Ubuntu)         │ ◄────────────────────────────────────────► │  Display (ARM / x86)      │
-│  Node.js, SQLite         │                                            │  Chromium kiosk mode      │
-│  /admin   admin panel    │                                            │  /player  player          │
-│  /player  player app     │                                            │  offline cache            │
-└──────────────────────────┘                                            └───────────────────────────┘
-```
+<p align="center"><img src="docs/architecture-en.svg" alt="Narancs Signage architecture: admin panel, server and displays" width="900"></p>
 
 <p align="center"><img src="docs/screenshots/admin-dashboard.png" alt="Dashboard" width="900"></p>
 

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 420" role="img" aria-labelledby="t">
+<title id="t">Narancs Signage felépítés</title>
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="ah"/></marker>
+</defs>
+<style>
+  svg { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .bg { fill: #fff8f2; }
+  .card { fill: #ffffff; stroke: #e9c8ad; stroke-width: 1.5; }
+  .card-a { fill: #fff3ea; stroke: #f59e5b; stroke-width: 2; }
+  .chip { fill: #fff8f2; stroke: #f3dfcf; }
+  .chip-a { fill: #ffe7d4; stroke: #f59e5b; }
+  .t-h { font-size: 19px; font-weight: 800; fill: #2a1a10; }
+  .t-sub { font-size: 13px; fill: #8d6f5b; }
+  .t-chip { font-size: 13px; font-weight: 600; fill: #3b2416; }
+  .t-lbl { font-size: 12.5px; fill: #8d6f5b; }
+  .t-link { font-size: 12px; font-weight: 700; fill: #e07a35; letter-spacing: .06em; }
+  .t-tv { font-size: 11px; font-weight: 700; fill: #fff; }
+  .ln { stroke: #e07a35; stroke-width: 2; fill: none; }
+  .ah { fill: #e07a35; }
+  .tv { fill: #2a201a; }
+  .screen { fill: #e07a35; }
+  .sun-o { fill: none; stroke: #fff; stroke-width: 3; }
+  .sun { fill: #fff; }
+  .stand { stroke: #2a201a; stroke-width: 5; stroke-linecap: round; fill: none; }
+  .ic { stroke: #e07a35; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-color-scheme: dark) {
+    .bg { fill: #1c1612; }
+    .card { fill: #2a201a; stroke: #574234; }
+    .card-a { fill: #35261c; stroke: #f59e5b; }
+    .chip { fill: #241b15; stroke: #3d2f25; }
+    .chip-a { fill: #4a3020; stroke: #f59e5b; }
+    .t-h { fill: #fbeee4; } .t-chip { fill: #fbeee4; } .t-sub, .t-lbl { fill: #c0a593; }
+    .tv { fill: #0f0b09; } .stand { stroke: #574234; }
+  }
+</style>
+<rect width="980" height="420" rx="18" class="bg"/>
+
+<!-- Admin -->
+<rect x="24" y="130" width="190" height="160" rx="16" class="card"/>
+<g transform="translate(95 150)" class="ic"><rect x="0" y="0" width="48" height="32" rx="4"/><path d="M-8 40h64"/></g>
+<text x="119" y="222" text-anchor="middle" class="t-h">Admin felület</text>
+<text x="119" y="244" text-anchor="middle" class="t-sub">bármely böngésző</text>
+<text x="119" y="266" text-anchor="middle" class="t-sub" font-family="ui-monospace, Menlo, monospace">/admin</text>
+
+<path d="M216 210H296" class="ln" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<text x="256" y="198" text-anchor="middle" class="t-link">REST API</text>
+
+<!-- Szerver -->
+<rect x="300" y="40" width="280" height="340" rx="18" class="card-a"/>
+<g transform="translate(324 64)" class="ic"><rect x="0" y="0" width="34" height="12" rx="3"/><rect x="0" y="16" width="34" height="12" rx="3"/><path d="M6 6h0M6 22h0"/></g>
+<text x="372" y="77" class="t-h">Szerver</text>
+<text x="372" y="97" class="t-sub">Ubuntu · Node.js</text>
+<rect x="322" y="124" width="236" height="34" rx="8" class="chip"/><text x="440.0" y="146" text-anchor="middle" class="t-chip">REST API</text>
+<rect x="322" y="166" width="236" height="34" rx="8" class="chip-a"/><text x="440.0" y="188" text-anchor="middle" class="t-chip">SSE valós idejű küldés</text>
+<rect x="322" y="208" width="114" height="34" rx="8" class="chip"/><text x="379.0" y="230" text-anchor="middle" class="t-chip">SQLite adatbázis</text>
+<rect x="444" y="208" width="114" height="34" rx="8" class="chip"/><text x="501.0" y="230" text-anchor="middle" class="t-chip">Médiafájlok</text>
+<rect x="322" y="250" width="236" height="34" rx="8" class="chip"/><text x="440.0" y="272" text-anchor="middle" class="t-chip">Lejátszó app · /player</text>
+<text x="440" y="340" text-anchor="middle" class="t-sub" font-family="ui-monospace, Menlo, monospace">/var/lib/narancs-signage</text>
+<text x="440" y="318" text-anchor="middle" class="t-lbl">adatkönyvtár</text>
+
+<!-- Kapcsolat a kijelzőkkel -->
+<text x="669" y="140" text-anchor="middle" class="t-link">HTTP + SSE</text>
+<path d="M584 176H754" class="ln" marker-end="url(#ar)"/>
+<text x="669" y="196" text-anchor="middle" class="t-lbl" font-size="11">beállítás · média · parancs</text>
+<path d="M754 244H584" class="ln" marker-end="url(#ar)"/>
+<text x="669" y="264" text-anchor="middle" class="t-lbl" font-size="11">életjel · statisztika · űrlap</text>
+
+<!-- Kijelzők -->
+<rect x="760" y="40" width="196" height="340" rx="18" class="card"/>
+<text x="858" y="72" text-anchor="middle" class="t-h">Kijelzők</text>
+<g transform="translate(783 92)"><rect width="150" height="86" rx="10" class="tv"/><rect x="7" y="7" width="136" height="72" rx="5" class="screen"/><circle cx="75" cy="36" r="14" class="sun-o"/><path d="M75 22a14 14 0 0 0 0 28z" class="sun"/><text x="75" y="70" text-anchor="middle" class="t-tv">Előtér</text><path d="M75 86v10M52 98h46" class="stand"/></g>
+<g transform="translate(783 196)"><rect width="150" height="86" rx="10" class="tv"/><rect x="7" y="7" width="136" height="72" rx="5" class="screen"/><circle cx="75" cy="36" r="14" class="sun-o"/><path d="M75 22a14 14 0 0 0 0 28z" class="sun"/><text x="75" y="70" text-anchor="middle" class="t-tv">Kávézó</text><path d="M75 86v10M52 98h46" class="stand"/></g>
+<text x="858" y="326" text-anchor="middle" class="t-sub">Chromium kioszk · ARM / x86</text>
+<text x="858" y="348" text-anchor="middle" class="t-sub">offline gyorsítótár</text>
+</svg>
