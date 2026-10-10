@@ -60,7 +60,7 @@
     'Offline': 'Offline',
     'Nincs adat': 'No data',
     'Előnézet': 'Preview',
-    'Claude-dal fejlesztve': 'Built with Claude',
+    'Teljes egészében a Claude programozta': 'Programmed entirely by Claude',
     'Élő előnézet': 'Live preview',
     'Megnyitás új lapon': 'Open in new tab',
     'Teljes képernyő': 'Full screen',

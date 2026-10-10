@@ -206,6 +206,6 @@ Frissítés később: `git pull && sudo ./install/install-server.sh`. Egy adott 
 
 © 2026 Balázs Mazzag – [Narancs Signage License](LICENSE)
 
-A fejlesztésben a [Claude](https://claude.com/claude-code) (Anthropic) is részt vett: a kód, a telepítők és a dokumentáció nagy része a Claude Code-dal közösen készült.
+Teljes egészében a [Claude](https://claude.com/claude-code) (Anthropic) programozta: a kód minden sorát, a telepítőket, a weboldalt és a dokumentációt a Claude Code írta, Mazzag Balázs ötletei és irányítása alapján.
 
 Bárki szabadon és ingyen használhatja, módosíthatja, továbbadhatja – üzleti célra, nagyvállalatnál is. **A szoftvert pénzért csak a szerző adhatja:** más nem adhatja el, nem adhatja bérbe és nem árulhatja fizetős szolgáltatásként (telepítésért, üzemeltetésért, tartalomkészítésért lehet díjat kérni). **Kötelező a névfeltüntetés:** a licencfájl és a szerzői jogi megjegyzés maradjon meg, az admin felületen látható „© 2026 Balázs Mazzag” felirat nem távolítható el, továbbadáskor pedig jelezni kell, hogy a rendszer a „Narancs Signage by Balázs Mazzag”-on alapul. A kijelzőkön nem jelenik meg felirat.

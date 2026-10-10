@@ -445,8 +445,8 @@
   // =====================================================================
   // Szerzői jogi megjegyzés – a licenc (LICENSE, 3. pont) szerint nem távolítható el. A lejátszón nincs.
   const COPYRIGHT = '© 2026 Balázs Mazzag';
-  // a fejlesztésben Claude (Anthropic) is részt vett – a szerzői jogi felirat alatt jelezzük
-  const builtWith = () => h('a', { class: 'built-with', href: 'https://claude.com/claude-code', target: '_blank', rel: 'noopener' }, tr('Claude-dal fejlesztve'));
+  // a programot teljes egészében Claude (Anthropic) írta – a szerzői jogi felirat alatt jelezzük
+  const builtWith = () => h('a', { class: 'built-with', href: 'https://claude.com/claude-code', target: '_blank', rel: 'noopener' }, tr('Teljes egészében a Claude programozta'));
 
   let ME = null;
   function authScreen(setup) {
