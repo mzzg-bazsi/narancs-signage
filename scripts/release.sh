@@ -21,4 +21,5 @@ git add server/package.json CHANGELOG.md
 git commit -q -m "Kiadás v$NEW"
 git tag -a "v$NEW" -m "v$NEW"
 echo "✔ v$CUR → v$NEW"
-if git remote get-url origin >/dev/null 2>&1; then git push -q origin HEAD --follow-tags && echo "✔ Feltöltve a GitHubra"; fi
+# a taget külön küldjük fel, hogy a GitHub Actions kiadás (Docker kép) biztosan elinduljon
+if git remote get-url origin >/dev/null 2>&1; then git push -q origin HEAD && git push -q origin "v$NEW" && echo "✔ Feltöltve a GitHubra"; fi
