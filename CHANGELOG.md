@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.17.2] – 2026-10-10
+
+### Új
+- **GitHub Release minden verzióhoz**: a `scripts/release.sh` a kiadás végén GitHub Release-t is készít a változásnapló bejegyzéséből (Docker és telepítési hivatkozással); a jegyzetet a `scripts/release-notes.sh` állítja elő. A korábbi verziók is megkapták a saját Release-üket.
+
 ## [1.17.1] – 2026-10-10
 
 ### Változott

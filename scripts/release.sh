@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Új verzió kiadása: verziószám emelés, változásnapló ellenőrzés, commit + címke (tag), feltöltés
+# Új verzió kiadása: verziószám emelés, változásnapló ellenőrzés, commit + címke (tag), feltöltés, GitHub Release
 #   ./scripts/release.sh patch|minor|major   vagy   ./scripts/release.sh 1.2.3
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,3 +23,7 @@ git tag -a "v$NEW" -m "v$NEW"
 echo "✔ v$CUR → v$NEW"
 # a taget külön küldjük fel, hogy a GitHub Actions kiadás (Docker kép) biztosan elinduljon
 if git remote get-url origin >/dev/null 2>&1; then git push -q origin HEAD && git push -q origin "v$NEW" && echo "✔ Feltöltve a GitHubra"; fi
+# GitHub Release a változásnapló bejegyzéséből (ha a gh be van jelentkezve)
+if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+  ./scripts/release-notes.sh "$NEW" | gh release create "v$NEW" --verify-tag --title "v$NEW" --notes-file - >/dev/null && echo "✔ GitHub Release: v$NEW"
+fi
