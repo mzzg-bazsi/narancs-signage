@@ -38,6 +38,7 @@
     return el;
   }
   const ICONS = {
+    chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     screen: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
     playlist: '<path d="M3 6h13M3 12h13M3 18h8"/><path d="M17 15v6l4-3z" fill="currentColor"/>',
@@ -485,7 +486,7 @@
   //  Keret és útválasztás
   // =====================================================================
   const NAV = [
-    [tr('Áttekintés'), [['dashboard', tr('Irányítópult'), 'dashboard'], ['screens', tr('Képernyők'), 'screen']]],
+    [tr('Áttekintés'), [['dashboard', tr('Irányítópult'), 'dashboard'], ['screens', tr('Képernyők'), 'screen'], ['reports', tr('Riportok'), 'chart']]],
     [tr('Tartalom'), [['playlists', tr('Lejátszási listák'), 'playlist'], ['slides', tr('Tartalmak'), 'slides'], ['media', tr('Médiatár'), 'media']]],
     [tr('Interaktív'), [['calendars', tr('Naptárak'), 'calendar'], ['forms', tr('Űrlapok'), 'form']]],
     [tr('Rendszer'), [['branding', tr('Arculat'), 'palette'], ['alerts', tr('Vészjelzés'), 'alert'], ['settings', tr('Beállítások'), 'settings']]],
@@ -514,7 +515,7 @@
 
   const ROUTES = {
     dashboard: pageDashboard, screens: pageScreens, playlists: pagePlaylists, slides: pageSlides, media: pageMedia,
-    calendars: pageCalendars, forms: pageForms, alerts: pageAlerts, settings: pageSettings, branding: pageBranding,
+    calendars: pageCalendars, forms: pageForms, alerts: pageAlerts, settings: pageSettings, branding: pageBranding, reports: pageReports,
   };
   let routeCleanup = null;
   let dirty = null; // nem mentett változások figyelése
@@ -575,6 +576,51 @@
   // =====================================================================
   //  Irányítópult
   // =====================================================================
+  // =====================================================================
+  //  Riportok: mi, hol, hányszor ment le (proof of play)
+  // =====================================================================
+  const reportFilter = { from: '', to: '', screen_id: '' };
+  async function pageReports(view) {
+    const ymd = (t) => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+    if (!reportFilter.to) { reportFilter.to = ymd(Date.now()); reportFilter.from = ymd(Date.now() - 6 * 864e5); }
+    const { screens } = await GET('/api/screens');
+    const qs = () => new URLSearchParams(Object.entries(reportFilter).filter(([, v]) => v)).toString();
+    const d = await GET(`/api/reports?${qs()}`);
+    const preset = (n) => () => { reportFilter.to = ymd(Date.now()); reportFilter.from = ymd(Date.now() - (n - 1) * 864e5); route(); };
+    const thisMonth = () => { const n = new Date(); reportFilter.from = ymd(new Date(n.getFullYear(), n.getMonth(), 1)); reportFilter.to = ymd(n); route(); };
+    const filters = h('div', { class: 'card card-pad report-filters' },
+      F.text(tr('Ettől'), reportFilter, 'from', { type: 'date', onchange: route }),
+      F.text(tr('Eddig'), reportFilter, 'to', { type: 'date', onchange: route }),
+      F.select(tr('Képernyő'), reportFilter, 'screen_id', [['', tr('Minden képernyő')], ...screens.map((x) => [String(x.id), x.name])], { onchange: route }),
+      h('div', { class: 'row', style: { alignSelf: 'end' } }, btn(tr('7 nap'), preset(7), { cls: 'sm' }), btn(tr('30 nap'), preset(30), { cls: 'sm' }), btn(tr('Ez a hónap'), thisMonth, { cls: 'sm' })));
+    // napi oszlopdiagram az egész időszakra
+    const days = [];
+    for (let t = new Date(`${reportFilter.from}T12:00`); ymd(t) <= reportFilter.to && days.length < 400; t.setDate(t.getDate() + 1)) days.push(ymd(t));
+    const byDay = Object.fromEntries(d.by_day.map((x) => [x.day, x]));
+    const max = Math.max(1, ...days.map((k) => (byDay[k]?.views || 0) + (byDay[k]?.touches || 0)));
+    const bars = h('div', { class: 'bars report-bars' }, days.map((k) => {
+      const v = byDay[k]?.views || 0, t = byDay[k]?.touches || 0;
+      return h('div', { class: 'b', title: `${new Date(`${k}T12:00`).toLocaleDateString(LOCALE, { month: 'short', day: 'numeric' })}: ${tr('{v} megjelenés, {t} érintés', { v, t })}` }, h('div', { class: 'col', style: { height: `${((v + t) / max) * 100}%` } },
+        h('i', { style: { flex: v || 0 } }), h('i', { class: 't', style: { flex: t || 0 } })), days.length <= 14 ? h('small', {}, I18N.dayShort(new Date(k).getDay())) : null);
+    }));
+    const total = d.totals.views || 1;
+    const table = (rows, label, nameCell) => rows.length ? h('table', { class: 'table' },
+      h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, label), h('th', { class: 'num' }, tr('Megjelenés')), h('th', { class: 'num' }, tr('Érintés')), h('th', { class: 'num' }, tr('Arány')))),
+      h('tbody', {}, rows.map((x, i) => h('tr', {}, h('td', { class: 'muted' }, i + 1), h('td', {}, nameCell(x)), h('td', { class: 'num' }, x.views), h('td', { class: 'num' }, x.touches),
+        h('td', { class: 'num' }, h('div', { class: 'share' }, h('b', {}, h('i', { style: { width: `${(x.views / total) * 100}%` } })), h('span', {}, `${Math.round((x.views / total) * 100)}%`))))))) : h('div', { class: 'empty small' }, tr('Ebben az időszakban nincs adat'));
+    const stat = (ic, v, l) => h('div', { class: 'card stat' }, h('div', { class: 'ic' }, icon(ic)), h('div', {}, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l)));
+    view.replaceChildren(
+      head(tr('Riportok'), tr('Mi, hol és hányszor jelent meg a képernyőkön (lejátszási igazolás).'),
+        [h('a', { class: 'btn', href: `/api/reports/export.csv?${qs()}` }, icon('download'), tr('CSV letöltése'))]),
+      filters,
+      h('div', { class: 'grid c4' }, stat('eye', d.totals.views, tr('Megjelenés')), stat('touch', d.totals.touches, tr('Érintés')), stat('screen', d.totals.screens, tr('Aktív képernyő')), stat('slides', d.totals.slides, tr('Lejátszott tartalom'))),
+      h('div', { class: 'card mt' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Napi aktivitás')), h('div', { class: 'legend' }, h('span', {}, h('i', { style: { background: 'var(--primary)' } }), tr('Megjelenés')), h('span', {}, h('i', { style: { background: '#ffc9a1' } }), tr('Érintés')))), h('div', { class: 'card-body' }, bars)),
+      h('div', { class: 'grid c2 mt' },
+        h('div', { class: 'card table-wrap' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Tartalmak szerint'))), table(d.by_slide, tr('Tartalom'), (x) => x.type ? h('a', { href: `#/slides/${x.slide_id}` }, `${TYPES[x.type]?.e || ''} ${x.name}`) : h('span', { class: 'muted' }, x.name))),
+        h('div', { class: 'card table-wrap' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Képernyők szerint'))), table(d.by_screen, tr('Képernyő'), (x) => x.name))),
+      h('p', { class: 'small muted mt' }, tr('A kijelzők minden tartalom megjelenését és minden érintést rögzítenek; az adatok 90 napig maradnak meg. A CSV export soronként egy eseményt tartalmaz időponttal.')));
+  }
+
   async function pageDashboard(view) {
     const d = await GET('/api/dashboard');
     await load('media');

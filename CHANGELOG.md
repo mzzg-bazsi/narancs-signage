@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.12.0] – 2026-10-10
+
+### Új
+- **Riportok (lejátszási igazolás / proof of play)**: új menüpont az Áttekintés alatt. Időszak (dátumtól–dátumig, 7 nap, 30 nap, ez a hónap) és képernyő szerinti szűrés; megjelenések és érintések összesítve, napi diagram, toplista tartalmak és képernyők szerint arányokkal. **CSV export** soronként egy eseménnyel (időpont, képernyő, tartalom, típus, esemény) – pl. hirdetőknek.
+- API: `GET /api/reports`, `GET /api/reports/export.csv` (`from`, `to`, `screen_id` paraméterekkel).
+
 ## [1.11.0] – 2026-10-10
 
 ### Új

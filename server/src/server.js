@@ -572,6 +572,37 @@ r.get('/api/forms/:id/export.csv', A, (req, res) => {
 });
 r.del('/api/submissions/:id', A, (req, res) => { run('DELETE FROM submissions WHERE id = ?', id(req)); send(res, 200, { ok: true }); });
 
+// ---------- Lejátszási riport (proof of play) ----------
+// időszak: ?from=ÉÉÉÉ-HH-NN&to=ÉÉÉÉ-HH-NN (helyi napok, alapból az utolsó 7 nap), opcionálisan ?screen_id=
+function reportQuery(req) {
+  const to = req.query.get('to') ? new Date(`${req.query.get('to')}T23:59:59.999`).getTime() : now();
+  const d7 = new Date(); d7.setHours(0, 0, 0, 0); d7.setDate(d7.getDate() - 6); // alapból a mai nappal együtt 7 nap
+  const from = req.query.get('from') ? new Date(`${req.query.get('from')}T00:00:00`).getTime() : d7.getTime();
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from > to) throw new HttpError(400, 'Érvénytelen időszak');
+  const sid = +req.query.get('screen_id') || null;
+  return { from, to, where: `created_at BETWEEN ? AND ?${sid ? ' AND screen_id = ?' : ''}`, params: sid ? [from, to, sid] : [from, to] };
+}
+r.get('/api/reports', A, (req, res) => {
+  const q = reportQuery(req);
+  const agg = (col) => all(`SELECT ${col} k, SUM(kind = 'view') views, SUM(kind = 'touch') touches FROM stats WHERE ${q.where} GROUP BY ${col} ORDER BY views DESC`, ...q.params);
+  const slides = Object.fromEntries(all('SELECT id, name, type FROM slides').map((x) => [x.id, x]));
+  const screens = Object.fromEntries(all('SELECT id, name FROM screens').map((x) => [x.id, x]));
+  const bySlide = agg('slide_id').map((x) => ({ slide_id: x.k, name: slides[x.k]?.name ?? tr('(törölt tartalom)'), type: slides[x.k]?.type || null, views: x.views, touches: x.touches }));
+  const byScreen = agg('screen_id').map((x) => ({ screen_id: x.k, name: screens[x.k]?.name ?? tr('(törölt képernyő)'), views: x.views, touches: x.touches }));
+  const byDay = all(`SELECT date(created_at / 1000, 'unixepoch', 'localtime') day, SUM(kind = 'view') views, SUM(kind = 'touch') touches FROM stats WHERE ${q.where} GROUP BY day ORDER BY day`, ...q.params);
+  const sum = (k) => byDay.reduce((n, x) => n + x[k], 0);
+  send(res, 200, { from: q.from, to: q.to, totals: { views: sum('views'), touches: sum('touches'), screens: byScreen.length, slides: bySlide.length }, by_slide: bySlide, by_screen: byScreen, by_day: byDay });
+});
+r.get('/api/reports/export.csv', A, (req, res) => {
+  const q = reportQuery(req);
+  const rows = all(`SELECT st.created_at, st.kind, sc.name screen, sl.name slide, sl.type FROM stats st LEFT JOIN screens sc ON sc.id = st.screen_id LEFT JOIN slides sl ON sl.id = st.slide_id WHERE st.${q.where.replace(' AND screen_id', ' AND st.screen_id')} ORDER BY st.created_at LIMIT 200000`, ...q.params);
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const head = [tr('Időpont'), tr('Képernyő'), tr('Tartalom'), tr('Típus'), tr('Esemény')];
+  const lines = rows.map((x) => [new Date(x.created_at).toLocaleString(locale()), x.screen ?? '', x.slide ?? tr('(törölt tartalom)'), x.type ?? '', x.kind === 'touch' ? tr('érintés') : tr('megjelenés')]);
+  const csv = '﻿' + [head, ...lines].map((row) => row.map(esc).join(';')).join('\r\n');
+  send(res, 200, csv, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${tr('lejatszasi-riport')}.csv"` });
+});
+
 // ---------- Képernyők ----------
 r.get('/api/screens', A, (req, res) => {
   send(res, 200, {

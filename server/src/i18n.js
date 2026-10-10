@@ -8,6 +8,15 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  '(törölt tartalom)': '(deleted content)',
+  '(törölt képernyő)': '(deleted screen)',
+  'Tartalom': 'Content',
+  'Típus': 'Type',
+  'Esemény': 'Event',
+  'érintés': 'touch',
+  'megjelenés': 'view',
+  'lejatszasi-riport': 'proof-of-play',
+  'Érvénytelen időszak': 'Invalid period',
   // hitelesítés, általános
   'Érvénytelen felhasználónév': 'Invalid username',
   'A jelszó legalább 6 karakter legyen': 'The password must be at least 6 characters',
