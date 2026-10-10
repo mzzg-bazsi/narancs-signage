@@ -49,7 +49,8 @@ export function send(res, status, body, headers = {}) {
   res.end(body);
 }
 
-export function readBody(req, limit = 5 * 1024 * 1024) {
+// a kérés törzse nyersen (Buffer), méretkorláttal
+export function readRaw(req, limit = 5 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -58,13 +59,15 @@ export function readBody(req, limit = 5 * 1024 * 1024) {
       if (size > limit) { reject(new HttpError(413, 'Túl nagy kérés')); req.destroy(); return; }
       chunks.push(c);
     });
-    req.on('end', () => {
-      const raw = Buffer.concat(chunks).toString('utf8');
-      if (!raw) return resolve({});
-      try { resolve(JSON.parse(raw)); } catch { reject(new HttpError(400, 'Hibás JSON')); }
-    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
+}
+
+export async function readBody(req, limit = 5 * 1024 * 1024) {
+  const raw = (await readRaw(req, limit)).toString('utf8');
+  if (!raw) return {};
+  try { return JSON.parse(raw); } catch { throw new HttpError(400, 'Hibás JSON'); }
 }
 
 export function parseCookies(req) {

@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.14.0] – 2026-10-10
+
+### Új
+- **Távoli képernyőkép**: a Képernyők → Vezérlés ablakban a „Képernyőkép” gombra a kijelző ügynöke lefényképezi, mi látszik éppen a valódi kijelzőn, és pár másodperc alatt megjelenik az admin felületen (a legutóbbi kép megmarad). Szerkesztők is használhatják.
+- API: `GET /api/screens/:id/screenshot`, parancs: `screenshot`.
+
+### Változott
+- A lejátszó telepítő a `scrot` csomagot is telepíti, a `player.conf` a kioszk felhasználó nevét is tárolja; az ügynök 2-es verzió. **A képernyőképhez a kijelzőn újra kell futtatni a lejátszó telepítőt.**
+
 ## [1.13.0] – 2026-10-10
 
 ### Új

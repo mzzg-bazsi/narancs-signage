@@ -8,6 +8,8 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  'Csak JPEG kép tölthető fel': 'Only JPEG images can be uploaded',
+  'Még nincs képernyőkép': 'No screenshot yet',
   'Ehhez nincs jogosultságod': 'You do not have permission for this',
   'Ismeretlen szerepkör': 'Unknown role',
   'A saját szerepkörödet nem módosíthatod': 'You cannot change your own role',

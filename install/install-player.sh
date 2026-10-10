@@ -114,7 +114,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 c_info "Installing the graphical environment (X11)…"
 apt-get install -y -qq --no-install-recommends \
-  xserver-xorg xserver-xorg-input-libinput x11-xserver-utils x11-utils xdotool xinit \
+  xserver-xorg xserver-xorg-input-libinput x11-xserver-utils x11-utils xdotool xinit scrot \
   curl jq ca-certificates fonts-noto-color-emoji fonts-dejavu-core dbus-x11 feh plymouth plymouth-themes plymouth-label >/dev/null
 # Egérmutató elrejtése X szinten (az unclutter-xfixes az újabb változat; ha nincs, a régi unclutter)
 apt-get install -y -qq --no-install-recommends unclutter-xfixes >/dev/null 2>&1 \
@@ -183,6 +183,7 @@ SERVER="$SERVER"
 DEVICE="$DEVICE"
 CHROMIUM="$CHROMIUM"
 ROTATE="$ROTATE"
+KIOSK_USER="$KIOSK_USER"
 # További Chromium kapcsolók (pl. GPU nélküli megjelenítés). Módosítás után: sudo reboot
 EXTRA_FLAGS="$EXTRA_FLAGS"
 EOF
@@ -407,10 +408,13 @@ chmod +x /usr/local/bin/signage-diag
 cat > /usr/local/bin/signage-agent <<'EOF'
 #!/usr/bin/env bash
 # Narancs Signage ügynök: a szerver élő csatornáján (SSE) érkező parancsokat hajtja végre.
-#   restart – a lejátszó (X + Chromium kioszk) teljes újraindítása
-#   reboot  – az eszköz újraindítása
+#   restart    – a lejátszó (X + Chromium kioszk) teljes újraindítása
+#   reboot     – az eszköz újraindítása
+#   screenshot – képernyőkép a kijelzőről, feltöltve a szerverre
 . /etc/narancs-signage/player.conf
-AGENT_VERSION=1
+AGENT_VERSION=2
+KU="${KIOSK_USER:-kiosk}"
+KH="$(getent passwd "$KU" | cut -d: -f6)"
 
 report() {
   local up ip os
@@ -431,6 +435,14 @@ handle() {
     reboot)
       logger -t signage-agent "Command: reboot device"
       sleep 2; systemctl reboot ;;
+    screenshot)
+      # a kioszk felhasználó X kijelzőjéről, JPEG-ben (a futó X a felhasználó jogosultságával érhető el)
+      local f=/tmp/signage-shot.jpg
+      rm -f "$f"
+      runuser -u "$KU" -- env DISPLAY=:0 XAUTHORITY="$KH/.Xauthority" scrot -z -q 70 "$f" 2>/dev/null \
+        && curl -fs --max-time 30 -H 'Content-Type: image/jpeg' --data-binary @"$f" "$SERVER/api/player/screenshot?device=$DEVICE" >/dev/null \
+        || logger -t signage-agent "Screenshot failed"
+      rm -f "$f" ;;
   esac
 }
 

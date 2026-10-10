@@ -39,6 +39,7 @@
   }
   const ICONS = {
     chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+    camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     screen: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
     playlist: '<path d="M3 6h13M3 12h13M3 18h8"/><path d="M17 15v6l4-3z" fill="currentColor"/>',
@@ -754,11 +755,50 @@
     const m = modal({
       title: all ? tr('Összes képernyő vezérlése') : tr('Vezérlés: {name}', { name: screen.name }),
       body: h('div', {}, quick, h('div', { class: 'card' },
+        all ? null : h('div', { class: 'list-item', style: { opacity: agentOk ? 1 : 0.55 } },
+          h('div', { class: 'stat', style: { padding: 0 } }, h('div', { class: 'ic' }, icon('camera'))),
+          h('div', { class: 'grow' }, h('b', {}, tr('Képernyőkép')), h('div', { class: 'small muted' }, tr('Mi látszik most a valódi kijelzőn? Pár másodperc.')), agentOk ? null : h('div', { class: 'small', style: { color: 'var(--danger)' } }, noAgent)),
+          btn(tr('Megnézem'), () => { m.close(); screenshotDialog(screen); }, { cls: 'sm primary', disabled: !agentOk })),
         option('refresh', tr('Oldal újratöltése'), tr('A lejátszó oldal frissül, a böngésző fut tovább. Pár másodperc.'), 'reload', all || screen.online),
         option('screen', tr('Lejátszó újraindítása'), tr('A böngésző teljesen újraindul, közben a logós indulóképernyő látszik. Kb. 10 másodperc.'), 'restart', agentOk, agentOk ? null : noAgent),
         option('power', tr('Eszköz újraindítása'), tr('A teljes kijelző eszköz (számítógép) újraindul. Kb. 1 perc.'), 'reboot', agentOk, agentOk ? null : noAgent))),
       foot: [btn(tr('Bezárás'), () => m.close())],
     });
+  }
+
+  // Képernyőkép a kijelzőről: az ügynök készíti és tölti fel, mi addig várunk, amíg frissebb kép érkezik
+  function screenshotDialog(screen) {
+    const img = h('img', { class: 'shot', alt: tr('Képernyőkép: {name}', { name: screen.name }) });
+    const status = h('div', { class: 'small muted' });
+    const url = () => `/api/screens/${screen.id}/screenshot?t=${Date.now()}`;
+    let prev = screen.info?.screenshot_at || 0;
+    if (prev) { img.src = url(); status.textContent = tr('Korábbi kép: {t}', { t: fmtDate(prev) }); }
+    let busy = false;
+    const take = async () => {
+      if (busy) return;
+      busy = true;
+      status.textContent = tr('Képernyőkép kérése…');
+      try {
+        const r = await POST(`/api/screens/${screen.id}/command`, { command: 'screenshot' });
+        if (!r.delivered) { status.textContent = tr('A kijelző ügynöke jelenleg nem érhető el.'); return; }
+        for (let i = 0; i < 20; i++) {
+          await new Promise((ok) => setTimeout(ok, 1000));
+          const s = (await GET('/api/screens')).screens.find((x) => x.id === screen.id);
+          if ((s?.info?.screenshot_at || 0) > prev) {
+            prev = s.info.screenshot_at; img.src = url();
+            status.textContent = tr('Készült: {t}', { t: fmtDate(prev) });
+            return;
+          }
+        }
+        status.textContent = tr('Nem érkezett kép. Ha a kijelzőn régebbi a lejátszó, futtasd újra rajta a telepítőt.');
+      } catch (e) { fail(e); } finally { busy = false; }
+    };
+    const m = modal({
+      title: tr('Képernyőkép: {name}', { name: screen.name }), size: 'wide',
+      body: h('div', { class: 'stack' }, h('div', { class: 'shot-box' }, img), status),
+      foot: [btn(tr('Új kép'), take, { ic: 'refresh' }), btn(tr('Bezárás'), () => m.close())],
+    });
+    take();
   }
 
   async function pageScreens(view) {

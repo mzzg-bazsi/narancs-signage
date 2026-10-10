@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   db, all, get, run, DATA_DIR, MEDIA_DIR, Slides, Playlists, Calendars, Events, Forms, Screens, getSetting, setSetting,
 } from './db.js';
-import { Router, HttpError, send, readBody, serveFile, serveStatic, MIME } from './http.js';
+import { Router, HttpError, send, readBody, readRaw, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, userCount, listUsers, verifyPassword, hashPassword, createToken, listTokens, setRole, ROLES } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
@@ -30,7 +30,8 @@ const id = (req) => +req.params.id;
 const streams = new Map(); // device_id -> Set<res>  (böngésző lejátszók)
 const agents = new Map();  // device_id -> Set<res>  (kijelző ügynök: lejátszó/eszköz újraindítás)
 // Ezeket a parancsokat az eszközön futó ügynök hajtja végre, nem a böngésző
-const AGENT_COMMANDS = ['restart', 'reboot'];
+const AGENT_COMMANDS = ['restart', 'reboot', 'screenshot']; // ezeket a kijelző ügynöke hajtja végre
+const ADMIN_COMMANDS = ['restart', 'reboot'];
 
 function pushTo(deviceId, event, data = {}, map = streams) {
   for (const res of map.get(deviceId) || []) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -230,6 +231,19 @@ r.post('/api/player/heartbeat', async (req, res) => {
       if (['view', 'touch'].includes(st.kind)) ins.run(s.id, +st.slide_id || null, st.kind, +st.t || now());
     }
   }
+  send(res, 200, { ok: true });
+});
+
+// Képernyőkép a kijelzőről: az ügynök tölti fel (JPEG), az admin felület kéri le
+const SHOTS_DIR = path.join(DATA_DIR, 'screenshots');
+r.post('/api/player/screenshot', async (req, res) => {
+  const s = screenByDevice(req.query.get('device'));
+  if (!s || !s.approved) throw new HttpError(404, 'Ismeretlen eszköz');
+  const buf = await readRaw(req, 8 * 1024 * 1024);
+  if (buf.length < 100 || buf[0] !== 0xff || buf[1] !== 0xd8) throw new HttpError(400, 'Csak JPEG kép tölthető fel');
+  fs.mkdirSync(SHOTS_DIR, { recursive: true });
+  fs.writeFileSync(path.join(SHOTS_DIR, `${s.id}.jpg`), buf);
+  run('UPDATE screens SET info = ? WHERE id = ?', JSON.stringify({ ...(s.info || {}), screenshot_at: now() }), s.id);
   send(res, 200, { ok: true });
 });
 
@@ -626,9 +640,14 @@ r.put('/api/screens/:id', A, async (req, res) => {
   pushTo(s.device_id, 'refresh');
   send(res, 200, screenOut(Screens.get(s.id)));
 });
+r.get('/api/screens/:id/screenshot', A, (req, res) => {
+  const file = path.join(SHOTS_DIR, `${id(req)}.jpg`);
+  if (!fs.existsSync(file)) throw new HttpError(404, 'Még nincs képernyőkép');
+  send(res, 200, fs.readFileSync(file), { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' });
+});
 r.del('/api/screens/:id', A, (req, res) => {
   const s = Screens.get(id(req));
-  if (s) { pushTo(s.device_id, 'unpaired'); run('DELETE FROM screens WHERE id = ?', s.id); }
+  if (s) { pushTo(s.device_id, 'unpaired'); run('DELETE FROM screens WHERE id = ?', s.id); fs.rmSync(path.join(SHOTS_DIR, `${s.id}.jpg`), { force: true }); }
   send(res, 200, { ok: true });
 });
 r.post('/api/screens/:id/command', A, async (req, res) => {
@@ -636,19 +655,19 @@ r.post('/api/screens/:id/command', A, async (req, res) => {
   if (!s) throw new HttpError(404, 'Nem található');
   const { command, args } = await readBody(req);
   if (!['reload', 'identify', 'next', 'prev', 'goto', 'refresh', 'clear-cache', 'diag', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
-  if (AGENT_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
+  if (ADMIN_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
   const map = AGENT_COMMANDS.includes(command) ? agents : streams;
   pushTo(s.device_id, 'command', { command, args }, map);
-  if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → ${s.name} (${req.user.username})`);
+  if (ADMIN_COMMANDS.includes(command)) console.log(`[parancs] ${command} → ${s.name} (${req.user.username})`);
   send(res, 200, { ok: true, delivered: map.has(s.device_id) });
 });
 r.post('/api/screens/broadcast', A, async (req, res) => {
   const { command } = await readBody(req);
-  if (!['reload', 'refresh', 'identify', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
-  if (AGENT_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
+  if (!['reload', 'refresh', 'identify', ...ADMIN_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
+  if (ADMIN_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
   const map = AGENT_COMMANDS.includes(command) ? agents : streams;
   for (const devId of map.keys()) pushTo(devId, 'command', { command }, map);
-  if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → minden képernyő (${req.user.username})`);
+  if (ADMIN_COMMANDS.includes(command)) console.log(`[parancs] ${command} → minden képernyő (${req.user.username})`);
   send(res, 200, { ok: true, count: map.size });
 });
 
