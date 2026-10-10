@@ -385,3 +385,7 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .share i { display: block; height: 100%; background: var(--primary); min-width: 2px; }
 .share span { width: 34px; color: var(--muted); font-size: 12px; }
 @media (max-width: 900px) { .report-filters { grid-template-columns: 1fr 1fr; } }
+
+/* Szerepkörök */
+.role-banner { position: sticky; top: 0; z-index: 30; background: var(--info-soft); color: var(--text); text-align: center; font-size: 13px; padding: 7px 12px; border-bottom: 1px solid var(--border); }
+.list-item .role-sel { width: auto; flex: none; min-width: 0; padding: 5px 28px 5px 10px; font-size: 13px; height: auto; }

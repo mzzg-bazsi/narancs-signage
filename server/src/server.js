@@ -8,7 +8,7 @@ import {
   db, all, get, run, DATA_DIR, MEDIA_DIR, Slides, Playlists, Calendars, Events, Forms, Screens, getSetting, setSetting,
 } from './db.js';
 import { Router, HttpError, send, readBody, serveFile, serveStatic, MIME } from './http.js';
-import { createUser, login, sessionCookie, currentUser, requireAuth, userCount, listUsers, verifyPassword, hashPassword } from './auth.js';
+import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, userCount, listUsers, verifyPassword, hashPassword, createToken, listTokens, setRole, ROLES } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
@@ -320,7 +320,7 @@ r.get('/api/preview', (req, res) => {
 // =====================================================================
 r.get('/api/auth/state', (req, res) => {
   const u = currentUser(req);
-  send(res, 200, { setup: userCount() === 0, user: u ? { id: u.id, username: u.username } : null, version: VERSION, lang: lang() });
+  send(res, 200, { setup: userCount() === 0, user: u ? { id: u.id, username: u.username, role: u.role } : null, version: VERSION, lang: lang() });
 });
 // Az admin felület nyelve – szinkron szkriptként töltődik be, a felület kódja előtt
 r.get('/api/lang.js', (req, res) => {
@@ -375,7 +375,7 @@ r.post('/api/auth/logout', (req, res) => {
 // =====================================================================
 //  Admin API – minden alábbi útvonal bejelentkezést igényel
 // =====================================================================
-const A = requireAuth;
+const A = (req) => { requireAuth(req); authorize(req); }; // bejelentkezés + szerepkör szerinti jogosultság
 
 function isOnline(s) { return streams.has(s.device_id) || (s.last_seen && now() - s.last_seen < 90e3); }
 function screenOut(s) {
@@ -636,6 +636,7 @@ r.post('/api/screens/:id/command', A, async (req, res) => {
   if (!s) throw new HttpError(404, 'Nem található');
   const { command, args } = await readBody(req);
   if (!['reload', 'identify', 'next', 'prev', 'goto', 'refresh', 'clear-cache', 'diag', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
+  if (AGENT_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
   const map = AGENT_COMMANDS.includes(command) ? agents : streams;
   pushTo(s.device_id, 'command', { command, args }, map);
   if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → ${s.name} (${req.user.username})`);
@@ -644,6 +645,7 @@ r.post('/api/screens/:id/command', A, async (req, res) => {
 r.post('/api/screens/broadcast', A, async (req, res) => {
   const { command } = await readBody(req);
   if (!['reload', 'refresh', 'identify', ...AGENT_COMMANDS].includes(command)) throw new HttpError(400, 'Ismeretlen parancs');
+  if (AGENT_COMMANDS.includes(command) && req.user.role !== 'admin') throw new HttpError(403, 'Ehhez nincs jogosultságod'); // újraindítás csak adminnak
   const map = AGENT_COMMANDS.includes(command) ? agents : streams;
   for (const devId of map.keys()) pushTo(devId, 'command', { command }, map);
   if (AGENT_COMMANDS.includes(command)) console.log(`[parancs] ${command} → minden képernyő (${req.user.username})`);
@@ -693,7 +695,20 @@ r.put('/api/settings', A, async (req, res) => {
 });
 r.post('/api/samples', A, (req, res) => { const out = seedSamples(); notifyChange(); send(res, 200, out); });
 r.get('/api/users', A, (req, res) => send(res, 200, listUsers()));
-r.post('/api/users', A, async (req, res) => { const b = await readBody(req); createUser(b.username, b.password); send(res, 200, listUsers()); });
+r.post('/api/users', A, async (req, res) => { const b = await readBody(req); createUser(b.username, b.password, b.role || 'editor'); send(res, 200, listUsers()); });
+r.put('/api/users/:id', A, async (req, res) => {
+  if (id(req) === req.user.id) throw new HttpError(400, 'A saját szerepkörödet nem módosíthatod');
+  setRole(id(req), (await readBody(req)).role);
+  send(res, 200, listUsers());
+});
+// ---------- API kulcsok (automatizáláshoz: Authorization: Bearer ns_…) ----------
+r.get('/api/tokens', A, (req, res) => send(res, 200, listTokens()));
+r.post('/api/tokens', A, async (req, res) => {
+  const b = await readBody(req);
+  const token = createToken(req.user.id, b.name, b.role);
+  send(res, 200, { token, tokens: listTokens() }); // a kulcs csak most látszik, utána csak a hash-e tárolódik
+});
+r.del('/api/tokens/:id', A, (req, res) => { run('DELETE FROM api_tokens WHERE id = ?', id(req)); send(res, 200, listTokens()); });
 r.del('/api/users/:id', A, (req, res) => {
   if (id(req) === req.user.id) throw new HttpError(400, 'Saját magadat nem törölheted');
   run('DELETE FROM users WHERE id = ?', id(req));

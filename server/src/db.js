@@ -114,6 +114,15 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_stats_time ON stats(created_at);
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  hash TEXT UNIQUE NOT NULL,
+  role TEXT NOT NULL DEFAULT 'editor',
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  last_used INTEGER
+);
 CREATE INDEX IF NOT EXISTS idx_events_cal ON events(calendar_id);
 `);
 
@@ -122,6 +131,7 @@ const addColumn = (table, col, def) => {
   if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
 };
 addColumn('events', 'rrule', "TEXT NOT NULL DEFAULT ''"); // ismétlődés, pl. FREQ=WEEKLY;UNTIL=20261231
+addColumn('users', 'role', "TEXT NOT NULL DEFAULT 'admin'"); // admin | editor | viewer
 
 // JSON oszlopok automatikus kezelése
 const JSON_COLS = new Set(['data', 'items', 'schedule', 'settings', 'info', 'fields', 'ical_cache', 'screen_ids']);

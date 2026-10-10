@@ -451,6 +451,8 @@
   const builtWith = () => h('a', { class: 'built-with', href: 'https://claude.com/claude-code', target: '_blank', rel: 'noopener' }, tr('Teljes egészében a Claude programozta'));
 
   let ME = null;
+  const ROLE_NAMES = { admin: tr('Adminisztrátor'), editor: tr('Szerkesztő'), viewer: tr('Megtekintő') };
+  const isAdmin = () => (ME?.role || 'admin') === 'admin';
   function authScreen(setup) {
     const data = { username: setup ? 'admin' : '', password: '', password2: '', org_name: '', language: I18N.lang };
     const err = h('div', { class: 'err' });
@@ -492,17 +494,19 @@
     [tr('Rendszer'), [['branding', tr('Arculat'), 'palette'], ['alerts', tr('Vészjelzés'), 'alert'], ['settings', tr('Beállítások'), 'settings']]],
   ];
   function shell() {
-    const nav = h('nav', { class: 'nav' }, NAV.map(([sec, items]) => [h('div', { class: 'nav-section' }, sec), items.map(([r, l, ic]) => h('a', { href: `#/${r}`, 'data-r': r }, icon(ic), l, h('span', { class: 'count hidden', 'data-count': r })))]));
+    // az arculat a rendszerbeállítások része → csak adminisztrátornak
+    const nav = h('nav', { class: 'nav' }, NAV.map(([sec, items]) => [h('div', { class: 'nav-section' }, sec), items.filter(([r]) => r !== 'branding' || isAdmin()).map(([r, l, ic]) => h('a', { href: `#/${r}`, 'data-r': r }, icon(ic), l, h('span', { class: 'count hidden', 'data-count': r })))]));
     const sidebar = h('aside', { class: 'sidebar' },
       h('div', { class: 'brand' }, ME.logo_url ? h('img', { class: 'logo-img', src: ME.logo_url, alt: '' }) : h('div', { class: 'logo' }, h('img', { src: '/shared/splash/logo.svg', alt: '' })), h('div', {}, ME.org_name || 'Narancs Signage', h('small', {}, 'Narancs Signage'))),
       nav,
-      h('div', { class: 'bottom' }, h('div', { class: 'avatar' }, ME.username[0].toUpperCase()), h('div', { class: 'who' }, ME.username, h('small', {}, tr('Adminisztrátor'))),
+      h('div', { class: 'bottom' }, h('div', { class: 'avatar' }, ME.username[0].toUpperCase()), h('div', { class: 'who' }, ME.username, h('small', {}, ROLE_NAMES[ME.role] || ROLE_NAMES.admin)),
         btn('', toggleTheme, { cls: 'ghost icon', ic: 'moon', title: tr('Sötét/világos mód') }),
         btn('', async () => { await POST('/api/auth/logout'); boot(); }, { cls: 'ghost icon', ic: 'logout', title: tr('Kijelentkezés') })),
       h('div', { class: 'copyright' }, COPYRIGHT, h('br'), builtWith()));
     nav.addEventListener('click', () => sidebar.classList.remove('open'));
     $('#app').replaceChildren(
       h('div', { class: 'mobile-bar' }, btn('', () => sidebar.classList.toggle('open'), { cls: 'ghost icon', ic: 'menu' }), 'Narancs Signage'),
+      ME.role === 'viewer' ? h('div', { class: 'role-banner' }, tr('👁️ Megtekintő vagy: mindent láthatsz, de módosítani nem tudsz.')) : null,
       h('div', { class: 'layout' }, sidebar, h('main', { class: 'main', id: 'view' })));
   }
   function toggleTheme() {
@@ -1803,24 +1807,35 @@
   //  Beállítások
   // =====================================================================
   async function pageSettings(view) {
-    const [st, users] = await Promise.all([GET('/api/settings'), GET('/api/users'), load('media')]);
+    const admin = isAdmin();
+    const [st, users, tokens] = await Promise.all([GET('/api/settings'), admin ? GET('/api/users') : [], admin ? GET('/api/tokens') : [], load('media')]);
     const pw = { current: '', password: '', password2: '' };
-    const nu = { username: '', password: '' };
+    const nu = { username: '', password: '', role: 'editor' };
+    const nt = { name: '', role: 'editor' };
+    const roleOpts = Object.entries(ROLE_NAMES);
     const lang = { v: st.language || I18N.lang };
     const usersBox = h('div');
     const drawUsers = (list) => usersBox.replaceChildren(...list.map((u) => h('div', { class: 'list-item' }, h('div', { class: 'avatar' }, u.username[0].toUpperCase()), h('div', { class: 'grow' }, h('b', {}, u.username), h('div', { class: 'small muted' }, tr('Létrehozva: {t}', { t: fmtDate(u.created_at) }))),
+      u.id !== ME.id ? h('select', { class: 'input sm role-sel', title: tr('Szerepkör'), onchange: async (e) => { try { drawUsers(await PUT(`/api/users/${u.id}`, { role: e.target.value })); toast(tr('Szerepkör módosítva')); } catch (ex) { fail(ex); } } },
+        roleOpts.map(([k, l]) => h('option', { value: k, selected: (u.role || 'admin') === k }, l))) : h('span', { class: 'small muted' }, ROLE_NAMES[u.role || 'admin']),
       u.id !== ME.id ? btn('', async () => { if (!(await confirmBox(tr('Törlöd „{name}” felhasználót?', { name: u.username }), { ok: tr('Törlés') }))) return; drawUsers(await DEL(`/api/users/${u.id}`)); }, { cls: 'sm icon ghost', ic: 'trash' }) : h('span', { class: 'badge orange' }, tr('Te')))));
     drawUsers(users);
+    const tokensBox = h('div');
+    const drawTokens = (list) => tokensBox.replaceChildren(...(list.length ? list.map((t) => h('div', { class: 'list-item' }, h('div', { class: 'grow' }, h('b', {}, t.name),
+      h('div', { class: 'small muted' }, `${ROLE_NAMES[t.role]} · ${tr('létrehozta: {u}', { u: t.username })} · ${t.last_used ? tr('utoljára használva: {t}', { t: ago(t.last_used) }) : tr('még nem használták')}`)),
+      btn('', async () => { if (!(await confirmBox(tr('Visszavonod a(z) „{name}” kulcsot? Az ezt használó rendszerek nem érik el többé az API-t.', { name: t.name }), { ok: tr('Visszavonás') }))) return; drawTokens(await DEL(`/api/tokens/${t.id}`)); }, { cls: 'sm icon ghost', ic: 'trash', title: tr('Visszavonás') })))
+      : [h('div', { class: 'empty small' }, tr('Még nincs API kulcs'))]));
+    drawTokens(tokens);
     view.replaceChildren(
       head(tr('Beállítások'), `Narancs Signage v${st.version} · Node ${st.node}`),
       h('div', { class: 'grid c2' },
-        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Nyelv'))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Nyelv'))),
           h('div', { class: 'card-body stack' },
             F.select(tr('A felület és a képernyők nyelve'), lang, 'v', Object.entries(I18N.LANGS), { onchange: async (v) => {
               try { await PUT('/api/settings', { language: v }); location.reload(); } catch (e) { fail(e); }
             } }),
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('Az admin felület, a kijelzők feliratai (dátumok, gombok, billentyűzet) és az új tartalmak mintaszövegei ezen a nyelven jelennek meg. A már létrehozott tartalmak szövege nem változik.')))),
-        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Szervezet és arculat'))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Szervezet és arculat'))),
           h('div', { class: 'card-body stack' },
             h('div', { class: 'row' }, ME.logo_url ? h('img', { src: ME.logo_url, style: { height: '44px', maxWidth: '140px', objectFit: 'contain' } }) : null, h('div', {}, h('b', {}, st.org_name), st.slogan ? h('div', { class: 'small muted' }, st.slogan) : null)),
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('A szervezet neve, a logó, a színek, a betűtípusok és a képernyő fejléce az Arculat menüben állítható.')),
@@ -1833,17 +1848,35 @@
               if (pw.password !== pw.password2) return toast(tr('A két jelszó nem egyezik'), 'err');
               try { await POST('/api/account/password', pw); toast(tr('Jelszó módosítva')); } catch (e) { fail(e); }
             }, { cls: 'primary' })))),
-        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Felhasználók'))), usersBox,
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Felhasználók'))), usersBox,
           h('div', { class: 'card-body row', style: { borderTop: '1px solid var(--border)', alignItems: 'flex-end' } },
             h('div', { class: 'grow' }, F.text(tr('Felhasználónév'), nu, 'username')), h('div', { class: 'grow' }, F.text(tr('Jelszó'), nu, 'password', { type: 'password' })),
+            h('div', {}, F.select(tr('Szerepkör'), nu, 'role', roleOpts)),
             btn(tr('Hozzáadás'), async () => { try { drawUsers(await POST('/api/users', nu)); toast(tr('Felhasználó létrehozva')); } catch (e) { fail(e); } }, { cls: 'primary', ic: 'plus' }))),
-        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Minta tartalmak'))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('API kulcsok'))),
+          h('div', { class: 'card-body stack' },
+            h('p', { class: 'small muted', style: { margin: 0 } }, tr('Más rendszerek (pl. Home Assistant, Zapier, saját szkript) ezzel a kulccsal hívhatják az API-t – például vészjelzést küldhetnek. Fejléc: '), h('span', { class: 'code-pill' }, 'Authorization: Bearer ns_…')),
+            tokensBox,
+            h('div', { class: 'row', style: { alignItems: 'flex-end' } },
+              h('div', { class: 'grow' }, F.text(tr('Kulcs neve'), nt, 'name', { placeholder: tr('pl. Home Assistant') })),
+              h('div', {}, F.select(tr('Szerepkör'), nt, 'role', roleOpts)),
+              btn(tr('Kulcs létrehozása'), async () => {
+                try {
+                  const r = await POST('/api/tokens', nt);
+                  drawTokens(r.tokens); nt.name = '';
+                  const m = modal({ title: tr('Új API kulcs'), body: h('div', { class: 'stack' },
+                    h('p', { class: 'small' }, tr('Másold ki most – biztonsági okból később már nem jeleníthető meg.')),
+                    h('div', { class: 'code-pill', style: { userSelect: 'all', wordBreak: 'break-all', fontSize: '13px', padding: '10px' } }, r.token)),
+                  foot: [btn(tr('Másolás'), async () => { try { await navigator.clipboard.writeText(r.token); toast(tr('Kimásolva')); } catch { /* */ } }, { ic: 'copy' }), btn(tr('Kész'), () => m.close(), { cls: 'primary' })] });
+                } catch (e) { fail(e); }
+              }, { cls: 'primary', ic: 'plus' })))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Minta tartalmak'))),
           h('div', { class: 'card-body stack' },
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('Egy új lejátszási lista bemutató tartalmakkal: üdvözlő hirdetmény, óra és időjárás, kártyák, naptár mintaeseményekkel, interaktív menü elégedettségi kérdőívvel és visszaszámláló. Az első telepítéskor ez automatikusan létrejön.')),
             h('div', {}, btn(tr('Minta tartalmak létrehozása'), async () => {
               try { const r = await POST('/api/samples'); invalidate('playlists', 'slides', 'forms', 'calendars'); toast(tr('Minta tartalmak létrehozva')); location.hash = `#/playlists/${r.playlist_id}`; } catch (e) { fail(e); }
             }, { ic: 'plus' })))),
-        h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer és mentés'))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer és mentés'))),
           h('div', { class: 'card-body stack' },
             h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)),
             h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))),
@@ -1852,6 +1885,7 @@
               btn(tr('Képernyők újratöltése'), async () => { const r = await POST('/api/screens/broadcast', { command: 'reload' }); toast(tr('{n} képernyő újratöltve', { n: r.count })); }, { ic: 'refresh' })),
             h('div', { class: 'small muted' }, tr('A teljes mentéshez (médiafájlokkal együtt) a szerveren futtasd: '), h('span', { class: 'code-pill' }, 'sudo signage-backup'))))),
     );
+    if (!admin) view.querySelectorAll('[data-admin]').forEach((el) => el.remove());
   }
 
   boot();

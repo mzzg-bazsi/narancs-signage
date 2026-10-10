@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.13.0] – 2026-10-10
+
+### Új
+- **Szerepkörök**: Adminisztrátor (minden), Szerkesztő (tartalmak, listák, naptárak, űrlapok, képernyők beállítása és parancsai, vészjelzés), Megtekintő (csak olvasás). Új felhasználónál választható, meglévőnél a Beállításokban módosítható. A felhasználók, API kulcsok, rendszerbeállítások, arculat, mentés, párosítás, képernyő törlése és az eszköz újraindítása csak adminisztrátornak elérhető. A meglévő felhasználók adminisztrátorok maradnak.
+- **API kulcsok** (Beállítások → API kulcsok): más rendszerek (Home Assistant, Zapier, saját szkript) a kulccsal hívhatják az API-t (`Authorization: Bearer ns_…`), saját szerepkörrel; a kulcs csak létrehozáskor látszik, a szerver csak a hash-ét tárolja, bármikor visszavonható.
+
 ## [1.12.0] – 2026-10-10
 
 ### Új

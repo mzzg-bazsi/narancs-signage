@@ -8,6 +8,10 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  'Ehhez nincs jogosultságod': 'You do not have permission for this',
+  'Ismeretlen szerepkör': 'Unknown role',
+  'A saját szerepkörödet nem módosíthatod': 'You cannot change your own role',
+  'Adj nevet a kulcsnak': 'Give the key a name',
   '(törölt tartalom)': '(deleted content)',
   '(törölt képernyő)': '(deleted screen)',
   'Tartalom': 'Content',
