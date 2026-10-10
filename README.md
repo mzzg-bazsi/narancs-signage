@@ -99,15 +99,15 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 
 ## Installation
 
-### 1. Server (Ubuntu Server 22.04 / 24.04, amd64 or arm64)
+### 1. Server (Ubuntu / Debian, amd64 or arm64 – or macOS)
 
 ```bash
-git clone https://github.com/mzzg-bazsi/narancs-signage.git
-cd narancs-signage
-sudo ./install/install-server.sh
+curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh | sudo bash
 ```
 
-The installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `--port 80`.
+The one-line installer downloads the latest [release](https://github.com/mzzg-bazsi/narancs-signage/releases) and runs `install/install-server.sh` (from a cloned folder you can run that directly). On **macOS** run the same command without `sudo`: it installs Node.js with Homebrew if needed and starts the server at login (LaunchAgent).
+
+The installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `... | sudo bash -s -- --port 80`.
 
 Open the printed address (`http://SERVER-IP:8080/admin/`). On first visit you choose the language and create the admin account; a default playlist with sample content is created as well.
 
@@ -167,6 +167,7 @@ server/
   public/player/       player (vanilla JS, service worker, QR generator, virtual keyboard)
   public/shared/       shared: translations (i18n.js), branding themes (themes.js), logo
 install/
+  install.sh           one-line installer from GitHub (Ubuntu/Debian → install-server.sh, macOS → LaunchAgent)
   install-server.sh    server installer (systemd, backup, firewall)
   install-player.sh    kiosk installer (X11, Chromium, autologin, monitor schedule)
 ```
@@ -180,7 +181,7 @@ Translations: every UI string is wrapped in `tr('…')` with the original Hungar
 | Status | `systemctl status narancs-signage` |
 | Logs | `journalctl -u narancs-signage -f` |
 | Manual backup | `sudo signage-backup` (→ `/var/backups/narancs-signage/`) |
-| Update | `git pull && sudo ./install/install-server.sh` (data is kept) |
+| Update | `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (data is kept) |
 | Data location | `/var/lib/narancs-signage` (database + media) |
 | Player settings | `/etc/narancs-signage/player.conf` on the display device |
 

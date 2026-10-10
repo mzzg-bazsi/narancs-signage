@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.18.0] – 2026-10-10
+
+### Új
+- **Egysoros telepítő a GitHubról**: `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh | sudo bash` – letölti a kiadást, Ubuntu/Debian alatt lefuttatja a szerver telepítőt, **macOS**-en (`sudo` nélkül) LaunchAgentként telepíti és indítja a szervert (Node.js Homebrew-val, ha hiányzik). Más rendszeren Docker parancsot ajánl.
+- **Telepítők a Release-ekben**: minden kiadáshoz assetként felkerül az `install.sh` (az adott verzióhoz kötve) és az `install-player.sh`; a kiadási jegyzet tartalmazza a telepítő parancsot.
+
+### Változott
+- README-k és dokumentáció: a szerver telepítése az egysoros paranccsal.
+
 ## [1.17.2] – 2026-10-10
 
 ### Új

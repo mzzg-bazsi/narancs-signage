@@ -25,5 +25,10 @@ echo "✔ v$CUR → v$NEW"
 if git remote get-url origin >/dev/null 2>&1; then git push -q origin HEAD && git push -q origin "v$NEW" && echo "✔ Feltöltve a GitHubra"; fi
 # GitHub Release a változásnapló bejegyzéséből (ha a gh be van jelentkezve)
 if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
-  ./scripts/release-notes.sh "$NEW" | gh release create "v$NEW" --verify-tag --title "v$NEW" --notes-file - >/dev/null && echo "✔ GitHub Release: v$NEW"
+  # telepítők assetként: az install.sh ehhez a verzióhoz kötve (a /releases/latest/download/ cím mindig a legfrissebbet adja)
+  ASSETS="$(mktemp -d)"
+  sed "s/__VERSION__/$NEW/" install/install.sh > "$ASSETS/install.sh"
+  cp install/install-player.sh "$ASSETS/install-player.sh"
+  ./scripts/release-notes.sh "$NEW" | gh release create "v$NEW" --verify-tag --title "v$NEW" --notes-file - "$ASSETS/install.sh" "$ASSETS/install-player.sh" >/dev/null && echo "✔ GitHub Release: v$NEW"
+  rm -rf "${ASSETS:?}"
 fi

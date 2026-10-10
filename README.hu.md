@@ -99,16 +99,15 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 
 ## Telepítés
 
-### 1. Szerver (Ubuntu Server 22.04 / 24.04, amd64 vagy arm64)
-
-Másold fel a projekt mappát a szerverre (pl. `scp -r signage user@szerver:~` vagy git), majd:
+### 1. Szerver (Ubuntu / Debian, amd64 vagy arm64 – vagy macOS)
 
 ```bash
-cd signage
-sudo ./install/install-server.sh
+curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh | sudo bash
 ```
 
-A telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `--port 80`.
+Az egysoros telepítő letölti a legfrissebb [kiadást](https://github.com/mzzg-bazsi/narancs-signage/releases), és lefuttatja az `install/install-server.sh`-t (klónozott mappából ez közvetlenül is futtatható). **macOS**-en ugyanez a parancs `sudo` nélkül: ha kell, Homebrew-val telepíti a Node.js-t, és bejelentkezéskor elindítja a szervert (LaunchAgent).
+
+A telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `... | sudo bash -s -- --port 80`.
 
 Nyisd meg a kiírt címet (`http://SZERVER-IP:8080/admin/`) – első alkalommal kiválasztod a nyelvet és létrehozod az admin fiókot; ekkor egy alap lejátszási lista is létrejön minta tartalmakkal.
 
@@ -168,6 +167,7 @@ server/
   public/player/       lejátszó (vanilla JS, service worker, QR generátor, virtuális billentyűzet)
   public/shared/       közös: fordítások (i18n.js), arculati témák (themes.js), logó
 install/
+  install.sh           egysoros telepítő a GitHubról (Ubuntu/Debian → install-server.sh, macOS → LaunchAgent)
   install-server.sh    szerver telepítő (systemd, mentés, tűzfal)
   install-player.sh    kioszk telepítő (X11, Chromium, autologin, monitor időzítés)
 ```
@@ -179,7 +179,7 @@ install/
 | Állapot | `systemctl status narancs-signage` |
 | Napló | `journalctl -u narancs-signage -f` |
 | Kézi mentés | `sudo signage-backup` (→ `/var/backups/narancs-signage/`) |
-| Frissítés | `git pull`, majd `sudo ./install/install-server.sh` (az adatok megmaradnak) |
+| Frissítés | `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (az adatok megmaradnak) |
 | Adatok helye | `/var/lib/narancs-signage` (adatbázis + média) |
 | Lejátszó beállítás | `/etc/narancs-signage/player.conf` a kijelző eszközön |
 
@@ -197,12 +197,10 @@ A forráskód a GitHubon van, a verziók [szemantikus verziózást](https://semv
 **Szerver telepítése / frissítése a GitHubról:**
 
 ```bash
-git clone https://github.com/mzzg-bazsi/narancs-signage.git
-cd narancs-signage
-sudo ./install/install-server.sh
+curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh | sudo bash
 ```
 
-Frissítés később: `git pull && sudo ./install/install-server.sh`. Egy adott verzióra: `git checkout v1.1.0`.
+Egy adott verzióra: `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/download/vX.Y.Z/install.sh | sudo bash`. Minden kiadáshoz letölthető assetként az `install.sh` és az `install-player.sh` is.
 
 **Új verzió kiadása:**
 1. Írd le a változásokat a `CHANGELOG.md` tetejére egy új `## [X.Y.Z] – dátum` szakaszba, és commitold.
