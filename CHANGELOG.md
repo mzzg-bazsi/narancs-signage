@@ -7,6 +7,14 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.17.0] – 2026-10-10
+
+### Új
+- **Közösségi sablongaléria**: a Sablonok oldalon új „Közösségi galéria” fül a [narancs-signage-templates](https://github.com/mzzg-bazsi/narancs-signage-templates) repó sablonjaival – élő előnézet, kategória, szerző és licenc, telepítés egy kattintással, letöltés `.narancs.json` fájlként. A szerver tölti le a galériát (10 perces gyorsítótárral), alapból benne van mind a 10 beépített sablon.
+- **Sablon nyelve**: a Sablonok oldalon választható (English / Magyar); a kétnyelvű sablonok előnézete és telepítése a választott nyelven történik, a galéria a választott nyelven elérhető sablonokat mutatja.
+- **Beküldés a galériába**: az Exportálás ablak új gombja letölti a fájlt, és megnyitja a galéria előre kitöltött beküldő űrlapját; a beküldést egy GitHub Action ugyanazzal az ellenőrzővel vizsgálja, és pull requestet nyit.
+- API: `GET /api/gallery`, `POST /api/gallery/:id/install`, `GET /api/gallery/:id/download`, előnézet: `/player/?preview=gallery:ID&lang=hu`; a sablon telepítésnél és importnál `lang` választható. Saját galéria: `SIGNAGE_GALLERY` környezeti változó.
+
 ## [1.16.1] – 2026-10-10
 
 ### Változott

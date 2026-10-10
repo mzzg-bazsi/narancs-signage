@@ -12,6 +12,7 @@ import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, 
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
 import { exportTemplate, importTemplate, templatePreview, normalizeFormFields, localized } from './templates.js';
 import { BUILTIN_TEMPLATES, CATEGORIES } from './builtin-templates.js';
+import { galleryIndex, galleryTemplate, GALLERY_REPO } from './gallery.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
 
@@ -307,7 +308,7 @@ function brandDemo() {
 }
 
 // Előnézet az admin felületről (bejelentkezés szükséges)
-r.get('/api/preview', (req, res) => {
+r.get('/api/preview', async (req, res) => {
   requireAuth(req);
   const slideId = +req.query.get('slide') || null;
   const playlistId = +req.query.get('playlist') || null;
@@ -318,7 +319,9 @@ r.get('/api/preview', (req, res) => {
   } else if (req.query.get('template')) {
     const b = BUILTIN_TEMPLATES.find((x) => x.id === req.query.get('template'));
     if (!b) throw new HttpError(404, 'Nem található');
-    cfg = templatePreview(b.template, orgInfo());
+    cfg = templatePreview(b.template, orgInfo(), { lang: req.query.get('lang') });
+  } else if (req.query.get('gallery')) {
+    cfg = templatePreview((await galleryTemplate(req.query.get('gallery'))).template, orgInfo(), { lang: req.query.get('lang') });
   } else if (screenId) {
     const s = Screens.get(screenId);
     if (!s) throw new HttpError(404, 'Nincs ilyen képernyő');
@@ -571,8 +574,8 @@ crudRoutes('forms', Forms, {
 });
 // ---------- Sablonok: beépített galéria, export és import (.narancs.json) ----------
 r.get('/api/templates', A, (req, res) => send(res, 200, {
-  categories: localized(CATEGORIES),
-  templates: BUILTIN_TEMPLATES.map((b) => ({ id: b.id, icon: b.icon, category: b.category, ...localized({ name: b.template.meta.name, description: b.template.meta.description }),
+  categories: localized(CATEGORIES, req.query.get('lang')),
+  templates: BUILTIN_TEMPLATES.map((b) => ({ id: b.id, icon: b.icon, category: b.category, languages: ['en', 'hu'], ...localized({ name: b.template.meta.name, description: b.template.meta.description }, req.query.get('lang')),
     slides: b.template.slides.length, items: b.template.playlist?.items.length || 0, forms: b.template.forms.length, calendars: b.template.calendars.length })),
 }));
 r.post('/api/templates/export', A, async (req, res) => {
@@ -580,16 +583,35 @@ r.post('/api/templates/export', A, async (req, res) => {
   send(res, 200, exportTemplate({ slideIds: b.slide_ids || [], playlistId: +b.playlist_id || null, meta: b }, VERSION));
 });
 r.post('/api/templates/import', A, async (req, res) => {
-  const out = importTemplate(await readBody(req, 64 * 1024 * 1024));
+  const out = importTemplate(await readBody(req, 64 * 1024 * 1024), { lang: req.query.get('lang') });
   notifyChange();
   send(res, 200, out);
 });
-r.post('/api/templates/:id/install', A, (req, res) => {
+r.post('/api/templates/:id/install', A, async (req, res) => {
   const b = BUILTIN_TEMPLATES.find((x) => x.id === req.params.id);
   if (!b) throw new HttpError(404, 'Nem található');
-  const out = importTemplate(b.template);
+  const out = importTemplate(b.template, { lang: (await readBody(req)).lang });
   notifyChange();
   send(res, 200, out);
+});
+// közösségi galéria (a szerver tölti le a GitHub Pages-ről)
+r.get('/api/gallery', A, async (req, res) => {
+  const idx = await galleryIndex();
+  const l = req.query.get('lang');
+  send(res, 200, {
+    repo: GALLERY_REPO, updated: idx.updated, categories: localized({ ...CATEGORIES, ...(idx.categories || {}) }, l),
+    templates: (idx.templates || []).map((t) => ({ ...t, ...localized({ name: t.name, description: t.description }, l) })),
+  });
+});
+r.post('/api/gallery/:id/install', A, async (req, res) => {
+  const { template } = await galleryTemplate(req.params.id);
+  const out = importTemplate(template, { lang: (await readBody(req)).lang });
+  notifyChange();
+  send(res, 200, out);
+});
+r.get('/api/gallery/:id/download', A, async (req, res) => {
+  const { template } = await galleryTemplate(req.params.id);
+  send(res, 200, JSON.stringify(template, null, 1), { 'Content-Type': 'application/json; charset=utf-8', 'Content-Disposition': `attachment; filename="${req.params.id}.narancs.json"` });
 });
 
 r.get('/api/forms/:id/submissions', A, (req, res) => {

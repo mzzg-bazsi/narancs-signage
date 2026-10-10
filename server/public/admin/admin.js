@@ -630,35 +630,60 @@
   // =====================================================================
   //  Sablonok: beépített galéria élő előnézettel, import fájlból, export
   // =====================================================================
-  let tplCategory = '';
+  const GALLERY_REPO = 'https://github.com/mzzg-bazsi/narancs-signage-templates';
+  const tpl = { tab: 'builtin', category: '', lang: '' };
   async function pageTemplates(view) {
-    const { categories, templates } = await GET('/api/templates');
+    tpl.lang ||= I18N.lang;
+    const LANG_NAMES = { en: 'English', hu: 'Magyar' };
     const fileIn = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: () => { const f = fileIn.files[0]; fileIn.value = ''; if (f) importFile(f); } });
-    const grid = h('div', { class: 'tpl-grid' });
-    const chips = h('div', { class: 'row tpl-chips' });
+    const body = h('div');
+    // a beépített lista azonnal megvan; a galériát a szerver tölti le (lehet, hogy épp nem érhető el)
+    const builtin = await GET(`/api/templates?lang=${tpl.lang}`);
+    let gallery = null, galleryErr = null;
+    const loadGallery = async () => { try { gallery = await GET(`/api/gallery?lang=${tpl.lang}`); galleryErr = null; } catch (e) { galleryErr = e.message; } };
+    if (tpl.tab === 'gallery') await loadGallery();
+
     const draw = () => {
-      chips.replaceChildren(...[['', tr('Mind')], ...Object.entries(categories)].map(([k, l]) => h('button', { type: 'button', class: `chip${tplCategory === k ? ' on' : ''}`, onclick: () => { tplCategory = k; draw(); } }, l)));
-      grid.replaceChildren(...templates.filter((t) => !tplCategory || t.category === tplCategory).map((t) => h('div', { class: 'card tpl-card' },
-        h('div', { class: 'tpl-preview' }, h('iframe', { src: `/player/?preview=template:${t.id}`, loading: 'lazy', tabindex: -1, title: t.name })),
-        h('div', { class: 'tpl-body' },
-          h('div', { class: 'row', style: { gap: '8px', flexWrap: 'nowrap' } }, h('span', { class: 'tpl-icon' }, t.icon), h('b', { class: 'grow' }, t.name), h('span', { class: 'badge' }, categories[t.category] || '')),
-          h('p', { class: 'small muted' }, t.description),
-          h('div', { class: 'row between' },
-            h('span', { class: 'small muted' }, [tr('{n} tartalom', { n: t.slides }), t.forms ? tr('űrlap') : null, t.calendars ? tr('naptár') : null].filter(Boolean).join(' · ')),
-            h('div', { class: 'row', style: { gap: '6px' } },
-              btn('', () => window.open(`/player/?preview=template:${t.id}`, '_blank'), { cls: 'sm icon', ic: 'external', title: tr('Előnézet új lapon') }),
-              btn(tr('Telepítés'), () => install(t), { cls: 'sm primary', ic: 'plus' })))))));
+      const src = tpl.tab === 'gallery' ? gallery : builtin;
+      const cats = { ...(builtin.categories || {}), ...(gallery?.categories || {}) };
+      const tabs = h('div', { class: 'tabs-line' },
+        ...[['builtin', tr('Beépített')], ['gallery', tr('Közösségi galéria')]].map(([k, l]) => h('button', { type: 'button', class: tpl.tab === k ? 'on' : '', onclick: async () => { tpl.tab = k; if (k === 'gallery' && !gallery) await loadGallery(); draw(); } }, l)),
+        h('span', { class: 'grow' }),
+        h('label', { class: 'tpl-lang' }, tr('Sablon nyelve'), h('select', { class: 'input sm', onchange: async (e) => { tpl.lang = e.target.value; route(); } }, Object.entries(LANG_NAMES).map(([k, l]) => h('option', { value: k, selected: k === tpl.lang }, l)))));
+      const chips = h('div', { class: 'row tpl-chips' }, ...[['', tr('Mind')], ...Object.entries(cats)].map(([k, l]) => h('button', { type: 'button', class: `chip${tpl.category === k ? ' on' : ''}`, onclick: () => { tpl.category = k; draw(); } }, l)));
+      let content;
+      if (tpl.tab === 'gallery' && galleryErr) {
+        content = h('div', { class: 'card card-pad empty' }, h('p', {}, tr('A közösségi galéria most nem érhető el. A szervernek internet kell hozzá.')), btn(tr('Újra'), async () => { await loadGallery(); draw(); }, { ic: 'refresh' }));
+      } else {
+        const list = (src?.templates || []).filter((t) => (!tpl.category || t.category === tpl.category) && (t.languages || ['en']).includes(tpl.lang));
+        const kind = tpl.tab === 'gallery' ? 'gallery' : 'template';
+        content = list.length ? h('div', { class: 'tpl-grid' }, list.map((t) => h('div', { class: 'card tpl-card' },
+          h('div', { class: 'tpl-preview' }, h('iframe', { src: `/player/?preview=${kind}:${t.id}&lang=${tpl.lang}`, loading: 'lazy', tabindex: -1, title: t.name })),
+          h('div', { class: 'tpl-body' },
+            h('div', { class: 'row', style: { gap: '8px', flexWrap: 'nowrap' } }, h('span', { class: 'tpl-icon' }, t.icon), h('b', { class: 'grow' }, t.name), h('span', { class: 'badge' }, cats[t.category] || tr('Egyéb'))),
+            h('p', { class: 'small muted' }, t.description),
+            tpl.tab === 'gallery' ? h('div', { class: 'small muted' }, [t.author || t.submitted_by ? tr('Szerző: {a}', { a: t.author || t.submitted_by }) : null, t.license, (t.languages || []).map((l) => l.toUpperCase()).join(' · ')].filter(Boolean).join(' · ')) : null,
+            h('div', { class: 'row between' },
+              h('span', { class: 'small muted' }, [tr('{n} tartalom', { n: t.slides }), t.forms ? tr('űrlap') : null, t.calendars ? tr('naptár') : null, t.media ? tr('{n} kép', { n: t.media }) : null].filter(Boolean).join(' · ')),
+              h('div', { class: 'row', style: { gap: '6px' } },
+                tpl.tab === 'gallery' ? h('a', { class: 'btn sm icon', href: `/api/gallery/${t.id}/download`, title: tr('Letöltés (.narancs.json)') }, icon('download')) : null,
+                btn('', () => window.open(`/player/?preview=${kind}:${t.id}&lang=${tpl.lang}`, '_blank'), { cls: 'sm icon', ic: 'external', title: tr('Előnézet új lapon') }),
+                btn(tr('Telepítés'), () => install(t), { cls: 'sm primary', ic: 'plus' })))))))
+          : h('div', { class: 'card card-pad empty' }, tr('Ebben a kategóriában és nyelven még nincs sablon.'));
+      }
+      body.replaceChildren(tabs, chips, content,
+        tpl.tab === 'gallery' ? h('p', { class: 'small muted mt' }, tr('A közösségi galéria sablonjait a felhasználók küldik be, jóváhagyás után kerülnek ide. Saját sablont az „Exportálás” ablak „Beküldés a galériába” gombjával küldhetsz be. '), h('a', { href: GALLERY_REPO, target: '_blank', rel: 'noopener' }, tr('A galéria a GitHubon →')))
+          : h('p', { class: 'small muted mt' }, tr('Saját sablont bármelyik tartalom vagy lejátszási lista „Exportálás” gombjával készíthetsz (.narancs.json fájl), és egy másik Narancs Signage rendszerbe itt importálhatod.')));
     };
     const install = async (t) => {
       if (!(await confirmBox(tr('Létrehozod a(z) „{name}” sablon tartalmait egy új lejátszási listában? A meglévő tartalmaid nem változnak.', { name: t.name }), { ok: tr('Telepítés') }))) return;
-      try { done(await POST(`/api/templates/${t.id}/install`)); } catch (e) { fail(e); }
+      try { done(await POST(tpl.tab === 'gallery' ? `/api/gallery/${t.id}/install` : `/api/templates/${t.id}/install`, { lang: tpl.lang })); } catch (e) { fail(e); }
     };
     draw();
     view.replaceChildren(
       head(tr('Sablonok'), tr('Kész tartalomcsomagok különféle helyekre – a saját arculatod színeivel. Telepítés után szabadon szerkesztheted őket.'),
         [btn(tr('Importálás fájlból'), () => fileIn.click(), { ic: 'upload' }), fileIn]),
-      chips, grid,
-      h('p', { class: 'small muted mt' }, tr('Saját sablont bármelyik tartalom vagy lejátszási lista „Exportálás” gombjával készíthetsz (.narancs.json fájl), és egy másik Narancs Signage rendszerbe itt importálhatod.')));
+      body);
   }
 
   // importálás/telepítés eredménye: a cache ürítése és ugrás a létrehozott listára vagy tartalomra
@@ -683,16 +708,24 @@
         h('p', { class: 'small muted', style: { margin: 0 } }, tr('A fájlba a tartalmak, a rájuk hivatkozó tartalmak (menü, kártyák, zónák), az űrlapok szerkezete és a képek kerülnek. Beküldött űrlapok, saját naptáresemények és iCal linkek nem.')),
         F.text(tr('Név'), meta, 'name'), F.textarea(tr('Leírás'), meta, 'description', { rows: 2 }),
         F.select(tr('Kategória'), meta, 'category', [...Object.entries(categories), ['other', tr('Egyéb')]])),
-      foot: [btn(tr('Mégse'), () => m.close()), btn(tr('Letöltés'), async () => {
-        try {
-          const t = await POST('/api/templates/export', { ...what, ...meta });
-          const slug = String(meta.name || 'sablon').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sablon';
-          const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(t, null, 1)], { type: 'application/json' })), download: `${slug}.narancs.json` });
-          document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-          m.close(); toast(tr('Sablon letöltve'));
-        } catch (e) { fail(e); }
-      }, { cls: 'primary', ic: 'download' })],
+      foot: [btn(tr('Mégse'), () => m.close()), btn(tr('Beküldés a galériába'), () => download(true), { ic: 'upload', title: tr('Letölti a fájlt, és megnyitja a galéria beküldő űrlapját') }), btn(tr('Letöltés'), () => download(false), { cls: 'primary', ic: 'download' })],
     });
+    async function download(submit) {
+      // az új lapot a kattintáskor nyitjuk meg (különben a böngésző felugró ablakként letiltaná)
+      const win = submit ? window.open('', '_blank') : null;
+      try {
+        const t = await POST('/api/templates/export', { ...what, ...meta });
+        const slug = String(meta.name || 'sablon').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sablon';
+        const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(t, null, 1)], { type: 'application/json' })), download: `${slug}.narancs.json` });
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        m.close();
+        if (!submit) return toast(tr('Sablon letöltve'));
+        // a beküldő űrlap előre kitöltve; a letöltött fájlt a felhasználó húzza rá
+        const q = new URLSearchParams({ template: 'submit-template.yml', title: `Template: ${meta.name}`, name: meta.name, description: meta.description });
+        if (win) win.location = `${GALLERY_REPO}/issues/new?${q}`;
+        toast(tr('A fájl letöltve. Húzd rá a megnyílt GitHub űrlap „Template file” mezőjére, majd küldd el.'));
+      } catch (e) { win?.close(); fail(e); }
+    }
   }
 
   async function pageDashboard(view) {

@@ -1168,7 +1168,8 @@
   }
 
   async function fetchConfig() {
-    const url = PREVIEW ? `/api/preview?${PREVIEW.replace(':', '=')}` : `/api/player/config?device=${DEVICE}`;
+    // előnézetben a ?lang= is továbbmegy (sablon előnézet a választott nyelven)
+    const url = PREVIEW ? `/api/preview?${PREVIEW.replace(':', '=')}${params.get('lang') ? `&lang=${encodeURIComponent(params.get('lang'))}` : ''}` : `/api/player/config?device=${DEVICE}`;
     try {
       const cfg = await api(url);
       setOnline(true);

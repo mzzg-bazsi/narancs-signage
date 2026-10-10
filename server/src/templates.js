@@ -46,8 +46,10 @@ function localize(v, ctx) {
   if (keys.length && keys.every((k) => k === 'en' || k === 'hu') && keys.every((k) => typeof v[k] === 'string')) return localize(v[ctx.lang] ?? v.en ?? v[keys[0]], ctx);
   return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, localize(x, ctx)]));
 }
-const localCtx = () => ({ lang: lang(), org: getSetting('org_name', 'Narancs Signage'), city: getSetting('default_city', 'Budapest') });
-export const localized = (v) => localize(v, localCtx());
+// a sablon nyelve választható (kétnyelvű sablonoknál), alapból a rendszer nyelve
+const LANGS = ['en', 'hu'];
+const localCtx = (l) => ({ lang: LANGS.includes(l) ? l : lang(), org: getSetting('org_name', 'Narancs Signage'), city: getSetting('default_city', 'Budapest') });
+export const localized = (v, l) => localize(v, localCtx(l));
 
 // óra: ha a sablon nem ad meg helyet, az alapértelmezett város
 function fillClock(slide) {
@@ -162,8 +164,8 @@ export function normalizeFormFields(fields = []) {
   });
 }
 
-export function importTemplate(raw) {
-  const t = localize(validateTemplate(raw), localCtx());
+export function importTemplate(raw, { lang: l } = {}) {
+  const t = localize(validateTemplate(raw), localCtx(l));
   const ids = { slide: new Map(), form: new Map(), calendar: new Map(), media: new Map() };
   const written = [];
   try {
@@ -212,8 +214,10 @@ function db_tx(fn) {
 // ---------------------------------------------------------------------
 //  Előnézet mentés nélkül (negatív azonosítókkal)
 // ---------------------------------------------------------------------
-export function templatePreview(raw, org) {
-  const t = localize(validateTemplate(raw), localCtx());
+export function templatePreview(raw, org, { lang: l } = {}) {
+  const ctx = localCtx(l);
+  const t = localize(validateTemplate(raw), ctx);
+  org = { ...org, lang: ctx.lang }; // a lejátszó feliratai (dátumok) is a sablon nyelvén
   const ids = { slide: new Map(), form: new Map(), calendar: new Map(), media: new Map() };
   for (const k of ['slide', 'form', 'calendar', 'media']) (k === 'slide' ? t.slides : t[`${k}s`] || []).forEach((x, i) => ids[k].set(x.ref, -(i + 1)));
   const toId = (kind, v) => ids[kind].get(String(v)) ?? null;

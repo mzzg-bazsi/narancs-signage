@@ -8,6 +8,8 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  'A közösségi galéria most nem érhető el': 'The community gallery is not available right now',
+  'Érvénytelen azonosító': 'Invalid identifier',
   'Hibás sablon: {detail}': 'Invalid template: {detail}',
   'Ez a fájl nem Narancs Signage sablon': 'This file is not a Narancs Signage template',
   'Nem támogatott sablon verzió: {v}': 'Unsupported template version: {v}',
