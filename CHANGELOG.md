@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.9.8] – 2026-10-10
+
+### Új
+- „Claude-dal fejlesztve” („Built with Claude”) jelzés az admin felület belépő oldalán és oldalmenüjében, a szerzői jogi felirat alatt, valamint a README-kben
+
 ## [1.9.7] – 2026-10-10
 
 ### Új

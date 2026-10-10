@@ -197,4 +197,6 @@ Versions follow [semantic versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`)
 
 © 2026 Balázs Mazzag – [Narancs Signage License](LICENSE)
 
+Developed with the help of [Claude](https://claude.com/claude-code) (Anthropic) – much of the code, the installers and the documentation were programmed together with Claude Code.
+
 Anyone may use, modify and share it freely and free of charge – for business purposes and in large companies too. **Only the author may sell the software:** nobody else may sell it, rent it out or offer it as a paid service (charging for installation, operation or content creation is allowed). **Attribution is required:** keep the license file and the copyright notice, do not remove the “© 2026 Balázs Mazzag” notice shown in the admin panel, and when passing it on, state that it is based on “Narancs Signage by Balázs Mazzag”. No notice is shown on the displays.

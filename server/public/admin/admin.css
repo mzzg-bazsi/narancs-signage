@@ -363,3 +363,5 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 /* Szerzői jogi megjegyzés (oldalmenü alja, belépő képernyő) */
 .copyright { font-size: 11px; color: var(--muted); text-align: center; padding-top: 10px; letter-spacing: .01em; }
 .auth .copyright { padding-top: 4px; }
+.copyright .built-with { color: inherit; text-decoration: none; opacity: .85; }
+.copyright .built-with:hover { color: var(--primary-strong); opacity: 1; }
