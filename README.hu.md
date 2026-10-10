@@ -52,7 +52,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 
 ## Funkciók
 
-**Tartalomtípusok (14 db)**
+**Tartalomtípusok (15 db)**
 | Típus | Leírás |
 |---|---|
 | 🖼️ Képváltó | Több kép/videó automatikus váltakozása – áttűnés, csúsztatás, Ken Burns effekt, feliratok, lapozó pöttyök, elmosott háttér |
@@ -69,6 +69,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 | 🌐 Weboldal | Külső oldal/dashboard beágyazása, nagyítás, időzített újratöltés |
 | 📄 PDF | Dokumentum megjelenítése |
 | 🧩 Egyedi HTML | Saját HTML/CSS/JS kód elszigetelt keretben |
+| 🔲 Osztott képernyő | Több tartalom egyszerre, zónákra osztva (oldalsáv, alsó sáv, L alak, oszlopok, 2 × 2 rács) |
 
 **Lejátszás és ütemezés**
 - Lejátszási listák drag & drop sorrendezéssel, tartalmankénti időtartammal, ki/bekapcsolással és érvényességi dátumokkal
@@ -78,7 +79,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 
 **Képernyőkezelés**
 - Párosítás 6 jegyű kóddal, online/offline állapot, éppen futó tartalom, felbontás
-- Távoli parancsok: azonosítás, előző/következő, újratöltés, gyorsítótár ürítés
+- Távoli parancsok: azonosítás, előző/következő, újratöltés, gyorsítótár ürítés, **élő képernyőkép a valódi kijelzőről**
 - Tájolás szoftveresen (fekvő/álló/fejjel lefelé), sarokóra, hírszalag, folyamatjelző, egyedi kiemelő szín
 - Élő előnézet minden tartalomról, listáról és képernyőről az admin felületen
 
@@ -88,8 +89,10 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 - 🎨 Arculat: 10 előre megadott téma (Narancs, Óceán, Erdő, Éjféli lila, Bordó, Fekete-arany, Neon, Tiszta világos, Vállalati kék, Pasztell), egyedi színek, betűtípusok, lekerekítés, logó vízjel, fejléc sáv címmel/alcímmel/órával, képernyőnként eltérő téma – élő előnézettel
 - 🚨 Vészjelzés / közlemény: azonnali, teljes képernyős üzenet minden vagy kiválasztott képernyőre (sablonok: tűzriadó, evakuálás…), lejárati idővel
 - 📊 Irányítópult: online képernyők, megjelenések és érintések statisztikája, legnézettebb tartalmak, beküldések
+- 📈 Riportok (lejátszási igazolás): mi, hol és hányszor ment le, tartalom és képernyő szerint, CSV exporttal
 - 📴 Offline működés: a lejátszó gyorsítótárazza a konfigurációt és a médiafájlokat, szerverkiesés alatt is megy tovább
-- 👥 Több admin felhasználó, munkamenet-kezelés, brute-force védelem, CSRF védelem
+- 👥 Több felhasználó szerepkörökkel (adminisztrátor, szerkesztő, megtekintő), API kulcsok integrációkhoz, munkamenet-kezelés, brute-force védelem, CSRF védelem
+- 🐳 Docker image (amd64 + arm64) az Ubuntu telepítő mellett
 - 💾 Napi automatikus mentés + letölthető adatbázis mentés
 - 🌗 Világos/sötét mód az admin felületen, mobilon is használható
 
@@ -184,7 +187,6 @@ install/
 ## Megjegyzések
 
 - Egyes weboldalak (Google, Facebook stb.) tiltják a beágyazást, ezek a „Weboldal” típusban nem jelennek meg.
-- Az iCal import az ismétlődő eseményeket (RRULE) nem bontja ki, csak az első előfordulást mutatja.
 - A videók hangja telepített lejátszón működik (a kioszk engedélyezi az automatikus lejátszást hanggal); sima böngészőben a böngésző némíthatja.
 
 ## Verziókezelés

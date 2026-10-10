@@ -52,7 +52,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 
 ## Features
 
-**Content types (14)**
+**Content types (15)**
 | Type | Description |
 |---|---|
 | 🖼️ Image slideshow | Several images/videos rotating automatically – fade, slide, Ken Burns effect, captions, page dots, blurred background |
@@ -69,6 +69,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 | 🌐 Website | Embed an external page/dashboard, zoom, timed reload |
 | 📄 PDF | Show a document |
 | 🧩 Custom HTML | Your own HTML/CSS/JS code in an isolated frame |
+| 🔲 Split screen | Several content items at once in zones (sidebar, bottom bar, L-shape, columns, 2 × 2 grid) |
 
 **Playback and scheduling**
 - Playlists with drag & drop ordering, per-item duration, on/off switch and validity dates
@@ -78,7 +79,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 
 **Screen management**
 - Pairing with a 6-digit code, online/offline status, currently playing content, resolution
-- Remote commands: identify, previous/next, reload, clear cache, restart player or device
+- Remote commands: identify, previous/next, reload, clear cache, restart player or device, **live screenshot of the real display**
 - Software rotation (landscape/portrait/upside down), corner clock, news ticker, progress bar, custom accent colour
 - Live preview of every content item, playlist and screen in the admin panel
 
@@ -88,8 +89,10 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 - 🎨 Branding: 10 built-in themes (Orange, Ocean, Forest, Midnight purple, Burgundy, Black & gold, Neon, Clean light, Corporate blue, Pastel), custom colours, fonts, corner rounding, logo watermark, header bar with title/subtitle/clock, a different theme per screen – with live preview
 - 🚨 Emergency alerts / notices: an instant full-screen message on all or selected screens (templates: fire alarm, evacuation…), with expiry
 - 📊 Dashboard: online screens, view and touch statistics, most viewed content, form submissions
+- 📈 Reports (proof of play): what played where and how often, by content and screen, with CSV export
 - 📴 Offline operation: the player caches its configuration and media files and keeps running if the server goes down
-- 👥 Multiple admin users, session management, brute-force and CSRF protection
+- 👥 Multiple users with roles (administrator, editor, viewer), API keys for integrations, session management, brute-force and CSRF protection
+- 🐳 Docker image (amd64 + arm64) besides the Ubuntu installer
 - 💾 Automatic daily backup + downloadable database backup
 - 🌗 Light/dark mode in the admin panel, works on mobile too
 
@@ -185,7 +188,6 @@ Translations: every UI string is wrapped in `tr('…')` with the original Hungar
 ## Notes
 
 - Some websites (Google, Facebook, etc.) block embedding; they will not show in the “Website” content type.
-- The iCal import does not expand recurring events (RRULE); only the first occurrence is shown.
 - Video sound works on an installed player (the kiosk allows autoplay with sound); in a regular browser the browser may mute it.
 
 ## Versioning
