@@ -9,7 +9,7 @@ import {
 } from './db.js';
 import { Router, HttpError, send, readBody, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, userCount, listUsers, verifyPassword, hashPassword } from './auth.js';
-import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal } from './feeds.js';
+import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
 
@@ -85,7 +85,8 @@ function calendarEvents(calIds, daysBack = 1, daysAhead = 120) {
   for (const cid of calIds) {
     const cal = Calendars.get(cid);
     if (!cal) continue;
-    const manual = all('SELECT * FROM events WHERE calendar_id = ?', cid);
+    // a kézi ismétlődő események előfordulásait itt bontjuk ki (az iCal-osakat már importáláskor)
+    const manual = all('SELECT * FROM events WHERE calendar_id = ?', cid).flatMap((e) => (e.rrule ? expandRrule(e, from, to) : [e]));
     for (const e of [...manual, ...(cal.ical_cache || [])]) {
       const s = Date.parse(e.start), en = Date.parse(e.end || e.start);
       if (en >= from && s <= to) out.push({ title: e.title, description: e.description, location: e.location, start: e.start, end: e.end, all_day: !!e.all_day, color: cal.color, calendar: cal.name });

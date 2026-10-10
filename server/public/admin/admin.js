@@ -1388,13 +1388,15 @@
     const evList = h('div');
     const drawEvents = () => {
       const now = Date.now() - 864e5;
-      const upcoming = events.filter((e) => Date.parse(e.end || e.start) >= now);
-      const past = events.filter((e) => Date.parse(e.end || e.start) < now);
+      // ismétlődő esemény addig „közelgő”, amíg a sorozat tart
+      const isUpcoming = (e) => Date.parse(e.end || e.start) >= now || (e.rrule && !(/UNTIL=(\d{8})/.exec(e.rrule)?.[1] < new Date(now).toISOString().slice(0, 10).replace(/-/g, '')));
+      const upcoming = events.filter(isUpcoming);
+      const past = events.filter((e) => !isUpcoming(e));
       const row = (e) => {
         const st = new Date(e.start.length === 10 ? e.start + 'T00:00' : e.start);
         return h('div', { class: 'cal-ev-row' },
           h('div', { class: 'date' }, h('b', {}, st.getDate()), h('small', {}, st.toLocaleDateString(LOCALE, { month: 'short' }))),
-          h('div', { class: 'grow' }, h('b', {}, e.title),
+          h('div', { class: 'grow' }, h('b', {}, e.title, e.rrule ? h('span', { class: 'muted', title: tr('Ismétlődő esemény') }, ' 🔁') : null),
             h('div', { class: 'small muted' }, e.all_day ? tr('Egész nap') : `${st.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })} – ${new Date(e.end).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}`, e.location ? ` · 📍 ${e.location}` : '')),
           btn('', () => eventDialog(c, e, events, drawEvents), { cls: 'sm icon ghost', ic: 'edit' }),
           btn('', async () => { if (!(await confirmBox(tr('Törlöd: „{name}”?', { name: e.title }), { ok: tr('Törlés') }))) return; await DEL(`/api/events/${e.id}`); events.splice(events.indexOf(e), 1); drawEvents(); }, { cls: 'sm icon ghost', ic: 'trash' }));
@@ -1423,6 +1425,9 @@
     const now = new Date(); now.setMinutes(0, 0, 0); now.setHours(now.getHours() + 1);
     const e = ev ? clone(ev) : { calendar_id: cal.id, title: '', location: '', description: '', all_day: 0, start: now.toISOString(), end: new Date(now.getTime() + 3600e3).toISOString() };
     const v = { start: e.all_day ? e.start.slice(0, 10) : toLocalInput(e.start), end: e.all_day ? e.end.slice(0, 10) : toLocalInput(e.end), all_day: !!e.all_day };
+    // ismétlődés: FREQ=…;UNTIL=ÉÉÉÉHHNN formában tároljuk
+    const rr = Object.fromEntries((e.rrule || '').split(';').filter(Boolean).map((p) => p.split('=')));
+    const rv = { freq: rr.FREQ || '', until: rr.UNTIL ? `${rr.UNTIL.slice(0, 4)}-${rr.UNTIL.slice(4, 6)}-${rr.UNTIL.slice(6, 8)}` : '' };
     const times = h('div', { class: 'fields full' });
     const drawTimes = () => {
       const type = v.all_day ? 'date' : 'datetime-local';
@@ -1435,6 +1440,8 @@
       body: h('div', { class: 'fields' },
         F.text(tr('Megnevezés'), e, 'title', { full: true }),
         F.toggle(tr('Egész napos'), v, 'all_day', { full: true, onchange: drawTimes }), times,
+        F.select(tr('Ismétlődés'), rv, 'freq', [['', tr('Nem ismétlődik')], ['DAILY', tr('Naponta')], ['WEEKLY', tr('Hetente')], ['MONTHLY', tr('Havonta')], ['YEARLY', tr('Évente')]]),
+        F.text(tr('Ismétlődés vége (opcionális)'), rv, 'until', { type: 'date' }),
         F.text(tr('Helyszín'), e, 'location', { full: true }),
         F.textarea(tr('Leírás'), e, 'description', { rows: 2 })),
       foot: [btn(tr('Mégse'), () => m.close()), btn(tr('Mentés'), async () => {
@@ -1443,6 +1450,7 @@
         e.start = v.all_day ? v.start : new Date(v.start).toISOString();
         e.end = v.all_day ? (v.end || v.start) : new Date(v.end || v.start).toISOString();
         if (e.end < e.start) return toast(tr('A befejezés nem lehet a kezdés előtt'), 'err');
+        e.rrule = rv.freq ? `FREQ=${rv.freq}${rv.until ? `;UNTIL=${rv.until.replace(/-/g, '')}` : ''}` : '';
         try {
           const saved = ev ? await PUT(`/api/events/${e.id}`, e) : await POST('/api/events', e);
           if (ev) Object.assign(ev, saved); else events.push(saved);

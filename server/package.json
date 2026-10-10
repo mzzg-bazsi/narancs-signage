@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
-    "dev": "SIGNAGE_DATA=./data node --disable-warning=ExperimentalWarning --watch src/server.js"
+    "dev": "SIGNAGE_DATA=./data node --disable-warning=ExperimentalWarning --watch src/server.js",
+    "test": "SIGNAGE_DATA=$(mktemp -d) node --disable-warning=ExperimentalWarning --test test/*.test.mjs"
   },
   "license": "SEE LICENSE IN ../LICENSE",
   "author": "Balázs Mazzag"

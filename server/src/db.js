@@ -117,6 +117,12 @@ CREATE INDEX IF NOT EXISTS idx_stats_time ON stats(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_cal ON events(calendar_id);
 `);
 
+// sémabővítések a korábbi verziókkal létrehozott adatbázisokhoz
+const addColumn = (table, col, def) => {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+};
+addColumn('events', 'rrule', "TEXT NOT NULL DEFAULT ''"); // ismétlődés, pl. FREQ=WEEKLY;UNTIL=20261231
+
 // JSON oszlopok automatikus kezelése
 const JSON_COLS = new Set(['data', 'items', 'schedule', 'settings', 'info', 'fields', 'ical_cache', 'screen_ids']);
 
@@ -164,7 +170,7 @@ export function crud(table, fields) {
 export const Slides = crud('slides', ['name', 'type', 'duration', 'data', 'updated_at']);
 export const Playlists = crud('playlists', ['name', 'items', 'transition', 'updated_at']);
 export const Calendars = crud('calendars', ['name', 'color', 'ical_url']);
-export const Events = crud('events', ['calendar_id', 'title', 'description', 'location', 'start', 'end', 'all_day']);
+export const Events = crud('events', ['calendar_id', 'title', 'description', 'location', 'start', 'end', 'all_day', 'rrule']);
 export const Forms = crud('forms', ['name', 'title', 'intro', 'fields', 'submit_text', 'thanks_text', 'updated_at']);
 export const Screens = crud('screens', ['name', 'approved', 'playlist_id', 'schedule', 'settings']);
 

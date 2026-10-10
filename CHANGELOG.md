@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.11.0] – 2026-10-10
+
+### Új
+- **Ismétlődő naptáresemények**: a kézi eseményeknél beállítható ismétlődés (naponta, hetente, havonta, évente) opcionális befejező dátummal; a listában 🔁 jelzi.
+- Automatikus tesztek: `npm test` (a szerver mappában), elsőként az iCal ismétlődés kibontásra.
+
+### Javítva
+- Az importált iCal naptárak (Google, Outlook) ismétlődő eseményei (RRULE) mostantól minden előfordulással megjelennek, nem csak az elsővel: DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT, UNTIL, BYDAY (pl. „minden hónap utolsó péntekje”), BYMONTHDAY, BYMONTH, kihagyott (EXDATE) és áthelyezett (RECURRENCE-ID) alkalmak.
+
 ## [1.10.0] – 2026-10-10
 
 ### Új
