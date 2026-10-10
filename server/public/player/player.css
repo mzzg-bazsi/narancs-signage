@@ -293,3 +293,10 @@ body.has-header { --header-h: 10vmin; }
 #brand-logo.corner-bl { bottom: 3vmin; left: 3vmin; }
 #brand-logo.corner-br { bottom: 3vmin; right: 3vmin; }
 body.has-ticker #brand-logo.corner-bl, body.has-ticker #brand-logo.corner-br { bottom: 10vmin; }
+
+/* Osztott képernyő */
+.zones { position: absolute; inset: 0; display: grid; }
+.zones.gap { gap: 0.8vmin; padding: 0.8vmin; background: var(--bg); }
+.zone { position: relative; overflow: hidden; min-width: 0; min-height: 0; background: var(--bg); }
+.zones.gap .zone { border-radius: var(--radius); }
+.zone iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }

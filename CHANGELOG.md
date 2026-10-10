@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.10.0] – 2026-10-10
+
+### Új
+- **Osztott képernyő (zónák)** – új tartalomtípus: több tartalom egyszerre, 8 elrendezéssel (oldalsáv jobbra/balra, alsó/felső sáv, L alak, 2 és 3 oszlop, 2 × 2 rács), állítható mellékzóna mérettel és réssel. Minden zónában egy vagy több meglévő tartalom váltakozik a saját idejével; a zónák beágyazott lejátszóként futnak, így minden tartalomtípus helyesen méreteződik.
+
 ## [1.9.10] – 2026-10-10
 
 ### Változott

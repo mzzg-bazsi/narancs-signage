@@ -75,7 +75,8 @@ function collectMediaIds(slide) {
 
 function slideTargets(slide) {
   const d = slide.data || {};
-  return [...(d.cards || []), ...(d.buttons || [])].map((x) => +x.target_slide).filter(Boolean);
+  const zoneIds = (d.zones || []).flatMap((z) => (z.items || []).map((it) => +it.slide_id));
+  return [...[...(d.cards || []), ...(d.buttons || [])].map((x) => +x.target_slide), ...zoneIds].filter(Boolean);
 }
 
 function calendarEvents(calIds, daysBack = 1, daysAhead = 120) {
@@ -474,7 +475,7 @@ function crudRoutes(base, model, { validate = (x) => x, order } = {}) {
   r.del(`/api/${base}/:id`, A, (req, res) => { model.remove(id(req)); notifyChange(); send(res, 200, { ok: true }); });
 }
 
-const SLIDE_TYPES = ['image', 'video', 'web', 'text', 'cards', 'calendar', 'form', 'menu', 'clock', 'rss', 'countdown', 'html', 'qr', 'pdf'];
+const SLIDE_TYPES = ['image', 'video', 'web', 'text', 'cards', 'calendar', 'form', 'menu', 'clock', 'rss', 'countdown', 'html', 'qr', 'pdf', 'zones'];
 crudRoutes('slides', Slides, {
   order: 'updated_at DESC',
   validate(b, isNew) {

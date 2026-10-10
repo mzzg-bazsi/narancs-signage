@@ -29,7 +29,9 @@
     return el;
   };
   const params = new URLSearchParams(location.search);
-  const PREVIEW = params.get('preview');
+  // ?zone=3,5 → egy osztott képernyő zónája: a szülő lejátszó beállításaival, csak a megadott tartalmakkal
+  const EMBED = window.parent !== window && params.get('zone');
+  const PREVIEW = params.get('preview') || (EMBED ? 'zone' : null);
   const LS = {
     get(k, d = null) { try { const v = localStorage.getItem('signage.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem('signage.' + k, JSON.stringify(v)); } catch { /* tele */ } },
@@ -43,6 +45,14 @@
   if (!DEVICE || !/^[\w-]{8,64}$/.test(DEVICE)) DEVICE = randomId();
   if (!PREVIEW) LS.set('device', DEVICE);
   if (PREVIEW) document.body.classList.add('preview');
+  if (EMBED) {
+    // a zóna a szülő egérmutató-állapotát követi, az érintéseket pedig továbbadja (a rotáció megáll)
+    const pb = parent.document.body;
+    const sync = () => { document.body.classList.toggle('preview', pb.classList.contains('preview')); document.body.classList.toggle('cursor-on', pb.classList.contains('cursor-on')); };
+    new MutationObserver(sync).observe(pb, { attributes: true, attributeFilter: ['class'] });
+    sync();
+    for (const t of ['pointerdown', 'pointermove']) document.addEventListener(t, (e) => parent.document.dispatchEvent(new PointerEvent(t, { pointerType: e.pointerType })), true);
+  }
 
   const api = async (path, opts = {}) => {
     const r = await fetch(path, { cache: 'no-store', ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
@@ -95,6 +105,7 @@
   const localDate = (str) => { const [y, m, d] = String(str).slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
   const evStart = (e) => (e.all_day ? localDate(e.start) : new Date(e.start));
   const evEnd = (e) => { if (e.all_day) { const d = localDate(e.end || e.start); d.setHours(23, 59, 59, 999); return d; } return new Date(e.end || e.start); };
+  window.__signage = state; // az osztott képernyő zónái innen olvassák a beállításokat
   const cleanups = new Set();
   const later = (fn, ms) => { const t = setTimeout(fn, ms); cleanups.add(() => clearTimeout(t)); return t; };
   const every = (fn, ms) => { const t = setInterval(fn, ms); cleanups.add(() => clearInterval(t)); return t; };
@@ -379,6 +390,24 @@
       v.addEventListener('error', () => later(done, 2000));
       el.append(v);
       return { start: () => v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }), manual: !s.duration, destroy: () => { v.pause(); v.removeAttribute('src'); v.load(); } };
+    },
+
+    // --- Osztott képernyő: minden zóna egy beágyazott lejátszó a saját tartalmaival ---
+    zones(el, s) {
+      const d = s.data;
+      const Z = window.SIGNAGE_ZONES;
+      const L = Z.LAYOUTS[d.layout] || Z.LAYOUTS.right;
+      const grid = h('div', { class: `zones${d.gap ? ' gap' : ''}` });
+      Object.assign(grid.style, Z.gridStyle(d.layout, d.size));
+      L.zones.forEach((_, i) => {
+        const z = d.zones?.[i] || {};
+        const ids = (z.items || []).map((it) => +it.slide_id).filter((id) => state.cfg.slides[id] && state.cfg.slides[id].type !== 'zones');
+        const cell = h('div', { class: 'zone', style: { gridArea: Z.AREAS[i] } });
+        if (ids.length) cell.append(h('iframe', { src: `index.html?zone=${ids.join(',')}&t=${encodeURIComponent(z.transition || 'fade')}`, allow: 'autoplay; fullscreen' }));
+        grid.append(cell);
+      });
+      el.append(grid);
+      return { duration: s.duration || 30 };
     },
 
     web(el, s) {
@@ -1277,7 +1306,31 @@
   // ------------------------------------------------------------------
   //  Indítás
   // ------------------------------------------------------------------
+  // Zóna mód: a szülő lejátszó konfigurációjából egy saját „lejátszási lista” a zóna tartalmaiból
+  function embedBoot() {
+    $('#boot')?.remove();
+    const ps = parent.__signage;
+    const ids = EMBED.split(',').map(Number).filter(Boolean);
+    let version = null;
+    const build = () => {
+      const pc = ps?.cfg;
+      if (!pc || pc.version === version) return;
+      version = pc.version;
+      const b = pc.org?.branding || {};
+      applyConfig({
+        ...pc,
+        org: { ...pc.org, branding: { ...b, header: { ...(b.header || {}), enabled: false }, logo_corner: 'none' } },
+        screen: { ...pc.screen, schedule: [], playlist_id: 'zone', settings: { ...pc.screen.settings, ticker: '', show_clock: false, show_progress: false, orientation: 'landscape', power_schedule: false } },
+        playlists: { zone: { id: 'zone', transition: params.get('t') || 'fade', items: ids.map((id) => ({ slide_id: id })) } },
+        alerts: [], version: `${pc.version}:zone`,
+      }, true);
+    };
+    build();
+    setInterval(build, 5000);
+  }
+
   async function boot() {
+    if (EMBED) { embedBoot(); return; }
     if (PREVIEW) $('#boot')?.remove(); // az admin előnézetben nem kell indulási kép
     if ('serviceWorker' in navigator && !PREVIEW) navigator.serviceWorker.register('sw.js').catch(() => {});
     if (!PREVIEW) {

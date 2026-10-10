@@ -162,6 +162,7 @@
     qr: { e: '🔳', name: tr('QR kód'), desc: tr('Beolvasható link (pl. Wi-Fi, menü, weboldal)'), duration: 12, defaults: { url: 'https://', title: tr('Olvasd be a telefonoddal!'), text: '' } },
     web: { e: '🌐', name: tr('Weboldal'), desc: tr('Külső weboldal vagy dashboard beágyazása'), duration: 30, defaults: { url: 'https://', zoom: 100, interactive: false, reload_sec: 0 } },
     pdf: { e: '📄', name: 'PDF', desc: tr('PDF dokumentum megjelenítése'), duration: 20, defaults: { media_id: null, page: 1 } },
+    zones: { e: '🔲', name: tr('Osztott képernyő'), desc: tr('Több tartalom egyszerre, zónákra osztva'), duration: 30, defaults: { layout: 'right', size: 30, gap: false, zones: [] } },
     html: { e: '🧩', name: tr('Egyedi HTML'), desc: tr('Saját HTML/CSS/JS kód'), duration: 15, defaults: { html: '<!doctype html>\n<html><body style="margin:0;display:grid;place-items:center;height:100vh;background:#f59e5b;font:700 8vmin sans-serif;color:#3b1a05">\n  ' + tr('Helló, signage!') + ' 👋\n</body></html>' } },
   };
   const TRANSITIONS = [['fade', tr('Áttűnés')], ['slide', tr('Becsúszás')], ['zoom', tr('Nagyítás')], ['up', tr('Felúszás')], ['none', tr('Nincs')]];
@@ -1170,6 +1171,7 @@
             F.color(tr('Gomb színe (üres = téma)'), b, 'color', { def: '#f59e5b', onchange: ch }), F.color(tr('Szöveg színe (üres = téma)'), b, 'text_color', { def: '#3b1a05', onchange: ch })),
           F.media(tr('Háttérkép a gombon'), b, 'media_id', { accept: 'image/', onchange: ch }),
         ], () => ({ icon: '✨', label: tr('Új gomb') }), ch));
+      case 'zones': return zonesEditor(d, ctx);
       case 'form': return f(
         forms.length ? F.select(tr('Űrlap'), d, 'form_id', [['', tr('— válassz —')], ...forms.map((x) => [x.id, x.name])], { number: true, full: true, onchange: ch })
           : h('div', { class: 'full' }, tr('Még nincs űrlap. '), h('a', { href: '#/forms' }, tr('Hozz létre egyet az Űrlapok menüben →'))),
@@ -1234,6 +1236,44 @@
         F.textarea(tr('HTML kód'), d, 'html', { code: true, rows: 14, onchange: ch, hint: tr('Elszigetelt keretben fut (sandbox). Külső scripteket és API-kat is használhatsz.') }));
       default: return h('div', {}, tr('Ehhez a típushoz nincs szerkesztő.'));
     }
+  }
+
+  // Osztott képernyő: elrendezés választó (kis rajzzal) és zónánként a lejátszandó tartalmak
+  function zonesEditor(d, ctx) {
+    const Z = SIGNAGE_ZONES, ch = ctx.onchange;
+    const pick = ctx.slides.filter((x) => x.type !== 'zones' && x.id !== ctx.self);
+    const zonesBox = h('div', { class: 'full stack', style: { gap: '12px' } });
+    const sizeBox = h('div');
+    const layouts = h('div', { class: 'zone-layouts' });
+    const drawLayouts = () => layouts.replaceChildren(...Object.entries(Z.LAYOUTS).map(([k, L]) => {
+      const mini = h('div', { class: 'zl-mini' }, L.zones.map((_, i) => h('i', { style: { gridArea: Z.AREAS[i] } }, String(i + 1))));
+      Object.assign(mini.style, Z.gridStyle(k, d.size));
+      return h('button', { type: 'button', class: `zl${(d.layout || 'right') === k ? ' on' : ''}`, title: tr(L.name), onclick: () => { d.layout = k; drawLayouts(); draw(); ch(); } }, mini, h('span', {}, tr(L.name)));
+    }));
+    const draw = () => {
+      const L = Z.LAYOUTS[d.layout] || Z.LAYOUTS.right;
+      d.zones ||= [];
+      while (d.zones.length < L.zones.length) d.zones.push({ items: [] });
+      sizeBox.replaceChildren(L.sized ? F.number(tr('Mellékzóna mérete (%)'), d, 'size', { min: 15, max: 50, onchange: () => { drawLayouts(); ch(); }, hint: tr('15–50%; az oldalsáv vagy a sáv mérete') }) : null);
+      zonesBox.replaceChildren(...L.zones.map((zname, i) => {
+        const z = d.zones[i];
+        z.transition ||= 'fade';
+        return h('div', { class: 'sub-item' },
+          h('div', { class: 'sub-head' }, h('b', {}, `${i + 1}. ${tr(zname)}`)),
+          h('div', { class: 'stack', style: { gap: '10px' } },
+            F.select(tr('Áttűnés a zónán belül'), z, 'transition', TRANSITIONS, { onchange: ch }),
+            subList(tr('Tartalmak (sorban váltakoznak)'), z, 'items', (it) => [
+              F.select(tr('Tartalom'), it, 'slide_id', [['', tr('— válassz —')], ...pick.map((x) => [x.id, `${TYPES[x.type]?.e || ''} ${x.name}`])], { number: true, onchange: ch }),
+            ], () => ({ slide_id: null }), ch)));
+      }));
+    };
+    drawLayouts(); draw();
+    return h('div', { class: 'fields' },
+      F.wrap(tr('Elrendezés'), layouts, { full: true }),
+      sizeBox,
+      F.toggle(tr('Rés a zónák között'), d, 'gap', { onchange: ch }),
+      h('div', { class: 'full small muted', style: { background: 'var(--primary-softer)', padding: '10px 12px', borderRadius: '10px' } }, tr('💡 Minden zónába tegyél egy vagy több meglévő tartalmat – a zónán belül a saját megjelenési idejük szerint váltakoznak. Például: fő területen képváltó, oldalsávon óra és időjárás, alul hírfolyam.')),
+      zonesBox);
   }
 
   function subList(label, obj, key, fields, make, ch) {
