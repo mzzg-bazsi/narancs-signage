@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.16.1] – 2026-10-10
+
+### Változott
+- README-k: sablonok (10 kész tartalomcsomag, export és import).
+
 ## [1.16.0] – 2026-10-10
 
 ### Új
