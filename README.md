@@ -93,7 +93,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 - 📴 Offline operation: the player caches its configuration and media files and keeps running if the server goes down
 - 👥 Multiple users with roles (administrator, editor, viewer), API keys for integrations, session management, brute-force and CSRF protection
 - 🐳 Docker image (amd64 + arm64) besides the Ubuntu installer
-- 📦 Templates: 10 ready-made content packs (restaurant, office, shop, clinic, school, hotel, gym, conference, bar, salon) with live preview; export any content or playlist as a `.narancs.json` file and import it into another system
+- 📦 Templates: 10 ready-made content packs (restaurant, office, shop, clinic, school, hotel, gym, conference, bar, salon) with live preview; export any content or playlist as a `.narancs.json` file and import it into another system; browse and install community templates from the [template gallery](https://github.com/mzzg-bazsi/narancs-signage-templates) – or submit your own
 - 💾 Automatic daily backup + downloadable database backup
 - 🌗 Light/dark mode in the admin panel, works on mobile too
 
