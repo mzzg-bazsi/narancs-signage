@@ -105,6 +105,14 @@ WantedBy=multi-user.target
 EOF
 
 # ---------- Mentés segédprogram ----------
+# Jelszó visszaállítása, ha valaki kizárta magát: sudo signage-reset-password <felhasználónév> [új jelszó] [--admin]
+cat > /usr/local/bin/signage-reset-password <<EOF
+#!/usr/bin/env bash
+# Narancs Signage: admin jelszó visszaállítása (jelszó nélkül véletlen jelszót generál)
+cd "$APP_DIR/server" && exec sudo -u signage SIGNAGE_DATA="$DATA_DIR" $(command -v node) --disable-warning=ExperimentalWarning src/reset-password.js "\$@"
+EOF
+chmod +x /usr/local/bin/signage-reset-password
+
 cat > /usr/local/bin/signage-backup <<EOF
 #!/usr/bin/env bash
 # Teljes mentés (adatbázis + média) a /var/backups/narancs-signage mappába

@@ -1,0 +1,15 @@
+# docker compose up -d   →   http://SZERVER-IP:8080/admin/
+services:
+  narancs-signage:
+    image: ghcr.io/mzzg-bazsi/narancs-signage:latest
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - signage-data:/data
+    environment:
+      - TZ=Europe/Budapest
+    restart: unless-stopped
+
+volumes:
+  signage-data:

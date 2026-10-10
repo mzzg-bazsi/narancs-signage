@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.15.0] – 2026-10-10
+
+### Új
+- **Docker kép** (amd64 + arm64): `ghcr.io/mzzg-bazsi/narancs-signage`, `Dockerfile` és `docker-compose.yml` a repóban; az adatok a `/data` kötetben. A GitHub Actions minden push-nál felépíti és lefuttatja a teszteket, kiadáskor közzéteszi a képet.
+- **`sudo signage-reset-password <felhasználónév> [új jelszó] [--admin]`** a szerveren: elfelejtett jelszó visszaállítása (jelszó nélkül véletlent generál, minden munkamenetet kiléptet).
+
 ## [1.14.0] – 2026-10-10
 
 ### Új

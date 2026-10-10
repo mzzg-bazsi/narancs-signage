@@ -107,6 +107,16 @@ The installer sets up Node.js 24 (if missing), creates the `narancs-signage` sys
 
 Open the printed address (`http://SERVER-IP:8080/admin/`). On first visit you choose the language and create the admin account; a default playlist with sample content is created as well.
 
+#### Or with Docker (any Linux, NAS, Synology, Unraid – amd64 and arm64)
+
+```bash
+docker run -d --name narancs-signage -p 8080:8080 -v narancs-signage:/data -e TZ=Europe/Budapest --restart unless-stopped ghcr.io/mzzg-bazsi/narancs-signage:latest
+```
+
+Or `docker compose up -d` with the [docker-compose.yml](docker-compose.yml) in the repository. The data lives in the `/data` volume.
+
+**Locked out?** On the server: `sudo signage-reset-password <username>` (prints a new password; `--admin` also makes the user an administrator).
+
 ### 2. Display / player (Ubuntu Server or Raspberry Pi OS Lite – arm64, armhf, amd64)
 
 On the device connected to the display, run a single command:

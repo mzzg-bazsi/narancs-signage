@@ -108,6 +108,16 @@ A telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-sig
 
 Nyisd meg a kiírt címet (`http://SZERVER-IP:8080/admin/`) – első alkalommal kiválasztod a nyelvet és létrehozod az admin fiókot; ekkor egy alap lejátszási lista is létrejön minta tartalmakkal.
 
+#### Vagy Dockerrel (bármilyen Linux, NAS, Synology, Unraid – amd64 és arm64)
+
+```bash
+docker run -d --name narancs-signage -p 8080:8080 -v narancs-signage:/data -e TZ=Europe/Budapest --restart unless-stopped ghcr.io/mzzg-bazsi/narancs-signage:latest
+```
+
+Vagy `docker compose up -d` a repóban lévő [docker-compose.yml](docker-compose.yml) fájllal. Az adatok a `/data` kötetben vannak.
+
+**Kizártad magad?** A szerveren: `sudo signage-reset-password <felhasználónév>` (új jelszót ír ki; a `--admin` kapcsolóval adminisztrátor is lesz).
+
 ### 2. Kijelző / lejátszó (Ubuntu Server vagy Raspberry Pi OS Lite – arm64, armhf, amd64)
 
 A kijelzőhöz kötött eszközön egyetlen parancs:
