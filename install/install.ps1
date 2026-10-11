@@ -2,9 +2,9 @@
 #  Narancs Signage - Windows installer: server, display, or both on one PC
 #
 #  Run in PowerShell (as Administrator for the server):
-#     irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
+#     irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex
 #  With options (no menu):
-#     & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Mode server|screen|both [-Port 8080] [-Server http://192.168.1.10:8080]
+#     & ([scriptblock]::Create((irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1))) -Mode server|screen|both [-Port 8080] [-Server http://192.168.1.10:8080]
 #  Remove (the data is kept): the same with -Uninstall
 #
 #  Running it again updates the program; your data and settings are kept.
@@ -13,7 +13,7 @@ param(
   [ValidateSet('', 'server', 'screen', 'both')] [string]$Mode = '',
   [int]$Port = 0,
   [string]$Server = '',
-  [string]$Version = '__VERSION__',   # a kiadáskor a release.sh írja be
+  [string]$Version = 'latest',
   [string]$Source = '',               # helyi forrásmappa letöltés helyett (a grafikus telepítő és a tesztek)
   [switch]$NoStart,                   # a kijelzőt most ne indítsa el (a grafikus telepítő a végén kérdezi)
   [switch]$Uninstall
@@ -258,5 +258,5 @@ if ($WithScreen) {
   } else { Write-Host '  Exit full screen: Alt+F4.' }
 }
 Write-Host '  Update:         run the same command again (data is kept)'
-Write-Host '  Remove:         & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Uninstall'
+Write-Host '  Remove:         & ([scriptblock]::Create((irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1))) -Uninstall'
 Write-Host ''

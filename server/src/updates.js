@@ -32,7 +32,7 @@ export function updateCommand(type, port) {
   return {
     linux: `curl -fsSL ${INSTALL} | sudo bash${args}`,
     macos: `curl -fsSL ${INSTALL} | bash${args}`,
-    windows: `irm ${INSTALL.replace(/\.sh$/, '.ps1')} | iex`, // a port az install.json-ból megmarad
+    windows: `irm https://raw.githubusercontent.com/${REPO}/main/install/install.ps1 | iex`, // a legfrissebb kiadást telepíti; a port az install.json-ból megmarad
     docker: 'docker compose pull && docker compose up -d',
     manual: 'git pull',
   }[type];

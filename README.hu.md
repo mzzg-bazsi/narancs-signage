@@ -116,7 +116,7 @@ Töltsd le és futtasd a telepítőt: **[NarancsSignageSetup.exe](https://github
 Vagy **rendszergazdai PowerShellből**:
 
 ```powershell
-irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
+irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex
 ```
 
 Ugyanezt kérdezi meg. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, winget-tel telepíti), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.

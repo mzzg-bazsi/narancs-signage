@@ -116,7 +116,7 @@ Download and run the installer: **[NarancsSignageSetup.exe](https://github.com/m
 Or from **PowerShell as Administrator**:
 
 ```powershell
-irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
+irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex
 ```
 
 It asks the same question. The server runs at startup as a scheduled task (Node.js is installed with winget if missing), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.

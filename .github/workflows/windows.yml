@@ -65,7 +65,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         shell: powershell
         run: |
-          & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Mode server -Port 8091
+          & ([scriptblock]::Create((irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1))) -Mode server -Port 8091
           (Invoke-RestMethod http://127.0.0.1:8091/healthz).version
 
   # Grafikus telepítő (Inno Setup): fordítás, csendes telepítés + eltávolítás próbája, tagnél feltöltés a kiadásba

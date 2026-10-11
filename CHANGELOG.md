@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.28.1] – 2026-10-11
+
+### Változott
+- A kiadások assetjei: `NarancsSignageSetup.exe`, `install.sh`, `install-player.sh`. A PowerShell telepítő már nem asset, a repóból érhető el: `irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex` (mindig a legfrissebb kiadást telepíti); a Frissítések kártya Windowson ezt a parancsot mutatja.
+
 ## [1.28.0] – 2026-10-11
 
 ### Új
