@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.28.2] – 2026-10-11
+
+### Javítva
+- **Windows kioszk gép nem jelentkezett be automatikusan**: Windows 11-en a „Csak Windows Hello bejelentkezés engedélyezése a Microsoft-fiókokhoz” beállítás letiltja az automatikus bejelentkezést – a csak kijelző telepítés ezt kikapcsolja (eltávolításkor visszaállítja). Az automatikus bejelentkezés jelszava a registry helyett az LSA titkos tárolóba kerül (mint a Microsoft Autologon eszközénél), egy esetleges `AutoLogonCount` számláló törlődik.
+
 ## [1.28.1] – 2026-10-11
 
 ### Változott
