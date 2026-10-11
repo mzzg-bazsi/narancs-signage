@@ -2045,8 +2045,8 @@
   function systemTable(x, st) {
     if (!x) return h('div', { class: 'stack' }, h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)), h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))));
     const long = (s) => { const d = Math.floor(s / 86400), hr = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return d ? tr('{d} nap {h} óra', { d, h: hr }) : hr ? tr('{h} óra {m} perc', { h: hr, m }) : fmtDur(s); };
-    const PLATFORM = { docker: tr('Docker konténer'), 'raspberry-pi': 'Raspberry Pi', vm: tr('Virtuális gép'), mac: 'Mac', 'bare-metal': tr('Saját gép (bare metal)') };
-    const INSTALL = { docker: 'Docker', linux: tr('Telepítő (systemd szolgáltatás)'), macos: tr('Telepítő (macOS háttérszolgáltatás)'), manual: tr('Kézi indítás') };
+    const PLATFORM = { docker: tr('Docker konténer'), 'raspberry-pi': 'Raspberry Pi', vm: tr('Virtuális gép'), mac: 'Mac', windows: 'Windows', 'bare-metal': tr('Saját gép (bare metal)') };
+    const INSTALL = { docker: 'Docker', linux: tr('Telepítő (systemd szolgáltatás)'), macos: tr('Telepítő (macOS háttérszolgáltatás)'), windows: tr('Telepítő (Windows ütemezett feladat)'), manual: tr('Kézi indítás') };
     const rows = [
       [tr('Futtatási környezet'), [PLATFORM[x.platform] || x.platform, x.model && x.platform === 'raspberry-pi' ? x.model : x.virt].filter(Boolean).join(' · ')],
       [tr('Telepítés módja'), INSTALL[x.install] || x.install],
@@ -2107,7 +2107,7 @@
       if (!u.update_available) return out.replaceChildren(h('div', { class: 'small' }, tr('✓ A legfrissebb verzió fut (v{v}).', { v: u.current })));
       const cmd = h('div', { class: 'row', style: { flexWrap: 'nowrap' } }, h('code', { class: 'code-pill grow', style: { overflowX: 'auto', whiteSpace: 'nowrap', padding: '6px 10px' } }, u.command),
         btn(tr('Másolás'), () => navigator.clipboard?.writeText(u.command).then(() => toast(tr('Parancs vágólapra másolva'))), { cls: 'sm', ic: 'copy' }));
-      const where = { docker: tr('A docker-compose.yml mappájában futtasd (docker run esetén: kép letöltése, majd a konténer újra létrehozása).'), macos: tr('Futtasd a Mac Termináljában.'), manual: tr('A program mappájában futtasd, majd indítsd újra a szervert.'), linux: tr('Vagy futtasd a szerveren:') }[u.install_type];
+      const where = { docker: tr('A docker-compose.yml mappájában futtasd (docker run esetén: kép letöltése, majd a konténer újra létrehozása).'), macos: tr('Futtasd a Mac Termináljában.'), windows: tr('Futtasd rendszergazdaként a PowerShellben.'), manual: tr('A program mappájában futtasd, majd indítsd újra a szervert.'), linux: tr('Vagy futtasd a szerveren:') }[u.install_type];
       out.replaceChildren(
         h('div', {}, h('b', {}, tr('Új verzió érhető el: v{v}', { v: u.latest })), ' ', h('span', { class: 'small muted' }, tr('(most: v{v})', { v: u.current }))),
         (u.notes || []).length ? h('div', { class: 'release-notes' }, u.notes.map((n) => h('div', {},

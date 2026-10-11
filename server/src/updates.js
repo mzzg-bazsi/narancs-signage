@@ -22,6 +22,7 @@ export function installType(dir = APP_DIR) {
   if (fs.existsSync('/.dockerenv')) return 'docker';
   if (dir === '/opt/narancs-signage') return 'linux';
   if (dir.includes('/Library/Application Support/Narancs Signage')) return 'macos';
+  if (/[\\/]NarancsSignage$/i.test(dir)) return 'windows'; // install.ps1: %ProgramData%\NarancsSignage
   return 'manual';
 }
 
@@ -31,6 +32,7 @@ export function updateCommand(type, port) {
   return {
     linux: `curl -fsSL ${INSTALL} | sudo bash${args}`,
     macos: `curl -fsSL ${INSTALL} | bash${args}`,
+    windows: `irm ${INSTALL.replace(/\.sh$/, '.ps1')} | iex`, // a port az install.json-ból megmarad
     docker: 'docker compose pull && docker compose up -d',
     manual: 'git pull',
   }[type];

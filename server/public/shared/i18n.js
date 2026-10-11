@@ -944,6 +944,8 @@
     'Telepítő (systemd szolgáltatás)': 'Installer (systemd service)',
     'Telepítő (macOS háttérszolgáltatás)': 'Installer (macOS background service)',
     'Kézi indítás': 'Started manually',
+    'Telepítő (Windows ütemezett feladat)': 'Installer (Windows scheduled task)',
+    'Futtasd rendszergazdaként a PowerShellben.': 'Run it in PowerShell as Administrator.',
     'Futtatási környezet': 'Runs on',
     'Telepítés módja': 'Installation',
     'Operációs rendszer': 'Operating system',

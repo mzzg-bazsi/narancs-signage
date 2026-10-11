@@ -16,7 +16,7 @@ function hostInfo() {
   const linux = process.platform === 'linux';
   const model = linux ? read('/proc/device-tree/model') : '';
   const osName = linux ? (read('/etc/os-release').match(/^PRETTY_NAME="?([^"\n]*)/m)?.[1] || 'Linux')
-    : process.platform === 'darwin' ? `macOS ${run('sw_vers', ['-productVersion'])}`.trim() : `${os.type()} ${os.release()}`;
+    : process.platform === 'darwin' ? `macOS ${run('sw_vers', ['-productVersion'])}`.trim() : process.platform === 'win32' ? `${os.version()} (${os.release()})` : `${os.type()} ${os.release()}`;
   let platform = 'bare-metal', virt = '';
   if (fs.existsSync('/.dockerenv') || /docker|containerd|kubepods/.test(read('/proc/1/cgroup'))) platform = 'docker';
   else if (/raspberry pi/i.test(model)) platform = 'raspberry-pi';
@@ -25,6 +25,7 @@ function hostInfo() {
     if (virt && virt !== 'none') platform = 'vm';
     else if (/hypervisor/.test(read('/proc/cpuinfo'))) { platform = 'vm'; virt = ''; }
   } else if (process.platform === 'darwin') platform = 'mac';
+  else if (process.platform === 'win32') platform = 'windows';
   host = { platform, virt: virt === 'none' ? '' : virt, model, os: osName, hostname: os.hostname(), arch: os.arch(), cpu: os.cpus()[0]?.model?.trim() || '', cores: os.cpus().length };
   return host;
 }

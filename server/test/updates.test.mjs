@@ -14,9 +14,11 @@ test('telepítés módja és parancs', () => {
     assert.equal(installType('/opt/narancs-signage'), 'linux');
     assert.equal(installType('/Users/x/Library/Application Support/Narancs Signage'), 'macos');
     assert.equal(installType('/home/x/narancs-signage'), 'manual');
+    assert.equal(installType('C:\\ProgramData\\NarancsSignage'), 'windows');
   }
   assert.match(updateCommand('macos', 8080), /install\.sh \| bash$/);
   assert.match(updateCommand('macos', 8099), /\| bash -s -- --port 8099/);
+  assert.match(updateCommand('windows', 8080), /^irm https:.*install\.ps1 \| iex$/);
   assert.equal(updateCommand('docker', 8080), 'docker compose pull && docker compose up -d');
 });
 

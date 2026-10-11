@@ -1,0 +1,39 @@
+# A Windows telepítő kipróbálása egy valódi Windows gépen (szerver + kijelző, majd eltávolítás)
+name: Windows installer
+on:
+  workflow_dispatch:
+  push:
+    paths: ['install/install.ps1', '.github/workflows/windows.yml']
+jobs:
+  install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Telepítés (Windows PowerShell 5.1, ugyanúgy szkriptblokkként, mint az irm | iex)
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode both -Port 8090 -Source .
+      - name: Ellenőrzés
+        shell: powershell
+        run: |
+          $h = Invoke-RestMethod http://127.0.0.1:8090/healthz
+          if (-not $h.ok) { throw 'healthz' }
+          if (-not (Get-ScheduledTask -TaskName 'Narancs Signage Server')) { throw 'task' }
+          $lnk = Join-Path ([Environment]::GetFolderPath('Startup')) 'Narancs Signage Display.lnk'
+          if (-not (Test-Path $lnk)) { throw 'shortcut' }
+          (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).Arguments
+          (Invoke-WebRequest http://127.0.0.1:8090/install-player.sh -UseBasicParsing).StatusCode
+          Get-Content "$env:ProgramData\NarancsSignage\install.json"
+      - name: Újrafuttatás (frissítés), menü nélkül az előző beállításokkal
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode both -Source .
+          if (-not (Invoke-RestMethod http://127.0.0.1:8090/healthz).ok) { throw 'port nem maradt meg' }
+      - name: Eltávolítás
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
+          if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'task maradt' }
+          if (-not (Test-Path "$env:ProgramData\NarancsSignage\data")) { throw 'az adat elveszett' }
