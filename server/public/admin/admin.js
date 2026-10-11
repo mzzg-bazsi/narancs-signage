@@ -826,6 +826,9 @@
       h('div', { class: 'row', style: { marginTop: '8px', flexWrap: 'nowrap' } },
         h('code', { class: 'code-pill grow', style: { overflowX: 'auto', whiteSpace: 'nowrap', padding: '6px 10px' } }, cmd),
         btn(tr('Másolás'), () => { navigator.clipboard?.writeText(cmd).then(() => toast(tr('Parancs vágólapra másolva')), () => toast(cmd)); }, { cls: 'sm', ic: 'copy' })),
+      h('div', { class: 'row', style: { marginTop: '10px', alignItems: 'center' } },
+        h('b', { class: 'grow' }, tr('🪟 Windows kijelző: a telepítőben válaszd a „Csak kijelző – kioszk gép” módot, szerver címnek ezt add meg: '), h('span', { class: 'code-pill' }, location.origin)),
+        h('a', { class: 'btn sm', href: 'https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/NarancsSignageSetup.exe' }, icon('download'), tr('Windows telepítő'))),
       h('div', { class: 'muted', style: { marginTop: '6px' } }, tr('Vagy nyisd meg bármely böngészőben: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)));
   }
 
@@ -845,7 +848,7 @@
       h('div', { class: 'stat', style: { padding: 0 } }, h('div', { class: 'ic' }, icon(ic))),
       h('div', { class: 'grow' }, h('b', {}, title), h('div', { class: 'small muted' }, desc), note ? h('div', { class: 'small', style: { color: 'var(--danger)' } }, note) : null),
       btn(tr('Indítás'), () => send(command, title), { cls: command === 'reboot' ? 'sm danger' : 'sm primary', disabled: !enabled }));
-    const noAgent = tr('Ehhez a telepített lejátszó ügynöke szükséges (install-player.sh). Futtasd újra a telepítőt a kijelzőn.');
+    const noAgent = tr('Ehhez a telepített lejátszó ügynöke szükséges (install-player.sh, vagy Windowson a „Csak kijelző” telepítés). Futtasd újra a telepítőt a kijelzőn.');
     const quick = h('div', { class: 'row', style: { marginBottom: '14px' } },
       btn(tr('Azonosítás'), async () => {
         try {

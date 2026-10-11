@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.29.0] – 2026-10-11
+
+### Új
+- **Windows kioszk távvezérlés**, mint a Linux kijelzőn: lejátszó és gép újraindítása, képernyőkép az adminból (`agent.ps1`, SYSTEM ügynök a szerver élő csatornáján), és az időzített kikapcsolás a monitort is ki-be kapcsolja (`kiosk.ps1` a kioszk fiókban, ami az Edge-et is életben tartja). A kioszk állandó eszközazonosítót kap (`?device=`), így újratelepítés után sem kell újra párosítani.
+- **Tálca ikon** a Windows szerverhez: mutatja, hogy fut-e (és a verziót), értesít, ha leáll vagy elindul; menü: admin felület, lejátszó, adatmappa, napló, szerver újraindítása (rendszergazdai jóváhagyással).
+- A **grafikus Windows telepítő a Node.js-t is tartalmazza**: a gépen nem kell semmit letölteni.
+- Admin: az új képernyő párosításánál a Windows kijelző telepítés is szerepel (letöltés gomb, a szerver címe).
+- Weboldal és dokumentáció: támogatott platformok kis ikonokkal (Windows, macOS, Linux, Raspberry Pi, Docker, böngésző), Windows letöltés a telepítés szakaszban.
+
 ## [1.28.3] – 2026-10-11
 
 ### Javítva

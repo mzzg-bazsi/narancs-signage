@@ -101,6 +101,8 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 
 ## Installation
 
+**Runs on:** 🪟 Windows 10/11 · 🍎 macOS · 🐧 Linux (Ubuntu / Debian, amd64 / arm64) · 🍓 Raspberry Pi · 🐳 Docker · 🌐 any browser as a display
+
 ### 1. Server (Ubuntu / Debian, amd64 or arm64 – or macOS)
 
 ```bash

@@ -101,6 +101,8 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 
 ## Telepítés
 
+**Ezeken fut:** 🪟 Windows 10/11 · 🍎 macOS · 🐧 Linux (Ubuntu / Debian, amd64 / arm64) · 🍓 Raspberry Pi · 🐳 Docker · 🌐 bármely böngésző kijelzőként
+
 ### 1. Szerver (Ubuntu / Debian, amd64 vagy arm64 – vagy macOS)
 
 ```bash
