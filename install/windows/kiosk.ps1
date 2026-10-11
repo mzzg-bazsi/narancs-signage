@@ -6,7 +6,18 @@
 $ErrorActionPreference = 'Continue'
 $Base = Join-Path $env:ProgramData 'NarancsSignage'
 $Io = Join-Path $Base 'kiosk'
+$Log = Join-Path $Io "kiosk-$env:USERNAME.log"
+function Write-Log($m) { try { Add-Content -Path $Log -Value ("{0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), $m) } catch { } }
+
+# ket uton is indul (utemezett feladat + Inditopult), de csak egy peldany fusson
+$created = $false
+$mutex = New-Object System.Threading.Mutex($true, 'Local\NarancsSignageKiosk', [ref]$created)
+if (-not $created) { return }
+if ((Test-Path $Log) -and (Get-Item $Log).Length -gt 1MB) { Remove-Item $Log -ErrorAction SilentlyContinue }
+Write-Log "kiosk start (user $env:USERNAME)"
+trap { Write-Log ("error: " + $_); continue }
 $conf = Get-Content (Join-Path $Base 'install.json') -Raw | ConvertFrom-Json
+if (-not $conf.server -or -not $conf.device) { Write-Log 'install.json has no server / device'; return }
 $Edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 $ProfileDir = Join-Path $env:LOCALAPPDATA 'NarancsSignage\kiosk'
 $EdgeArgs = "--kiosk $($conf.server)/player/?device=$($conf.device) --edge-kiosk-type=fullscreen --no-first-run --hide-crash-restore-bubble --autoplay-policy=no-user-gesture-required --disable-features=Translate --user-data-dir=`"$ProfileDir`""
@@ -61,7 +72,12 @@ $lastPower = [datetime]::MinValue
 while ($true) {
   # az Edge fut-e a kioszk profillal (a masodik inditas uj ablakot nyitna, ezert csak ha nem fut)
   $running = Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*$ProfileDir*" }
-  if (-not $running -and $Edge) { Start-Process $Edge $EdgeArgs }
+  if (-not $running) {
+    if (-not $Edge) { Write-Log 'Microsoft Edge not found'; Start-Sleep -Seconds 30; continue }
+    Write-Log "starting Edge: $EdgeArgs"
+    try { Start-Process $Edge $EdgeArgs } catch { Write-Log ("Edge start failed: " + $_) }
+    Start-Sleep -Seconds 5   # amig az Edge folyamata megjelenik, ne inditsuk ujra
+  }
 
   if (Test-Path "$Io\shot.req") {
     Remove-Item "$Io\shot.req" -Force -ErrorAction SilentlyContinue

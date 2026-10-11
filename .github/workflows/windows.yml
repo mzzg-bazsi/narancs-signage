@@ -61,6 +61,24 @@ jobs:
           if ((Get-LocalGroupMember -SID 'S-1-5-32-544').Name -like '*NarancsKiosk') { throw 'kiosk account must not be admin' }
           # a kioszk szkript szintaxisa (PowerShell parser)
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
+          if (-not (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\Narancs Signage Kiosk.lnk")) { throw 'kiosk startup link' }
+          Get-Content "$env:ProgramData\NarancsSignage\kiosk.vbs"
+      - name: A kioszk szkript tényleg elindítja az Edge-et (a futó felhasználóval)
+        shell: powershell
+        run: |
+          $p = Start-Process powershell.exe -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "$env:ProgramData\NarancsSignage\install\windows\kiosk.ps1" -PassThru
+          $edge = $null
+          for ($i = 0; $i -lt 30 -and -not $edge; $i++) { Start-Sleep 2; $edge = Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like '*NarancsSignage\kiosk*' } }
+          Get-Content "$env:ProgramData\NarancsSignage\kiosk\kiosk-$env:USERNAME.log"
+          if (-not $edge) { throw 'Edge did not start' }
+          ($edge | Select-Object -First 1).CommandLine
+          if (Select-String -Path "$env:ProgramData\NarancsSignage\kiosk\kiosk-$env:USERNAME.log" -Pattern 'error:' -Quiet) { throw 'kiosk.ps1 logged an error' }
+          # képernyőkép kérés a mappán át (ahogy az ügynök kéri)
+          New-Item -ItemType File "$env:ProgramData\NarancsSignage\kiosk\shot.req" -Force | Out-Null
+          for ($i = 0; $i -lt 20 -and -not (Test-Path "$env:ProgramData\NarancsSignage\kiosk\shot.jpg"); $i++) { Start-Sleep 1 }
+          if (Test-Path "$env:ProgramData\NarancsSignage\kiosk\shot.jpg") { 'screenshot OK: ' + (Get-Item "$env:ProgramData\NarancsSignage\kiosk\shot.jpg").Length } else { 'no screenshot (no interactive desktop on the runner?)' }
+          Stop-Process -Id $p.Id -Force
+          $edge | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
       - name: Kioszk eltávolítása
         shell: powershell
         run: |

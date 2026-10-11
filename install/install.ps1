@@ -38,6 +38,7 @@ $KioskUser = 'NarancsKiosk'
 $KioskTask = 'Narancs Signage Display'
 $AgentTask = 'Narancs Signage Agent'
 $TrayLink = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\StartUp\Narancs Signage.lnk'
+$KioskLink = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\StartUp\Narancs Signage Kiosk.lnk'
 
 # a tálca ikon (minden felhasználónál, bejelentkezéskor) – csak ahol szerver fut
 function Remove-Tray {
@@ -82,6 +83,7 @@ public static class NsLsa {
 
 # A kioszk fiók visszabontása (eltávolításkor, és ha a gép már nem „csak kijelző”)
 function Remove-Kiosk {
+  Remove-Item $KioskLink, "$Base\kiosk.vbs" -ErrorAction SilentlyContinue
   foreach ($t in $KioskTask, $AgentTask) { Stop-ScheduledTask -TaskName $t -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue }
   if ((Get-ItemProperty $Winlogon -ErrorAction SilentlyContinue).DefaultUserName -eq $KioskUser) {
     Set-ItemProperty $Winlogon AutoAdminLogon '0'
@@ -314,6 +316,13 @@ if ($WithScreen) {
     $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     $pri = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$KioskUser" -LogonType Interactive -RunLevel Limited
     Register-ScheduledTask -TaskName $KioskTask -Action $act -Trigger $trg -Settings $set -Principal $pri -Force | Out-Null
+    # második indítási út: a közös Indítópult (az Explorer indítja bejelentkezéskor); csak a kioszk fióknál indít, a kiosk.ps1 egy példányban fut
+    "If LCase(CreateObject(""WScript.Network"").UserName) = ""$($KioskUser.ToLower())"" Then CreateObject(""WScript.Shell"").Run ""powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File $Base\install\windows\kiosk.ps1"", 0, False" | Set-Content -Encoding ASCII "$Base\kiosk.vbs"
+    $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($KioskLink)
+    $lnk.TargetPath = "$env:SystemRoot\System32\wscript.exe"
+    $lnk.Arguments = "`"$Base\kiosk.vbs`""
+    $lnk.Description = 'Narancs Signage kiosk'
+    $lnk.Save()
     # távvezérlés az adminból (lejátszó / gép újraindítása, képernyőkép): SYSTEM ügynök a gép indulásakor
     $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Base\install\windows\agent.ps1`""
     $trg = New-ScheduledTaskTrigger -AtStartup
