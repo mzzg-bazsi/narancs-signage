@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.26.0] – 2026-10-11
+
+### Új
+- **Lapozás érintéssel**: érintőképernyőn a bal szél (a képernyő 30%-a) érintése az előző, a jobb szélé a következő tartalomra lapoz; elforgatott kijelzőn a tartalom szerinti bal/jobb számít. Menün, űrlapon és interaktív weboldalon a szélek helyett nyilak vannak az alsó sarkokban. A kézi lapozás után a tétlenségi idő elteltével folytatódik az automatikus lejátszás. Képernyőnként kikapcsolható (Képernyők → Szerkesztés → Általános → Lapozás érintéssel); osztott képernyő zónáiban és az előnézetben nem működik.
+
 ## [1.25.0] – 2026-10-11
 
 ### Új

@@ -220,7 +220,32 @@
 
   function updateNav() {
     $('#nav').hidden = !state.stack.length;
+    updateEdgeNav();
   }
+
+  // Kézi lapozás érintőképernyőn: a bal szél érintése vissza, a jobb szélé előre.
+  // Gombos / kitöltős tartalmon (menü, űrlap, interaktív weboldal) a szélek helyett nyilak vannak, hogy ne lapozzon véletlenül.
+  const EDGE = 0.3; // a képernyő szélességének ennyi része számít szélnek
+  const edgeNavOn = () => !EMBED && !PREVIEW && settings().touch_nav !== false && state.items.length > 1 && !state.stack.length;
+  const needsArrows = (s) => s && (s.type === 'menu' || s.type === 'form' || (s.type === 'web' && s.data?.interactive));
+  function updateEdgeNav() { $('#edge-nav').hidden = !(edgeNavOn() && needsArrows(state.current?.slide)); }
+  function manualStep(step) {
+    state.interactUntil = Date.now() + idleMs(); // kézi lapozás után a megszokott tétlenségi idő múlva megy tovább magától
+    next(step);
+  }
+  $('#edge-nav').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) manualStep(+b.dataset.step);
+  });
+  document.addEventListener('click', (e) => {
+    const s = state.current?.slide;
+    if (!edgeNavOn() || !s || needsArrows(s) || !$('#keyboard').hidden) return;
+    if (e.target.closest?.('button, a, input, textarea, select, label, .link, #nav, #edge-nav, #alerts, #keyboard')) return;
+    // a tartalom szerinti bal/jobb (elforgatott kijelzőn a fizikai koordináták mást jelentenek)
+    const fx = e.clientX / innerWidth, fy = e.clientY / innerHeight;
+    const u = { 'rot-90': fy, 'rot-270': 1 - fy, 'rot-180': 1 - fx }[$('#rotor').className] ?? fx;
+    if (u < EDGE) manualStep(-1); else if (u > 1 - EDGE) manualStep(1);
+  });
 
   function show(slide, { duration, interactive } = {}) {
     if (!slide) return;
@@ -247,6 +272,7 @@
       setTimeout(() => oldEl.remove(), 950);
     }
     state.current = { slide, ctrl, el };
+    updateEdgeNav();
     ctrl.start?.();
     let secs = duration || slide.duration;
     if (ctrl.duration != null && !secs) secs = ctrl.duration;

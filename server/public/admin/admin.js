@@ -981,6 +981,7 @@
           F.select(tr('Alapértelmezett lejátszási lista'), s, 'playlist_id', plOpts, { number: true, full: true, hint: tr('Ez fut, ha egyik ütemezési szabály sem aktív.') }),
           F.number(tr('Visszatérés érintés után (mp)'), st, 'idle_return', { min: 10, max: 600, placeholder: '45', hint: tr('Ennyi tétlenség után folytatódik az automatikus lejátszás.') }),
           F.toggle(tr('Virtuális billentyűzet űrlapokhoz'), st, 'virtual_keyboard', { defaultOn: true, hint: tr('Érintőképernyőhöz, ha nincs fizikai billentyűzet') }),
+          F.toggle(tr('Lapozás érintéssel'), st, 'touch_nav', { full: true, defaultOn: true, hint: tr('Érintőképernyőn a bal szél érintése az előző, a jobb szélé a következő tartalomra lapoz. Menün, űrlapon és interaktív weboldalon a szélek helyett nyilak jelennek meg.') }),
           F.toggle(tr('Tablet mód (érintőképernyő)'), st, 'tablet', { full: true, hint: tr('Bekapcsolva soha nem jelenik meg egérmutató, csak érinteni lehet. Kikapcsolva egér mozgatásakor 3 másodpercig látszik a mutató, utána eltűnik.') }));
       } else if (tab === 'schedule') {
         const list = h('div');

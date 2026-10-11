@@ -236,6 +236,12 @@ body.has-ticker .slide { bottom: 7vmin; }
 .alert h1 { font-size: 9vmin; margin: 0; }
 .alert p { font-size: 4.5vmin; margin: 0; max-width: 80%; white-space: pre-line; }
 
+/* a menü gombjait ne takarja: az alsó sarkokban */
+#edge-nav { position: absolute; left: 2.5vmin; right: 2.5vmin; bottom: 2.5vmin; z-index: 39; pointer-events: none; display: flex; justify-content: space-between; }
+body.has-ticker #edge-nav { bottom: 9.5vmin; }
+#edge-nav[hidden] { display: none; }
+#edge-nav button { pointer-events: auto; width: 9vmin; height: 9vmin; border-radius: 50%; border: 0; background: rgba(0,0,0,.45); backdrop-filter: blur(6px); color: #fff; font-size: 6vmin; line-height: 1; padding-bottom: .8vmin; cursor: pointer; box-shadow: 0 .5vmin 2vmin rgba(0,0,0,.35); }
+#edge-nav button:active { transform: scale(.92); }
 #nav { position: absolute; left: 2.5vmin; bottom: 2.5vmin; z-index: 40; display: flex; gap: 1.5vmin; }
 body.has-ticker #nav { bottom: 9.5vmin; }
 #nav button { width: 9vmin; height: 9vmin; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); color: #fff; font-size: 4vmin; cursor: pointer; box-shadow: 0 .5vmin 2vmin rgba(0,0,0,.4); }
