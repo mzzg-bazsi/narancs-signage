@@ -36,20 +36,31 @@ export function updateCommand(type, port) {
   }[type];
 }
 
+// A GitHub kiadásokból csak a kódkiadások (vX.Y.Z; a pi-image és a piszkozatok nem), a jegyzet a telepítési sorok nélkül
+export function releaseList(arr) {
+  return (Array.isArray(arr) ? arr : [])
+    .filter((j) => !j.draft && !j.prerelease && /^v\d+\.\d+\.\d+$/.test(j.tag_name || ''))
+    .map((j) => ({ version: j.tag_name.slice(1), url: j.html_url, published_at: j.published_at, body: String(j.body || '').split(/\n---\n/)[0].trim().slice(0, 8000) }))
+    .sort((a, b) => (newer(a.version, b.version) ? -1 : newer(b.version, a.version) ? 1 : 0));
+}
+
 export async function checkUpdates(current, port) {
   if (!cache || cache.until < Date.now()) {
     try {
-      const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'User-Agent': 'NarancsSignage', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
+      const r = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=40`, { headers: { 'User-Agent': 'NarancsSignage', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const j = await r.json();
-      cache = { until: Date.now() + 30 * 60e3, latest: String(j.tag_name || '').replace(/^v/, ''), url: j.html_url, published_at: j.published_at };
+      const list = releaseList(await r.json());
+      if (!list.length) throw new Error('nincs kiadás');
+      cache = { until: Date.now() + 30 * 60e3, latest: list[0].version, url: list[0].url, published_at: list[0].published_at, releases: list };
     } catch (e) {
       console.warn('[frissítések]', e.message);
       throw new HttpError(502, 'Nem sikerült ellenőrizni a frissítéseket (van internet a szerveren?)');
     }
   }
   const type = installType();
-  return { current, ...cache, until: undefined, update_available: newer(cache.latest, current), install_type: type, command: updateCommand(type, port), can_update: updateSupported() };
+  // a kihagyott verziók újdonságai is (a legújabbtól visszafelé), a releases listát nem küldjük tovább
+  const notes = cache.releases.filter((x) => newer(x.version, current));
+  return { current, ...cache, until: undefined, releases: undefined, notes, update_available: newer(cache.latest, current), install_type: type, command: updateCommand(type, port), can_update: updateSupported() };
 }
 
 // „Frissítés most” gomb: csak a systemd-s Linux telepítésen (a telepítő teszi ki az update/enabled jelzőt)

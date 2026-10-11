@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newer, installType, updateCommand } from '../src/updates.js';
+import { newer, installType, updateCommand, releaseList } from '../src/updates.js';
 
 test('verzió összehasonlítás', () => {
   assert.equal(newer('1.10.0', '1.9.9'), true);
@@ -18,4 +18,13 @@ test('telepítés módja és parancs', () => {
   assert.match(updateCommand('macos', 8080), /install\.sh \| bash$/);
   assert.match(updateCommand('macos', 8099), /\| bash -s -- --port 8099/);
   assert.equal(updateCommand('docker', 8080), 'docker compose pull && docker compose up -d');
+});
+
+test('kiadások listája: csak vX.Y.Z, sorrend, jegyzet a telepítési sorok nélkül', () => {
+  const l = releaseList([
+    { tag_name: 'pi-image', body: 'x' }, { tag_name: 'v1.9.0', body: 'régi' }, { tag_name: 'v1.10.0', body: '### Új\n- **a**\n\n---\n**Server:** curl' },
+    { tag_name: 'v2.0.0', draft: true }, { tag_name: 'v1.10.1', prerelease: true },
+  ]);
+  assert.deepEqual(l.map((x) => x.version), ['1.10.0', '1.9.0']);
+  assert.equal(l[0].body, '### Új\n- **a**');
 });

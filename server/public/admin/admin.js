@@ -2064,6 +2064,20 @@
     return h('table', { class: 'table sys-table' }, rows.map(([k, v]) => h('tr', {}, h('td', { class: 'muted' }, k), h('td', {}, v))));
   }
 
+  // Kiadási jegyzet (GitHub markdown egyszerű része: ### cím, - pont, **félkövér**, `kód`) – DOM elemekként, innerHTML nélkül
+  function releaseNotes(md) {
+    const inline = (t) => t.split(/(\*\*[^*]+\*\*|`[^`]+`)/).filter(Boolean).map((x) => x.startsWith('**') ? h('b', {}, x.slice(2, -2)) : x.startsWith('`') ? h('code', {}, x.slice(1, -1)) : x);
+    const out = []; let ul = null;
+    for (const line of String(md || '').split('\n')) {
+      const t = line.trim();
+      if (!t) { ul = null; continue; }
+      if (t.startsWith('#')) { ul = null; out.push(h('div', { class: 'rn-head' }, t.replace(/^#+\s*/, ''))); continue; }
+      if (/^[-*] /.test(t)) { if (!ul) out.push(ul = h('ul', {})); ul.append(h('li', {}, ...inline(t.slice(2)))); continue; }
+      ul = null; out.push(h('p', {}, ...inline(t)));
+    }
+    return h('div', { class: 'rn-body' }, out);
+  }
+
   function updatesBox(current) {
     const box = h('div', { class: 'stack' });
     const out = h('div', { class: 'stack' });
@@ -2094,7 +2108,10 @@
         btn(tr('Másolás'), () => navigator.clipboard?.writeText(u.command).then(() => toast(tr('Parancs vágólapra másolva'))), { cls: 'sm', ic: 'copy' }));
       const where = { docker: tr('A docker-compose.yml mappájában futtasd (docker run esetén: kép letöltése, majd a konténer újra létrehozása).'), macos: tr('Futtasd a Mac Termináljában.'), manual: tr('A program mappájában futtasd, majd indítsd újra a szervert.'), linux: tr('Vagy futtasd a szerveren:') }[u.install_type];
       out.replaceChildren(
-        h('div', {}, h('b', {}, tr('Új verzió érhető el: v{v}', { v: u.latest })), ' ', h('span', { class: 'small muted' }, tr('(most: v{v})', { v: u.current })), ' · ', h('a', { href: u.url, target: '_blank', rel: 'noopener' }, tr('Újdonságok'))),
+        h('div', {}, h('b', {}, tr('Új verzió érhető el: v{v}', { v: u.latest })), ' ', h('span', { class: 'small muted' }, tr('(most: v{v})', { v: u.current }))),
+        (u.notes || []).length ? h('div', { class: 'release-notes' }, u.notes.map((n) => h('div', {},
+          h('div', { class: 'row between' }, h('b', {}, `v${n.version}`), h('a', { class: 'small', href: n.url, target: '_blank', rel: 'noopener' }, fmtDate(n.published_at))),
+          releaseNotes(n.body)))) : null,
         u.can_update ? h('div', {}, btn(tr('Frissítés most#szoftver'), async () => {
           if (!(await confirmBox(tr('A szerver frissül a v{v} verzióra és újraindul, ez 1–3 perc. A kijelzők közben a tárolt tartalmat játsszák, utána újracsatlakoznak.', { v: u.latest }), { ok: tr('Frissítés#szoftver'), title: tr('Frissítés#szoftver') }))) return;
           try { await POST('/api/updates/install'); watch(); } catch (e) { fail(e); }
