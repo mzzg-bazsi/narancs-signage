@@ -66,6 +66,29 @@ jobs:
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
           if (Get-LocalUser NarancsKiosk -ErrorAction SilentlyContinue) { throw 'kiosk account left behind' }
           if ((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon').AutoAdminLogon -eq '1') { throw 'autologon maradt' }
+      - name: Szkriptek szintaxisa (kioszk, ügynök, tálca)
+        shell: powershell
+        run: |
+          foreach ($f in 'install\windows\kiosk.ps1', 'install\windows\agent.ps1', 'install\windows\tray.ps1') {
+            $e = $null; [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$e); if ($e) { throw ($f + ': ' + ($e | Out-String)) }
+          }
+      - name: Ügynök élőben - szerver, majd egy kioszk, ami ehhez csatlakozik
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode server -Port 8093 -Source .
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server http://127.0.0.1:8093 -Source .
+          $dev = (Get-Content "$env:ProgramData\NarancsSignage\device" -Raw).Trim()
+          $H = @{ 'X-Signage' = '1' }
+          Invoke-RestMethod -Method Post http://127.0.0.1:8093/api/auth/setup -Headers $H -ContentType 'application/json' -SessionVariable ws -Body (@{ username = 'admin'; password = 'admin-jelszo-123'; org_name = 'CI'; language = 'en' } | ConvertTo-Json) | Out-Null
+          $hi = Invoke-RestMethod -Method Post http://127.0.0.1:8093/api/player/hello -ContentType 'application/json' -Body (@{ device = $dev } | ConvertTo-Json)
+          Invoke-RestMethod -Method Post http://127.0.0.1:8093/api/screens/pair -Headers $H -WebSession $ws -ContentType 'application/json' -Body (@{ code = $hi.code; name = 'CI kiosk' } | ConvertTo-Json) | Out-Null
+          $ok = $false
+          for ($i = 0; $i -lt 60 -and -not $ok; $i++) { Start-Sleep 2; $sc = (Invoke-RestMethod http://127.0.0.1:8093/api/screens -WebSession $ws).screens[0]; $ok = $sc.agent_online -and $sc.info.agent.version }
+          $sc.info.agent | ConvertTo-Json
+          if (-not $ok) { throw 'agent did not connect / report' }
+          Invoke-RestMethod -Method Post "http://127.0.0.1:8093/api/screens/$($sc.id)/command" -Headers $H -WebSession $ws -ContentType 'application/json' -Body '{"command":"restart"}' | ConvertTo-Json
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
+          if (Get-ScheduledTask -TaskName 'Narancs Signage Agent' -ErrorAction SilentlyContinue) { throw 'agent task left behind' }
       - name: Kézi indításkor a kiadott telepítő a GitHubról (letöltés, irm)
         if: github.event_name == 'workflow_dispatch'
         shell: powershell
@@ -87,6 +110,10 @@ jobs:
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
           # a licenc BOM-mal, hogy az ékezetek jól látszódjanak a varázslóban
           Get-Content LICENSE -Encoding UTF8 | Set-Content install\windows\LICENSE.txt -Encoding UTF8
+          # a Node.js a telepítőbe kerül (aktuális LTS, x64)
+          $lts = ''; foreach ($r in (Invoke-RestMethod https://nodejs.org/dist/index.json)) { if ($r.lts) { $lts = [string]$r.version; break } }
+          New-Item -ItemType Directory -Force install\windows\node | Out-Null
+          Invoke-WebRequest "https://nodejs.org/dist/$lts/win-x64/node.exe" -OutFile install\windows\node\node.exe -UseBasicParsing
           $v = (Get-Content server\package.json -Raw | ConvertFrom-Json).version
           & $iscc /Qp "/DAppVersion=$v" install\windows\setup.iss
           if ($LASTEXITCODE) { throw 'ISCC' }

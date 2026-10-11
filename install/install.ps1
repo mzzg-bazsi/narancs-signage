@@ -36,13 +36,21 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 
 $KioskUser = 'NarancsKiosk'
 $KioskTask = 'Narancs Signage Display'
+$AgentTask = 'Narancs Signage Agent'
+$TrayLink = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\StartUp\Narancs Signage.lnk'
+
+# a tálca ikon (minden felhasználónál, bejelentkezéskor) – csak ahol szerver fut
+function Remove-Tray {
+  Remove-Item $TrayLink -ErrorAction SilentlyContinue
+  Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like '*NarancsSignage\install\windows\tray.ps1*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+}
 $Winlogon = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
 
 $PwLessKey = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device'
 $PwLessPrev = Join-Path $Base 'passwordless.prev'
 
 # Az automatikus bejelentkezés jelszava az LSA titkos tárolóba kerül (mint a Sysinternals Autologonnál), nem olvasható szövegként a registrybe
-function Set-LsaSecret([string]$Key, [string]$Value) {
+function Set-LsaSecret([string]$Key, $Value) {   # a $Value típus nélkül: a [string] a $null-t üres szöveggé alakítaná (törlés helyett)
   if (-not ('NsLsa' -as [type])) {
     Add-Type -TypeDefinition @'
 using System;
@@ -74,7 +82,7 @@ public static class NsLsa {
 
 # A kioszk fiók visszabontása (eltávolításkor, és ha a gép már nem „csak kijelző”)
 function Remove-Kiosk {
-  Unregister-ScheduledTask -TaskName $KioskTask -Confirm:$false -ErrorAction SilentlyContinue
+  foreach ($t in $KioskTask, $AgentTask) { Stop-ScheduledTask -TaskName $t -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue }
   if ((Get-ItemProperty $Winlogon -ErrorAction SilentlyContinue).DefaultUserName -eq $KioskUser) {
     Set-ItemProperty $Winlogon AutoAdminLogon '0'
     Remove-ItemProperty $Winlogon DefaultPassword -ErrorAction SilentlyContinue
@@ -103,6 +111,7 @@ if ($Uninstall) {
   if (-not $IsAdmin) { throw 'Run PowerShell as Administrator.' }
   Stop-Server
   Remove-Kiosk
+  Remove-Tray
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Get-NetFirewallRule -DisplayName $RuleName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
   Remove-Item $Shortcut -ErrorAction SilentlyContinue
@@ -140,60 +149,68 @@ if ($Mode -eq 'screen') {
 }
 New-Item -ItemType Directory -Force $Base | Out-Null
 
+# ---------- Forrás: a grafikus telepítő mellékeli, különben a kiadás csomagja a GitHubról ----------
+$Tmp = $null
+if ($Source) { $Src = (Resolve-Path $Source).Path } else {
+  if ($Version -like '__*' -or $Version -eq 'latest') { $Version = (Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ 'User-Agent' = 'NarancsSignage' }).tag_name }
+  $Version = $Version.TrimStart('v')
+  if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Could not determine the version to install.' }
+  Info "Downloading Narancs Signage v$Version"
+  $Tmp = Join-Path $env:TEMP ('narancs-signage-' + [guid]::NewGuid())
+  New-Item -ItemType Directory $Tmp | Out-Null
+  Invoke-WebRequest "https://github.com/$Repo/archive/refs/tags/v$Version.tar.gz" -OutFile "$Tmp\src.tar.gz" -UseBasicParsing
+  tar -xzf "$Tmp\src.tar.gz" -C $Tmp
+  $Src = Join-Path $Tmp "narancs-signage-$Version"
+}
+if (-not (Test-Path "$Src\server\src\server.js")) { throw 'The download is incomplete.' }
+$Ver = (Get-Content "$Src\server\package.json" -Raw | ConvertFrom-Json).version
+# az install mappa minden módban kell (a kioszk, az ügynök és a tálca ikon szkriptjei; a szerver a kijelző telepítőt is innen adja)
+Remove-Item "$Base\install" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item "$Src\install" "$Base\install" -Recurse
+
 # ---------- Szerver ----------
-$Ver = ''
 if ($WithServer) {
   function Test-NodeExe($exe) {
     try { return [version](& $exe -p 'process.versions.node') -ge [version]'22.13.0' } catch { return $false }
   }
   $Node = $null
-  $sysNode = Get-Command node -ErrorAction SilentlyContinue
-  if ($sysNode -and (Test-NodeExe $sysNode.Source)) { $Node = $sysNode.Source }
-  elseif ((Test-Path "$Base\node\node.exe") -and (Test-NodeExe "$Base\node\node.exe")) { $Node = "$Base\node\node.exe" }
-  else {
-    # saját Node.js a program mellé, közvetlenül a nodejs.org-ról (a winget nem mindenhol van meg, pl. régebbi Windows 10-en)
-    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
-    # PowerShell 5.1-ben az irm a JSON tömböt egyben adja tovább, ezért foreach-csel bontjuk ki
-    $lts = ''
-    foreach ($r in (Invoke-RestMethod 'https://nodejs.org/dist/index.json')) { if ($r.lts) { $lts = [string]$r.version; break } }
-    if ($lts -notmatch '^v\d+\.\d+\.\d+$') { throw 'Could not find the current Node.js version on nodejs.org.' }
-    Info "Downloading Node.js $lts"
-    $zip = Join-Path $env:TEMP "node-$lts-win-$arch.zip"
-    Invoke-WebRequest "https://nodejs.org/dist/$lts/node-$lts-win-$arch.zip" -OutFile $zip -UseBasicParsing
+  if (Test-Path "$Src\node\node.exe") {
+    # a grafikus telepítő a Node.js-t is tartalmazza: nincs letöltés, nincs függés a gépen lévő Node.js-től
     Stop-Server
-    Remove-Item "$Base\node", "$Base\node-$lts-win-$arch" -Recurse -Force -ErrorAction SilentlyContinue
-    tar -xf $zip -C $Base
-    Rename-Item "$Base\node-$lts-win-$arch" 'node'
-    Remove-Item $zip -ErrorAction SilentlyContinue
+    Remove-Item "$Base\node" -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory "$Base\node" | Out-Null
+    Copy-Item "$Src\node\node.exe" "$Base\node\node.exe"
     $Node = "$Base\node\node.exe"
-    if (-not (Test-NodeExe $Node)) { throw 'Node.js could not be installed. Install Node.js 22.13 or newer from https://nodejs.org, then run this again.' }
+  } else {
+    $sysNode = Get-Command node -ErrorAction SilentlyContinue
+    if ($sysNode -and (Test-NodeExe $sysNode.Source)) { $Node = $sysNode.Source }
+    elseif ((Test-Path "$Base\node\node.exe") -and (Test-NodeExe "$Base\node\node.exe")) { $Node = "$Base\node\node.exe" }
+    else {
+      # saját Node.js a program mellé, közvetlenül a nodejs.org-ról (a winget nem mindenhol van meg, pl. régebbi Windows 10-en)
+      $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+      # PowerShell 5.1-ben az irm a JSON tömböt egyben adja tovább, ezért foreach-csel bontjuk ki
+      $lts = ''
+      foreach ($r in (Invoke-RestMethod 'https://nodejs.org/dist/index.json')) { if ($r.lts) { $lts = [string]$r.version; break } }
+      if ($lts -notmatch '^v\d+\.\d+\.\d+$') { throw 'Could not find the current Node.js version on nodejs.org.' }
+      Info "Downloading Node.js $lts"
+      $zip = Join-Path $env:TEMP "node-$lts-win-$arch.zip"
+      Invoke-WebRequest "https://nodejs.org/dist/$lts/node-$lts-win-$arch.zip" -OutFile $zip -UseBasicParsing
+      Stop-Server
+      Remove-Item "$Base\node", "$Base\node-$lts-win-$arch" -Recurse -Force -ErrorAction SilentlyContinue
+      tar -xf $zip -C $Base
+      Rename-Item "$Base\node-$lts-win-$arch" 'node'
+      Remove-Item $zip -ErrorAction SilentlyContinue
+      $Node = "$Base\node\node.exe"
+    }
   }
+  if (-not (Test-NodeExe $Node)) { throw 'Node.js could not be installed. Install Node.js 22.13 or newer from https://nodejs.org, then run this again.' }
   Ok "Node.js $(& $Node -v)"
-
-  # forrás: a kiadás csomagja a GitHubról
-  $Tmp = $null
-  if ($Source) { $Src = (Resolve-Path $Source).Path } else {
-    if ($Version -like '__*' -or $Version -eq 'latest') { $Version = (Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ 'User-Agent' = 'NarancsSignage' }).tag_name }
-    $Version = $Version.TrimStart('v')
-    if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Could not determine the version to install.' }
-    Info "Downloading Narancs Signage v$Version"
-    $Tmp = Join-Path $env:TEMP ('narancs-signage-' + [guid]::NewGuid())
-    New-Item -ItemType Directory $Tmp | Out-Null
-    Invoke-WebRequest "https://github.com/$Repo/archive/refs/tags/v$Version.tar.gz" -OutFile "$Tmp\src.tar.gz" -UseBasicParsing
-    tar -xzf "$Tmp\src.tar.gz" -C $Tmp
-    $Src = Join-Path $Tmp "narancs-signage-$Version"
-  }
-  if (-not (Test-Path "$Src\server\src\server.js")) { throw 'The download is incomplete.' }
-  $Ver = (Get-Content "$Src\server\package.json" -Raw | ConvertFrom-Json).version
 
   Stop-Server
   New-Item -ItemType Directory -Force "$Base\data" | Out-Null
-  foreach ($d in 'server', 'install') {
-    Remove-Item "$Base\$d" -Recurse -Force -ErrorAction SilentlyContinue
-    Copy-Item "$Src\$d" "$Base\$d" -Recurse   # az install mappából a szerver a kijelző telepítőt is kiszolgálja
-  }
+  Remove-Item "$Base\server" -Recurse -Force -ErrorAction SilentlyContinue
+  Copy-Item "$Src\server" "$Base\server" -Recurse
   Remove-Item "$Base\server\data" -Recurse -Force -ErrorAction SilentlyContinue
-  if ($Tmp) { Remove-Item $Tmp -Recurse -Force -ErrorAction SilentlyContinue }
 
   # shortcut: a napló korlátlanul nő, ha sokat ír a szerver – kell majd forgatás
   $Run = "$Base\run.cmd"
@@ -223,15 +240,33 @@ if ($WithServer) {
   }
   if (-not $up) { throw "The server did not start. Log: $Base\server.log" }
   Ok "Server v$Ver is running on port $Port"
-}
+
+  # tálca ikon: wscript indítja, hogy ne villanjon fel PowerShell ablak
+  $vbs = "$Base\tray.vbs"
+  "CreateObject(""WScript.Shell"").Run ""powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File $Base\install\windows\tray.ps1"", 0, False" | Set-Content -Encoding ASCII $vbs
+  $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($TrayLink)
+  $lnk.TargetPath = "$env:SystemRoot\System32\wscript.exe"
+  $lnk.Arguments = "`"$vbs`""
+  $lnk.Description = 'Narancs Signage tray icon'
+  $lnk.Save()
+  if (-not $NoStart -and -not $env:CI) { Start-Process "$env:SystemRoot\System32\wscript.exe" "`"$vbs`"" }
+  Ok 'Tray icon: starts at sign-in (Narancs Signage in the notification area)'
+} else { Remove-Tray }
+if ($Tmp) { Remove-Item $Tmp -Recurse -Force -ErrorAction SilentlyContinue }
 
 # ---------- Kijelző: Microsoft Edge kioszk módban ----------
 # Csak kijelző: önálló kioszk gép – külön fiók automatikus bejelentkezéssel, a lejátszó teljes képernyőn, bezárás után újraindul.
 # Szerver + kijelző: a saját fiókban, bejelentkezéskor (a gép a sajátod marad).
+# a kijelző állandó azonosítója (a kioszk ezzel párosul; újratelepítéskor sem kell újra párosítani)
+$DevFile = Join-Path $Base 'device'
+if (-not (Test-Path $DevFile)) { -join ((1..32) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) }) | Set-Content -Encoding ASCII $DevFile }
+$Device = (Get-Content $DevFile -Raw).Trim()
+@{ mode = $Mode; port = $Port; server = $Server; version = $Ver; device = $Device } | ConvertTo-Json | Set-Content -Encoding ASCII $ConfFile
+
 $Url = ''
 if ($Mode -ne 'screen') { Remove-Kiosk }
 if ($WithScreen) {
-  $Url = if ($WithServer) { "http://localhost:$Port/player/" } else { "$Server/player/" }
+  $Url = if ($WithServer) { "http://localhost:$Port/player/" } else { "$Server/player/?device=$Device" }
   $Edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
   if (-not $Edge) { throw 'Microsoft Edge was not found. Install it, then run this again.' }
   $Flags = "--kiosk `"$Url`" --edge-kiosk-type=fullscreen --no-first-run --hide-crash-restore-bubble --autoplay-policy=no-user-gesture-required --disable-features=Translate"
@@ -270,20 +305,23 @@ if ($WithScreen) {
     New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' -Force | Out-Null
     Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' DisablePrivacyExperience 1 -Type DWord
 
-    # a kioszk fiók bejelentkezésekor: az Edge teljes képernyőn, és ha bezárják / összeomlik, pár másodperc múlva újra
-    $KioskScript = "$Base\kiosk.ps1"
-    @(
-      "`$profileDir = Join-Path `$env:LOCALAPPDATA 'NarancsSignage\kiosk'",
-      "while (`$true) {",
-      "  Start-Process '$Edge' -ArgumentList ('$($Flags.Replace('"', '')) --user-data-dir=' + `$profileDir) -Wait",
-      "  Start-Sleep -Seconds 3",
-      "}"
-    ) | Set-Content -Encoding ASCII $KioskScript
-    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$KioskScript`""
+    # a kiosk.ps1 (a kioszk fiók munkamenetében) és az ügynök (SYSTEM) ezen a mappán át cserél képernyőképet
+    New-Item -ItemType Directory -Force "$Base\kiosk" | Out-Null
+    icacls "$Base\kiosk" /grant '*S-1-5-32-545:(OI)(CI)M' | Out-Null
+    # bejelentkezéskor: az Edge teljes képernyőn (bezárás után újra), időzített kijelző ki/be, képernyőkép
+    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Base\install\windows\kiosk.ps1`""
     $trg = New-ScheduledTaskTrigger -AtLogOn -User "$env:COMPUTERNAME\$KioskUser"
     $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     $pri = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$KioskUser" -LogonType Interactive -RunLevel Limited
     Register-ScheduledTask -TaskName $KioskTask -Action $act -Trigger $trg -Settings $set -Principal $pri -Force | Out-Null
+    # távvezérlés az adminból (lejátszó / gép újraindítása, képernyőkép): SYSTEM ügynök a gép indulásakor
+    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Base\install\windows\agent.ps1`""
+    $trg = New-ScheduledTaskTrigger -AtStartup
+    $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+    $pri = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+    Register-ScheduledTask -TaskName $AgentTask -Action $act -Trigger $trg -Settings $set -Principal $pri -Force | Out-Null
+    Stop-ScheduledTask -TaskName $AgentTask -ErrorAction SilentlyContinue   # újratelepítéskor az új beállításokkal induljon
+    Start-ScheduledTask -TaskName $AgentTask
     Ok "Kiosk: after a restart this PC signs in as '$KioskUser' and shows the display full screen"
   } else {
     # külön profil: a kijelző azonosítója (párosítás) itt marad meg, és nem keveredik a saját böngészéssel
@@ -298,7 +336,6 @@ if ($WithScreen) {
   }
 }
 
-@{ mode = $Mode; port = $Port; server = $Server; version = $Ver } | ConvertTo-Json | Set-Content -Encoding ASCII $ConfFile
 
 # ---------- Összefoglaló ----------
 $Ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1).IPAddress
@@ -315,6 +352,7 @@ if ($WithServer) {
 if ($WithScreen) {
   Write-Host "  Display:        $Url  (pair it in the admin panel with the code it shows)"
   if ($Mode -eq 'screen') {
+    Write-Host '  Remote control from the admin panel: restart player / PC, screenshot, power schedule (monitor off / on).'
     Write-Host '  Restart the PC to start the kiosk. To get back to Windows: Ctrl+Alt+Del, then Sign out, and sign in with your own account.'
   } else { Write-Host '  Exit full screen: Alt+F4.' }
 }

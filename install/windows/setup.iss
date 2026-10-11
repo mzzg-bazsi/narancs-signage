@@ -36,8 +36,8 @@ Name: "hungarian"; MessagesFile: "compiler:Languages\Hungarian.isl"
 english.TypeBoth=Server and display on this PC
 english.TypeServer=Server only (displays connect to it)
 english.TypeScreen=Display only – kiosk PC (full screen, signs in automatically)
-english.CompServer=Server – admin panel and content (runs at startup, also without sign-in)
-english.CompScreen=Display – Microsoft Edge full screen (kiosk)
+english.CompServer=Server – admin panel and content (runs at startup, also without sign-in; tray icon)
+english.CompScreen=Display – Microsoft Edge full screen (kiosk; remote restart, screenshot, power schedule)
 english.PortTitle=Server settings
 english.PortDesc=Which port should the server use?
 english.PortLabel=Port (the admin panel will be at http://this-PC:PORT/admin/):
@@ -54,8 +54,8 @@ english.KioskInfo=After the restart this PC signs in automatically with its own 
 hungarian.TypeBoth=Szerver és kijelző ezen a gépen
 hungarian.TypeServer=Csak szerver (a kijelzők ehhez csatlakoznak)
 hungarian.TypeScreen=Csak kijelző – kioszk gép (teljes képernyő, automatikus bejelentkezés)
-hungarian.CompServer=Szerver – admin felület és tartalmak (a gép indulásakor fut, bejelentkezés nélkül is)
-hungarian.CompScreen=Kijelző – Microsoft Edge teljes képernyőn (kioszk)
+hungarian.CompServer=Szerver – admin felület és tartalmak (a gép indulásakor fut, bejelentkezés nélkül is; tálca ikon)
+hungarian.CompScreen=Kijelző – Microsoft Edge teljes képernyőn (kioszk; távoli újraindítás, képernyőkép, időzített ki/be)
 hungarian.PortTitle=Szerver beállítások
 hungarian.PortDesc=Melyik porton fusson a szerver?
 hungarian.PortLabel=Port (az admin felület címe: http://ez-a-gép:PORT/admin/):
@@ -82,7 +82,9 @@ Name: "screen"; Description: "{cm:CompScreen}"; Types: both screen
 [Files]
 ; a forrás csak a telepítés idejére kell, az install.ps1 másolja a helyére (%ProgramData%\NarancsSignage)
 Source: "..\..\server\*"; DestDir: "{tmp}\src\server"; Excludes: "\data\*,\test\*"; Flags: recursesubdirs deleteafterinstall
-Source: "..\..\install\*"; DestDir: "{tmp}\src\install"; Excludes: "\windows\*"; Flags: recursesubdirs deleteafterinstall
+Source: "..\..\install\*"; DestDir: "{tmp}\src\install"; Excludes: "\windows\Output\*,\windows\node\*"; Flags: recursesubdirs deleteafterinstall
+; a Node.js is benne van (a CI tölti le a fordítás előtt): a gépen nem kell semmit letölteni
+Source: "node\node.exe"; DestDir: "{tmp}\src\node"; Flags: deleteafterinstall; Components: server
 ; az eltávolításhoz megmarad
 Source: "..\install.ps1"; DestDir: "{app}"
 Source: "narancs.ico"; DestDir: "{app}"
@@ -170,7 +172,10 @@ begin
   // a PowerShell kimenete a naplóba megy (hiba esetén ebből derül ki az ok)
   if not Exec(ExpandConstant('{cmd}'), '/c powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\src\install\install.ps1') + '"' + Args + ' > "' + Log + '" 2>&1',
               '', SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then
-    SuppressibleMsgBox(FmtMessage(CustomMessage('Failed'), [Log]), mbError, MB_OK, IDOK);
+    SuppressibleMsgBox(FmtMessage(CustomMessage('Failed'), [Log]), mbError, MB_OK, IDOK)
+  else if WizardIsComponentSelected('server') and not WizardSilent then
+    // a tálca ikon a bejelentkezett felhasználónál (nem rendszergazdaként) induljon
+    ExecAsOriginalUser(ExpandConstant('{sys}\wscript.exe'), '"' + ExpandConstant('{commonappdata}\NarancsSignage\tray.vbs') + '"', '', SW_SHOWNORMAL, ewNoWait, Code);
   WizardForm.ProgressGauge.Style := npbstNormal;
 end;
 
