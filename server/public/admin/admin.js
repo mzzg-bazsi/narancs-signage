@@ -2114,7 +2114,7 @@
     const check = async () => {
       out.replaceChildren(h('div', { class: 'small muted' }, tr('Keresés…#frissítés')));
       let u;
-      try { u = await GET('/api/updates'); } catch (e) { out.replaceChildren(h('div', { class: 'small', style: { color: 'var(--danger)' } }, e.message)); return; }
+      try { u = await GET('/api/updates?force=1'); } catch (e) { out.replaceChildren(h('div', { class: 'small', style: { color: 'var(--danger)' } }, e.message)); return; }
       if (!u.update_available) return out.replaceChildren(h('div', { class: 'small' }, tr('✓ A legfrissebb verzió fut (v{v}).', { v: u.current })));
       const cmd = h('div', { class: 'row', style: { flexWrap: 'nowrap' } }, h('code', { class: 'code-pill grow', style: { overflowX: 'auto', whiteSpace: 'nowrap', padding: '6px 10px' } }, u.command),
         btn(tr('Másolás'), () => navigator.clipboard?.writeText(u.command).then(() => toast(tr('Parancs vágólapra másolva'))), { cls: 'sm', ic: 'copy' }));

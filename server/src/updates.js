@@ -46,8 +46,9 @@ export function releaseList(arr) {
     .sort((a, b) => (newer(a.version, b.version) ? -1 : newer(b.version, a.version) ? 1 : 0));
 }
 
-export async function checkUpdates(current, port) {
-  if (!cache || cache.until < Date.now()) {
+// force: a „Frissítések keresése” gomb mindig frissen kérdez (a gyorsítótár csak az automatikus ellenőrzéseket fogja vissza)
+export async function checkUpdates(current, port, force = false) {
+  if (force || !cache || cache.until < Date.now()) {
     try {
       const r = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=40`, { headers: { 'User-Agent': 'NarancsSignage', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

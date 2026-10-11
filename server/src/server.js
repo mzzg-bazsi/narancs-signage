@@ -772,7 +772,7 @@ r.put('/api/settings', A, async (req, res) => {
 });
 // frissítések: ellenőrzés a GitHubon, és „Frissítés most” a systemd-s Linux telepítésen
 r.get('/api/system', A, (req, res) => send(res, 200, { ...systemInfo(), version: VERSION, data_dir: DATA_DIR }));
-r.get('/api/updates', A, async (req, res) => send(res, 200, await checkUpdates(VERSION, PORT)));
+r.get('/api/updates', A, async (req, res) => send(res, 200, await checkUpdates(VERSION, PORT, req.query.get('force') === '1')));
 r.post('/api/updates/install', A, (req, res) => { requestUpdate(); send(res, 200, { ok: true }); });
 r.get('/api/updates/status', A, (req, res) => send(res, 200, { ...updateStatus(), version: VERSION }));
 // hálózat (statikus IP) – csak Raspberry Pi-n, ahol a telepítő a root segédet is feltette

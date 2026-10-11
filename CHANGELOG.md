@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.29.2] – 2026-10-11
+
+### Javítva
+- **Frissítések keresése**: a gomb mindig frissen kérdezi a GitHubot; eddig a szerver 30 percig a korábbi választ adta vissza, így egy frissen megjelent kiadást nem mutatott.
+- **Windows kioszk**: az Edge a közös Indítópultból is indul (nem csak ütemezett feladatból), egy példányban; a kioszk naplót ír (`%ProgramData%\NarancsSignage\kiosk\kiosk-NarancsKiosk.log`). A CI a kioszk szkriptet ténylegesen lefuttatja: elindul-e az Edge, és elkészül-e a képernyőkép.
+
 ## [1.29.1] – 2026-10-11
 
 ### Javítva
