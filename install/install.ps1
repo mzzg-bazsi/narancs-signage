@@ -81,9 +81,19 @@ public static class NsLsa {
   return [NsLsa]::Store($Key, $Value)
 }
 
+# a futó kioszk / ügynök programok (felülíráshoz és eltávolításhoz)
+function Stop-KioskPrograms {
+  Stop-ScheduledTask -TaskName $AgentTask -ErrorAction SilentlyContinue
+  foreach ($n in 'kiosk.exe', 'agent.exe') {
+    Get-CimInstance Win32_Process -Filter "Name='$n'" | Where-Object { $_.ExecutablePath -like "$Base\*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+  }
+}
+
 # A kioszk fiók visszabontása (eltávolításkor, és ha a gép már nem „csak kijelző”)
 function Remove-Kiosk {
   Remove-Item $KioskLink, "$Base\kiosk.vbs" -ErrorAction SilentlyContinue
+  Stop-KioskPrograms
+  Remove-Item "$Base\kiosk.exe", "$Base\agent.exe" -ErrorAction SilentlyContinue
   foreach ($t in $KioskTask, $AgentTask) { Stop-ScheduledTask -TaskName $t -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue }
   if ((Get-ItemProperty $Winlogon -ErrorAction SilentlyContinue).DefaultUserName -eq $KioskUser) {
     Set-ItemProperty $Winlogon AutoAdminLogon '0'
@@ -307,24 +317,32 @@ if ($WithScreen) {
     New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' -Force | Out-Null
     Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' DisablePrivacyExperience 1 -Type DWord
 
-    # a kiosk.ps1 (a kioszk fiók munkamenetében) és az ügynök (SYSTEM) ezen a mappán át cserél képernyőképet
+    # a kioszk program (a kioszk fiók munkamenetében) és az ügynök (SYSTEM) ezen a mappán át cserél képernyőképet, és ide naplóz
     New-Item -ItemType Directory -Force "$Base\kiosk" | Out-Null
     icacls "$Base\kiosk" /grant '*S-1-5-32-545:(OI)(CI)M' | Out-Null
+    # lefordított programok, nem PowerShell szkriptek: a Windows Defender a szkriptként futó kioszkot kártevőnek jelölte
+    Stop-KioskPrograms
+    $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+    if (-not (Test-Path $csc)) { $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe" }
+    if (-not (Test-Path $csc)) { throw 'The .NET Framework 4 compiler (csc.exe) was not found.' }
+    foreach ($n in 'kiosk', 'agent') {
+      $out = & $csc /nologo /optimize /codepage:65001 /target:winexe "/out:$Base\$n.exe" /r:System.Management.dll /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll "$Base\install\windows\$n.cs"
+      if ($LASTEXITCODE -or -not (Test-Path "$Base\$n.exe")) { throw "Could not build $n.exe: $out" }
+    }
     # bejelentkezéskor: az Edge teljes képernyőn (bezárás után újra), időzített kijelző ki/be, képernyőkép
-    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Base\install\windows\kiosk.ps1`""
+    $act = New-ScheduledTaskAction -Execute "$Base\kiosk.exe"
     $trg = New-ScheduledTaskTrigger -AtLogOn -User "$env:COMPUTERNAME\$KioskUser"
     $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     $pri = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$KioskUser" -LogonType Interactive -RunLevel Limited
     Register-ScheduledTask -TaskName $KioskTask -Action $act -Trigger $trg -Settings $set -Principal $pri -Force | Out-Null
-    # második indítási út: a közös Indítópult (az Explorer indítja bejelentkezéskor); csak a kioszk fióknál indít, a kiosk.ps1 egy példányban fut
-    "If LCase(CreateObject(""WScript.Network"").UserName) = ""$($KioskUser.ToLower())"" Then CreateObject(""WScript.Shell"").Run ""powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File $Base\install\windows\kiosk.ps1"", 0, False" | Set-Content -Encoding ASCII "$Base\kiosk.vbs"
+    # második indítási út: a közös Indítópult; a program csak a kioszk fióknál dolgozik, és egy példányban fut
     $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($KioskLink)
-    $lnk.TargetPath = "$env:SystemRoot\System32\wscript.exe"
-    $lnk.Arguments = "`"$Base\kiosk.vbs`""
+    $lnk.TargetPath = "$Base\kiosk.exe"
+    $lnk.Arguments = $KioskUser
     $lnk.Description = 'Narancs Signage kiosk'
     $lnk.Save()
     # távvezérlés az adminból (lejátszó / gép újraindítása, képernyőkép): SYSTEM ügynök a gép indulásakor
-    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Base\install\windows\agent.ps1`""
+    $act = New-ScheduledTaskAction -Execute "$Base\agent.exe"
     $trg = New-ScheduledTaskTrigger -AtStartup
     $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
     $pri = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest

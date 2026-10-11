@@ -51,7 +51,8 @@ jobs:
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server 192.168.1.10:8080/ -Source .
           $t = Get-ScheduledTask -TaskName 'Narancs Signage Display'
           $t.Principal.UserId
-          if ($t.Actions[0].Arguments -notlike '*install\windows\kiosk.ps1*') { throw 'kiosk task' }
+          if ($t.Actions[0].Execute -notlike '*NarancsSignage\kiosk.exe') { throw 'kiosk task' }
+          if (-not (Test-Path "$env:ProgramData\NarancsSignage\agent.exe")) { throw 'agent.exe was not built' }
           if (-not (Get-ScheduledTask -TaskName 'Narancs Signage Agent' -ErrorAction SilentlyContinue)) { throw 'agent task' }
           $c = Get-Content "$env:ProgramData\NarancsSignage\install.json" -Raw | ConvertFrom-Json
           if ($c.server -ne 'http://192.168.1.10:8080' -or $c.device -notmatch '^[0-9a-f]{32}$') { throw ('install.json: ' + ($c | ConvertTo-Json)) }
@@ -62,17 +63,16 @@ jobs:
           # a kioszk szkript szintaxisa (PowerShell parser)
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
           if (-not (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\Narancs Signage Kiosk.lnk")) { throw 'kiosk startup link' }
-          Get-Content "$env:ProgramData\NarancsSignage\kiosk.vbs"
-      - name: A kioszk szkript tényleg elindítja az Edge-et (a futó felhasználóval)
+      - name: A kioszk program tényleg elindítja az Edge-et (a futó felhasználóval)
         shell: powershell
         run: |
-          $p = Start-Process powershell.exe -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "$env:ProgramData\NarancsSignage\install\windows\kiosk.ps1" -PassThru
+          $p = Start-Process "$env:ProgramData\NarancsSignage\kiosk.exe" -PassThru
           $edge = $null
           for ($i = 0; $i -lt 30 -and -not $edge; $i++) { Start-Sleep 2; $edge = Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like '*NarancsSignage\kiosk*' } }
           Get-Content "$env:ProgramData\NarancsSignage\kiosk\kiosk-$env:USERNAME.log"
           if (-not $edge) { throw 'Edge did not start' }
           ($edge | Select-Object -First 1).CommandLine
-          if (Select-String -Path "$env:ProgramData\NarancsSignage\kiosk\kiosk-$env:USERNAME.log" -Pattern 'error:' -Quiet) { throw 'kiosk.ps1 logged an error' }
+          if (Select-String -Path "$env:ProgramData\NarancsSignage\kiosk\kiosk-$env:USERNAME.log" -Pattern 'error:' -Quiet) { throw 'kiosk.exe logged an error' }
           # képernyőkép kérés a mappán át (ahogy az ügynök kéri)
           New-Item -ItemType File "$env:ProgramData\NarancsSignage\kiosk\shot.req" -Force | Out-Null
           for ($i = 0; $i -lt 20 -and -not (Test-Path "$env:ProgramData\NarancsSignage\kiosk\shot.jpg"); $i++) { Start-Sleep 1 }
@@ -85,10 +85,10 @@ jobs:
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
           if (Get-LocalUser NarancsKiosk -ErrorAction SilentlyContinue) { throw 'kiosk account left behind' }
           if ((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon').AutoAdminLogon -eq '1') { throw 'autologon maradt' }
-      - name: Szkriptek szintaxisa (kioszk, ügynök, tálca)
+      - name: Tálca szkript szintaxisa
         shell: powershell
         run: |
-          foreach ($f in 'install\windows\kiosk.ps1', 'install\windows\agent.ps1', 'install\windows\tray.ps1') {
+          foreach ($f in 'install\windows\tray.ps1') {
             $e = $null; [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$e); if ($e) { throw ($f + ': ' + ($e | Out-String)) }
           }
       - name: Ügynök élőben - szerver, majd egy kioszk, ami ehhez csatlakozik
