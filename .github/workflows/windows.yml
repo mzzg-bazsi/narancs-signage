@@ -48,17 +48,18 @@ jobs:
       - name: Csak kijelző (kioszk gép), egy másik szerverre mutatva
         shell: powershell
         run: |
-          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server 192.168.1.10:8080/
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server 192.168.1.10:8080/ -Source .
           $t = Get-ScheduledTask -TaskName 'Narancs Signage Display'
           $t.Principal.UserId
-          Get-Content "$env:ProgramData\NarancsSignage\kiosk.ps1"
-          if ((Get-Content "$env:ProgramData\NarancsSignage\kiosk.ps1" -Raw) -notlike '*--kiosk http://192.168.1.10:8080/player/ *') { throw 'kiosk.ps1' }
+          if ($t.Actions[0].Arguments -notlike '*install\windows\kiosk.ps1*') { throw 'kiosk task' }
+          if (-not (Get-ScheduledTask -TaskName 'Narancs Signage Agent' -ErrorAction SilentlyContinue)) { throw 'agent task' }
+          $c = Get-Content "$env:ProgramData\NarancsSignage\install.json" -Raw | ConvertFrom-Json
+          if ($c.server -ne 'http://192.168.1.10:8080' -or $c.device -notmatch '^[0-9a-f]{32}$') { throw ('install.json: ' + ($c | ConvertTo-Json)) }
           $w = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
           if ($w.AutoAdminLogon -ne '1' -or $w.DefaultUserName -ne 'NarancsKiosk') { throw 'autologon' }
           if ($w.DefaultPassword) { throw 'password must not be in the registry as text' }
           if ((Get-LocalGroupMember -SID 'S-1-5-32-544').Name -like '*NarancsKiosk') { throw 'kiosk account must not be admin' }
           # a kioszk szkript szintaxisa (PowerShell parser)
-          $e = $null; [void][Management.Automation.Language.Parser]::ParseFile("$env:ProgramData\NarancsSignage\kiosk.ps1", [ref]$null, [ref]$e); if ($e) { throw ($e | Out-String) }
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
       - name: Kioszk eltávolítása
         shell: powershell
