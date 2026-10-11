@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.28.3] – 2026-10-11
+
+### Javítva
+- **Windows szerver telepítés Node.js nélküli gépen** („Node.js 22.13 or newer is required”): a telepítő a `winget` helyett közvetlenül a nodejs.org-ról tölti le az aktuális LTS Node.js-t a program mellé (`%ProgramData%\NarancsSignage\node`), így régebbi Windows 10-en is működik. A Windows CI Node.js nélküli gépen is kipróbálja.
+
 ## [1.28.2] – 2026-10-11
 
 ### Javítva
