@@ -132,6 +132,39 @@ chmod +x /usr/local/bin/signage-backup
 # napi automatikus mentés hajnali 3-kor
 echo "0 3 * * * root /usr/local/bin/signage-backup >/dev/null 2>&1" > /etc/cron.d/narancs-signage-backup
 
+# ---------- Hálózat (statikus IP az admin felületről) – csak Raspberry Pi + NetworkManager ----------
+# A szerver nem rootként fut: a kérést a $DATA_DIR/network/request.json-ba írja, ezt a path egység figyeli,
+# és root jogon futtatja a signage-network segédet (az újra ellenőrzi az értékeket).
+if grep -qs "Raspberry Pi" /proc/device-tree/model && command -v nmcli >/dev/null; then
+  install -m 0755 "$SRC_DIR/install/signage-network.sh" /usr/local/sbin/signage-network
+  install -d -o signage -g signage -m 0750 "$DATA_DIR/network"
+  touch "$DATA_DIR/network/enabled"
+  cat > /etc/systemd/system/$SERVICE-network.path <<EOF
+[Unit]
+Description=Narancs Signage network settings requests
+
+[Path]
+PathChanged=$DATA_DIR/network/request.json
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  cat > /etc/systemd/system/$SERVICE-network.service <<EOF
+[Unit]
+Description=Narancs Signage network settings
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+Environment=SIGNAGE_DATA=$DATA_DIR
+ExecStart=/usr/local/sbin/signage-network apply $DATA_DIR/network/request.json
+EOF
+  systemctl daemon-reload
+  systemctl enable --now $SERVICE-network.path >/dev/null 2>&1
+  SIGNAGE_DATA="$DATA_DIR" /usr/local/sbin/signage-network status >/dev/null 2>&1 || true
+  c_ok "Network settings available in the admin panel (Settings → Network)"
+fi
+
 systemctl daemon-reload
 systemctl enable --now $SERVICE >/dev/null 2>&1
 systemctl restart $SERVICE
@@ -166,4 +199,5 @@ echo "  Useful commands:"
 echo "     systemctl status $SERVICE      – status"
 echo "     journalctl -u $SERVICE -f      – logs"
 echo "     sudo signage-backup            – backup (also runs automatically every day)"
+[[ -x /usr/local/sbin/signage-network ]] && echo "     sudo signage-network dhcp      – back to automatic IP address (DHCP)"
 echo

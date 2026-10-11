@@ -8,6 +8,12 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
+  // hálózat (Raspberry Pi)
+  'A hálózat ezen a rendszeren nem állítható': 'The network cannot be configured on this system',
+  'Érvénytelen mód': 'Invalid mode',
+  'Érvénytelen IP cím (formátum: 192.168.1.50/24)': 'Invalid IP address (format: 192.168.1.50/24)',
+  'Érvénytelen átjáró': 'Invalid gateway',
+  'Adj meg 1–3 érvényes DNS szervert': 'Enter 1–3 valid DNS servers',
   'A közösségi galéria most nem érhető el': 'The community gallery is not available right now',
   'Érvénytelen azonosító': 'Invalid identifier',
   'Hibás sablon: {detail}': 'Invalid template: {detail}',

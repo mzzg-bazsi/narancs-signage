@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.21.0] – 2026-10-11
+
+### Új
+- **Statikus IP cím az admin felületről (Raspberry Pi)**: a Beállítások oldalon új „Hálózat (Raspberry Pi)” kártya – csak akkor jelenik meg, ha a szerver Raspberry Pi-n fut NetworkManagerrel. Váltás DHCP és statikus cím (cím/előtag, átjáró, DNS) között; az új címet a felület ki is írja. A szerver nem rootként fut: a kérést a `network/request.json`-ba írja, a `narancs-signage-network.path` egység root jogon futtatja a `signage-network` segédet, ami újra ellenőriz, és `nmcli`-vel alkalmaz. Kizárás esetén: `sudo signage-network dhcp`. Csak adminisztrátornak (`/api/network`).
+
 ## [1.20.0] – 2026-10-11
 
 ### Új

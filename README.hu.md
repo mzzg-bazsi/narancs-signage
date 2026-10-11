@@ -94,6 +94,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 - 👥 Több felhasználó szerepkörökkel (adminisztrátor, szerkesztő, megtekintő), API kulcsok integrációkhoz, munkamenet-kezelés, brute-force védelem, CSRF védelem
 - 🐳 Docker image (amd64 + arm64) az Ubuntu telepítő mellett
 - 📦 Sablonok: 10 kész tartalomcsomag (étterem, iroda, üzlet, rendelő, iskola, szálloda, edzőterem, konferencia, bár, szalon) élő előnézettel; bármely tartalom vagy lista exportálható `.narancs.json` fájlba, és másik rendszerbe importálható; a [közösségi sablongaléria](https://github.com/mzzg-bazsi/narancs-signage-templates) sablonjai az adminból böngészhetők és telepíthetők – vagy küldd be a sajátodat
+- 🌐 Statikus IP cím az admin felületről, ha a szerver Raspberry Pi-n fut (Beállítások → Hálózat)
 - 💾 Napi automatikus mentés + letölthető adatbázis mentés
 - 🌗 Világos/sötét mód az admin felületen, mobilon is használható
 

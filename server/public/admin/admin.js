@@ -1950,9 +1950,55 @@
   // =====================================================================
   //  Beállítások
   // =====================================================================
+  // Hálózat (statikus IP) – csak ha a szerver Raspberry Pi-n fut, és a telepítő feltette a root segédet
+  function networkCard(net) {
+    const box = h('div', { class: 'card-body stack' });
+    const draw = (n) => {
+      const st = n.status || {};
+      const f = { mode: st.method === 'manual' ? 'static' : 'dhcp', address: st.address || '', gateway: st.gateway || '', dns: (st.dns || []).join(', ') };
+      const staticBox = h('div', { class: 'stack' },
+        F.text(tr('IP cím / előtag'), f, 'address', { placeholder: '192.168.1.50/24', hint: tr('A /24 a szokásos otthoni és irodai hálózatokhoz való (255.255.255.0).') }),
+        h('div', { class: 'fields' }, F.text(tr('Átjáró (router)'), f, 'gateway', { placeholder: '192.168.1.1' }), F.text(tr('DNS szerverek'), f, 'dns', { placeholder: '1.1.1.1, 8.8.8.8' })));
+      const sync = () => { staticBox.style.display = f.mode === 'static' ? '' : 'none'; };
+      const msg = h('div', { class: 'small' });
+      const apply = async () => {
+        const ip = f.address.split('/')[0];
+        const url = `${location.protocol}//${ip}:${n.port}/admin/`;
+        const text = f.mode === 'static'
+          ? tr('Az eszköz címe {ip} lesz, az admin felület ezután itt érhető el: {url}. Ha a cím rossz, az eszköz elérhetetlenné válhat – ilyenkor billentyűzettel és képernyővel: sudo signage-network dhcp', { ip, url })
+          : tr('Az eszköz a routertől kap címet, ami eltérhet a mostanitól. Az új címet a routerben vagy az eszköz bejelentkező képernyőjén találod.');
+        if (!(await confirmBox(text, { ok: tr('Alkalmazás'), title: tr('Hálózati beállítás') }))) return;
+        try {
+          const r = await POST('/api/network', f);
+          msg.replaceChildren(tr('Beállítás folyamatban…'), f.mode === 'static' ? h('div', {}, tr('Ha a cím megváltozott, nyisd meg: '), h('a', { href: url }, url)) : null);
+          // ha a cím nem változott, megvárjuk az eredményt
+          for (let i = 0; i < 20; i++) {
+            await new Promise((ok) => setTimeout(ok, 1500));
+            const x = await GET('/api/network').catch(() => null);
+            if (x?.result?.id === r.id) {
+              if (x.result.ok) { toast(tr('Hálózati beállítás alkalmazva')); draw(x); } else msg.textContent = `${tr('Nem sikerült')}: ${x.result.error}`;
+              return;
+            }
+          }
+        } catch (e) { fail(e); }
+      };
+      sync();
+      box.replaceChildren(
+        h('div', { class: 'kv' }, tr('Csatoló: '), h('b', {}, st.device ? `${st.device}${st.connection ? ` (${st.connection})` : ''}` : '—')),
+        h('div', { class: 'kv' }, tr('Jelenlegi cím: '), h('b', {}, st.address || '—'), ' · ', st.method === 'manual' ? tr('statikus') : 'DHCP'),
+        h('div', { class: 'kv' }, tr('Átjáró: '), h('b', {}, st.gateway || '—'), ' · DNS: ', h('b', {}, (st.dns || []).join(', ') || '—')),
+        F.select(tr('Címzés'), f, 'mode', [['dhcp', tr('Automatikus (DHCP)')], ['static', tr('Statikus IP cím')]], { onchange: sync }),
+        staticBox, msg,
+        h('div', { class: 'row' }, btn(tr('Alkalmazás'), apply, { cls: 'primary', ic: 'save' }),
+          btn(tr('Frissítés'), async () => { await POST('/api/network/refresh'); setTimeout(async () => draw(await GET('/api/network')), 1500); }, { ic: 'refresh' })));
+    };
+    draw(net);
+    return h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Hálózat (Raspberry Pi)'))), box);
+  }
+
   async function pageSettings(view) {
     const admin = isAdmin();
-    const [st, users, tokens] = await Promise.all([GET('/api/settings'), admin ? GET('/api/users') : [], admin ? GET('/api/tokens') : [], load('media')]);
+    const [st, users, tokens, net] = await Promise.all([GET('/api/settings'), admin ? GET('/api/users') : [], admin ? GET('/api/tokens') : [], admin ? GET('/api/network').catch(() => null) : null, load('media')]);
     const pw = { current: '', password: '', password2: '' };
     const nu = { username: '', password: '', role: 'editor' };
     const nt = { name: '', role: 'editor' };
@@ -1984,6 +2030,7 @@
             h('div', { class: 'row' }, ME.logo_url ? h('img', { src: ME.logo_url, style: { height: '44px', maxWidth: '140px', objectFit: 'contain' } }) : null, h('div', {}, h('b', {}, st.org_name), st.slogan ? h('div', { class: 'small muted' }, st.slogan) : null)),
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('A szervezet neve, a logó, a színek, a betűtípusok és a képernyő fejléce az Arculat menüben állítható.')),
             h('div', {}, btn(tr('Arculat szerkesztése'), () => { location.hash = '#/branding'; }, { cls: 'primary', ic: 'palette' })))),
+        net?.supported ? networkCard(net) : null,
         h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Jelszó módosítása'))),
           h('div', { class: 'card-body stack' },
             F.text(tr('Jelenlegi jelszó'), pw, 'current', { type: 'password' }),

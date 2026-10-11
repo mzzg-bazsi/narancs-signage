@@ -11,6 +11,7 @@ import {
 import { Router, HttpError, send, readBody, readRaw, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, userCount, listUsers, verifyPassword, hashPassword, createToken, listTokens, setRole, ROLES } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
+import { networkState, requestNetworkChange, requestNetworkStatus } from './network.js';
 import { exportTemplate, importTemplate, templatePreview, normalizeFormFields, localized } from './templates.js';
 import { BUILTIN_TEMPLATES, CATEGORIES } from './builtin-templates.js';
 import { galleryIndex, galleryTemplate, GALLERY_REPO } from './gallery.js';
@@ -761,6 +762,10 @@ r.put('/api/settings', A, async (req, res) => {
   notifyChange();
   send(res, 200, { ok: true });
 });
+// hálózat (statikus IP) – csak Raspberry Pi-n, ahol a telepítő a root segédet is feltette
+r.get('/api/network', A, (req, res) => send(res, 200, { ...networkState(), port: PORT }));
+r.post('/api/network', A, async (req, res) => send(res, 200, requestNetworkChange(await readBody(req))));
+r.post('/api/network/refresh', A, (req, res) => { requestNetworkStatus(); send(res, 200, { ok: true }); });
 r.post('/api/samples', A, (req, res) => { const out = seedSamples(); notifyChange(); send(res, 200, out); });
 r.get('/api/users', A, (req, res) => send(res, 200, listUsers()));
 r.post('/api/users', A, async (req, res) => { const b = await readBody(req); createUser(b.username, b.password, b.role || 'editor'); send(res, 200, listUsers()); });
@@ -850,6 +855,7 @@ server.requestTimeout = 0; // nagy feltöltések és SSE miatt
 server.headersTimeout = 60000;
 
 server.listen(PORT, HOST, () => {
+  try { requestNetworkStatus(); } catch (e) { console.warn('[hálózat]', e.message); }
   console.log(`Narancs Signage v${VERSION} fut: http://${HOST}:${PORT}  (adatok: ${DATA_DIR})`);
 });
 
