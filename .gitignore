@@ -10,3 +10,5 @@ node_modules/
 # Raspberry Pi image build
 image/out/
 image/work/
+install/windows/Output/
+install/windows/LICENSE.txt

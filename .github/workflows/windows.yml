@@ -3,7 +3,10 @@ name: Windows installer
 on:
   workflow_dispatch:
   push:
-    paths: ['install/install.ps1', '.github/workflows/windows.yml']
+    paths: ['install/install.ps1', 'install/windows/**', '.github/workflows/windows.yml']
+    tags: ['v*']
+permissions:
+  contents: write
 jobs:
   install:
     runs-on: windows-latest
@@ -37,17 +40,72 @@ jobs:
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'task maradt' }
           if (-not (Test-Path "$env:ProgramData\NarancsSignage\data")) { throw 'az adat elveszett' }
-      - name: Csak kijelző, egy másik szerverre mutatva
+      - name: Csak kijelző (kioszk gép), egy másik szerverre mutatva
         shell: powershell
         run: |
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server 192.168.1.10:8080/
-          $lnk = Join-Path ([Environment]::GetFolderPath('Startup')) 'Narancs Signage Display.lnk'
-          $a = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).Arguments
-          if ($a -notlike '*"http://192.168.1.10:8080/player/"*') { throw $a }
+          $t = Get-ScheduledTask -TaskName 'Narancs Signage Display'
+          $t.Principal.UserId
+          Get-Content "$env:ProgramData\NarancsSignage\kiosk.ps1"
+          if ((Get-Content "$env:ProgramData\NarancsSignage\kiosk.ps1" -Raw) -notlike '*--kiosk http://192.168.1.10:8080/player/ *') { throw 'kiosk.ps1' }
+          $w = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+          if ($w.AutoAdminLogon -ne '1' -or $w.DefaultUserName -ne 'NarancsKiosk') { throw 'autologon' }
+          if ((Get-LocalGroupMember -SID 'S-1-5-32-544').Name -like '*NarancsKiosk') { throw 'a kioszk fiók nem lehet admin' }
+          # a kioszk szkript szintaxisa (PowerShell parser)
+          $e = $null; [void][Management.Automation.Language.Parser]::ParseFile("$env:ProgramData\NarancsSignage\kiosk.ps1", [ref]$null, [ref]$e); if ($e) { throw ($e | Out-String) }
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
+      - name: Kioszk eltávolítása
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
+          if (Get-LocalUser NarancsKiosk -ErrorAction SilentlyContinue) { throw 'a fiók maradt' }
+          if ((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon').AutoAdminLogon -eq '1') { throw 'autologon maradt' }
       - name: Kézi indításkor a kiadott telepítő a GitHubról (letöltés, irm)
         if: github.event_name == 'workflow_dispatch'
         shell: powershell
         run: |
           & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Mode server -Port 8091
           (Invoke-RestMethod http://127.0.0.1:8091/healthz).version
+
+  # Grafikus telepítő (Inno Setup): fordítás, csendes telepítés + eltávolítás próbája, tagnél feltöltés a kiadásba
+  setup-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Fordítás
+        shell: powershell
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          # a licenc BOM-mal, hogy az ékezetek jól látszódjanak a varázslóban
+          Get-Content LICENSE -Encoding UTF8 | Set-Content install\windows\LICENSE.txt -Encoding UTF8
+          $v = (Get-Content server\package.json -Raw | ConvertFrom-Json).version
+          & $iscc /Qp "/DAppVersion=$v" install\windows\setup.iss
+          if ($LASTEXITCODE) { throw 'ISCC' }
+      - name: Csendes telepítés (szerver + kijelző) és eltávolítás
+        shell: powershell
+        run: |
+          Start-Process install\windows\Output\NarancsSignageSetup.exe '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TYPE=both /PORT=8092' -Wait
+          Get-Content "$env:ProgramData\NarancsSignage\setup.log"
+          if (-not (Invoke-RestMethod http://127.0.0.1:8092/healthz).ok) { throw 'healthz' }
+          Start-Process "${env:ProgramFiles}\Narancs Signage\unins000.exe" '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait
+          for ($i = 0; $i -lt 60 -and (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue); $i++) { Start-Sleep 1 }
+          if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'az eltávolítás nem futott le' }
+      - name: Csendes telepítés (csak kijelző, kioszk)
+        shell: powershell
+        run: |
+          Start-Process install\windows\Output\NarancsSignageSetup.exe '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TYPE=screen /SERVER=http://192.168.1.10:8080' -Wait
+          Get-Content "$env:ProgramData\NarancsSignage\setup.log"
+          if (-not (Get-ScheduledTask -TaskName 'Narancs Signage Display' -ErrorAction SilentlyContinue)) { throw 'kioszk feladat' }
+      - uses: actions/upload-artifact@v4
+        with: { name: NarancsSignageSetup, path: install/windows/Output/NarancsSignageSetup.exe }
+      - name: Feltöltés a kiadásba
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          # a release.sh a tag után hozza létre a kiadást – megvárjuk
+          for i in $(seq 1 30); do gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break; sleep 10; done
+          gh release upload "$GITHUB_REF_NAME" install/windows/Output/NarancsSignageSetup.exe --clobber

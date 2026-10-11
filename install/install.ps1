@@ -14,7 +14,8 @@ param(
   [int]$Port = 0,
   [string]$Server = '',
   [string]$Version = '__VERSION__',   # a kiadáskor a release.sh írja be
-  [string]$Source = '',               # tesztekhez: helyi forrásmappa letöltés helyett
+  [string]$Source = '',               # helyi forrásmappa letöltés helyett (a grafikus telepítő és a tesztek)
+  [switch]$NoStart,                   # a kijelzőt most ne indítsa el (a grafikus telepítő a végén kérdezi)
   [switch]$Uninstall
 )
 $ErrorActionPreference = 'Stop'
@@ -33,6 +34,24 @@ function Info($m) { Write-Host "  --> $m" -ForegroundColor Yellow }
 # figyelem: irm | iex alatt az exit a felhasználó PowerShell ablakát zárná be, ezért hibánál throw
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
+$KioskUser = 'NarancsKiosk'
+$KioskTask = 'Narancs Signage Display'
+$Winlogon = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+
+# A kioszk fiók visszabontása (eltávolításkor, és ha a gép már nem „csak kijelző”)
+function Remove-Kiosk {
+  Unregister-ScheduledTask -TaskName $KioskTask -Confirm:$false -ErrorAction SilentlyContinue
+  if ((Get-ItemProperty $Winlogon -ErrorAction SilentlyContinue).DefaultUserName -eq $KioskUser) {
+    Set-ItemProperty $Winlogon AutoAdminLogon '0'
+    Remove-ItemProperty $Winlogon DefaultPassword -ErrorAction SilentlyContinue
+  }
+  $u = Get-LocalUser $KioskUser -ErrorAction SilentlyContinue
+  if ($u) {
+    Get-CimInstance Win32_UserProfile | Where-Object { $_.SID -eq $u.SID.Value } | Remove-CimInstance -ErrorAction SilentlyContinue
+    Remove-LocalUser $KioskUser
+  }
+}
+
 function Stop-Server {
   Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
   # a feladat leállítása a node gyermekfolyamatot nem mindig zárja be, az pedig fogja a fájlokat
@@ -41,8 +60,9 @@ function Stop-Server {
 
 # ---------- Eltávolítás (az adatok maradnak) ----------
 if ($Uninstall) {
-  if (-not $IsAdmin -and (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) { throw 'Run PowerShell as Administrator to remove the server.' }
+  if (-not $IsAdmin) { throw 'Run PowerShell as Administrator.' }
   Stop-Server
+  Remove-Kiosk
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Get-NetFirewallRule -DisplayName $RuleName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
   Remove-Item $Shortcut -ErrorAction SilentlyContinue
@@ -69,14 +89,14 @@ if (-not $Mode) {
 $WithServer = $Mode -ne 'screen'
 $WithScreen = $Mode -ne 'server'
 if ($Port -le 0) { $Port = if ($Prev -and $Prev.port) { [int]$Prev.port } else { 8080 } }
-if ($WithServer -and -not $IsAdmin) { throw 'The server needs Administrator rights: open PowerShell with "Run as administrator" and run the command again.' }
+if (-not $IsAdmin) { throw 'Administrator rights are needed: open PowerShell with "Run as administrator" and run the command again.' }
 
 if ($Mode -eq 'screen') {
   if (-not $Server -and $Prev -and $Prev.server) { $Server = $Prev.server }
   if (-not $Server) { $Server = Read-Host '  Server address (for example http://192.168.1.10:8080)' }
   $Server = $Server.Trim().TrimEnd('/')
   if ($Server -notmatch '^[a-z]+://') { $Server = "http://$Server" }
-  if ($Server -notmatch '^https?://[^\s/]+$') { throw "Invalid server address: $Server" }
+  if ($Server -notmatch '^https?://[^\s/''"]+$') { throw "Invalid server address: $Server" }
 }
 New-Item -ItemType Directory -Force $Base | Out-Null
 
@@ -153,25 +173,68 @@ if ($WithServer) {
   Ok "Server v$Ver is running on port $Port"
 }
 
-# ---------- Kijelző: Microsoft Edge kioszk módban, bejelentkezéskor indul ----------
+# ---------- Kijelző: Microsoft Edge kioszk módban ----------
+# Csak kijelző: önálló kioszk gép – külön fiók automatikus bejelentkezéssel, a lejátszó teljes képernyőn, bezárás után újraindul.
+# Szerver + kijelző: a saját fiókban, bejelentkezéskor (a gép a sajátod marad).
 $Url = ''
+if ($Mode -ne 'screen') { Remove-Kiosk }
 if ($WithScreen) {
   $Url = if ($WithServer) { "http://localhost:$Port/player/" } else { "$Server/player/" }
   $Edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
   if (-not $Edge) { throw 'Microsoft Edge was not found. Install it, then run this again.' }
-  # külön profil: a kijelző azonosítója (párosítás) itt marad meg, és nem keveredik a saját böngészéssel
-  $KioskProfile = Join-Path $env:LOCALAPPDATA 'NarancsSignage\kiosk'
-  $EdgeArgs = "--kiosk `"$Url`" --edge-kiosk-type=fullscreen --no-first-run --hide-crash-restore-bubble --autoplay-policy=no-user-gesture-required --disable-features=Translate --user-data-dir=`"$KioskProfile`""
-  $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($Shortcut)
-  $lnk.TargetPath = $Edge
-  $lnk.Arguments = $EdgeArgs
-  $lnk.Description = 'Narancs Signage display'
-  $lnk.Save()
+  $Flags = "--kiosk `"$Url`" --edge-kiosk-type=fullscreen --no-first-run --hide-crash-restore-bubble --autoplay-policy=no-user-gesture-required --disable-features=Translate"
+  # az Edge első indításkori üdvözlő lapjai ne takarják el a lejátszót
+  New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' -Force | Out-Null
+  Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' HideFirstRunExperience 1 -Type DWord
   # a kijelző ne kapcsoljon ki és a gép ne aludjon el (hálózati tápról)
   powercfg /change monitor-timeout-ac 0 | Out-Null
   powercfg /change standby-timeout-ac 0 | Out-Null
-  Ok 'Display: Microsoft Edge starts full screen when you sign in'
-  if (-not $env:CI) { Start-Process $Edge $EdgeArgs }
+
+  if ($Mode -eq 'screen') {
+    Remove-Item $Shortcut -ErrorAction SilentlyContinue
+    # véletlen jelszó: senkinek nem kell tudnia, csak az automatikus bejelentkezés használja
+    $bytes = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+    $Pw = [Convert]::ToBase64String($bytes) + 'a1!'
+    $Sec = ConvertTo-SecureString $Pw -AsPlainText -Force
+    if (Get-LocalUser $KioskUser -ErrorAction SilentlyContinue) { Set-LocalUser $KioskUser -Password $Sec -PasswordNeverExpires $true }
+    else { New-LocalUser $KioskUser -Password $Sec -FullName 'Narancs Signage' -Description 'Narancs Signage display (kiosk)' -PasswordNeverExpires -UserMayNotChangePassword | Out-Null }
+    # a Felhasználók csoport SID-del (magyar Windowson „Felhasználók” a neve), adminisztrátor nem lesz
+    Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $KioskUser -ErrorAction SilentlyContinue
+    Set-ItemProperty $Winlogon AutoAdminLogon '1'
+    Set-ItemProperty $Winlogon DefaultUserName $KioskUser
+    Set-ItemProperty $Winlogon DefaultDomainName $env:COMPUTERNAME
+    Set-ItemProperty $Winlogon DefaultPassword $Pw
+    Set-ItemProperty $Winlogon EnableFirstLogonAnimation 0 -Type DWord
+    # az új fiók első bejelentkezésekor ne jöjjön fel az adatvédelmi beállítások képernyője
+    New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' -Force | Out-Null
+    Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' DisablePrivacyExperience 1 -Type DWord
+
+    # a kioszk fiók bejelentkezésekor: az Edge teljes képernyőn, és ha bezárják / összeomlik, pár másodperc múlva újra
+    $KioskScript = "$Base\kiosk.ps1"
+    @(
+      "`$profileDir = Join-Path `$env:LOCALAPPDATA 'NarancsSignage\kiosk'",
+      "while (`$true) {",
+      "  Start-Process '$Edge' -ArgumentList ('$($Flags.Replace('"', '')) --user-data-dir=' + `$profileDir) -Wait",
+      "  Start-Sleep -Seconds 3",
+      "}"
+    ) | Set-Content -Encoding ASCII $KioskScript
+    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$KioskScript`""
+    $trg = New-ScheduledTaskTrigger -AtLogOn -User "$env:COMPUTERNAME\$KioskUser"
+    $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    $pri = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$KioskUser" -LogonType Interactive -RunLevel Limited
+    Register-ScheduledTask -TaskName $KioskTask -Action $act -Trigger $trg -Settings $set -Principal $pri -Force | Out-Null
+    Ok "Kiosk: after a restart this PC signs in as '$KioskUser' and shows the display full screen"
+  } else {
+    # külön profil: a kijelző azonosítója (párosítás) itt marad meg, és nem keveredik a saját böngészéssel
+    $EdgeArgs = "$Flags --user-data-dir=`"$(Join-Path $env:LOCALAPPDATA 'NarancsSignage\kiosk')`""
+    $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut($Shortcut)
+    $lnk.TargetPath = $Edge
+    $lnk.Arguments = $EdgeArgs
+    $lnk.Description = 'Narancs Signage display'
+    $lnk.Save()
+    Ok 'Display: Microsoft Edge starts full screen when you sign in'
+    if (-not $NoStart -and -not $env:CI) { Start-Process $Edge $EdgeArgs }
+  }
 }
 
 @{ mode = $Mode; port = $Port; server = $Server; version = $Ver } | ConvertTo-Json | Set-Content -Encoding ASCII $ConfFile
@@ -190,7 +253,9 @@ if ($WithServer) {
 }
 if ($WithScreen) {
   Write-Host "  Display:        $Url  (pair it in the admin panel with the code it shows)"
-  Write-Host '  Tip: for an unattended display turn on automatic sign-in (run: netplwiz). Exit kiosk mode: Alt+F4.'
+  if ($Mode -eq 'screen') {
+    Write-Host '  Restart the PC to start the kiosk. To get back to Windows: Ctrl+Alt+Del, then Sign out, and sign in with your own account.'
+  } else { Write-Host '  Exit full screen: Alt+F4.' }
 }
 Write-Host '  Update:         run the same command again (data is kept)'
 Write-Host '  Remove:         & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Uninstall'
