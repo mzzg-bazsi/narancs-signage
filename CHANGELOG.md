@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.18.3] – 2026-10-11
+
+### Változott
+- README képernyőképek a mostani felülettel; a magyar README magyar felületű képeket használ (`docs/screenshots/hu/`).
+
 ## [1.18.2] – 2026-10-11
 
 ### Javítva
