@@ -1820,6 +1820,7 @@
   // =====================================================================
   //  Arculat (színek, logók, betűk, fejléc, előre megadott témák)
   // =====================================================================
+  let brandTab = 'theme', settingsTab = 'general'; // a megnyitott fül újrarajzolás (mentés) után is marad
   async function pageBranding(view) {
     const T = window.SIGNAGE_THEMES;
     const [st] = await Promise.all([GET('/api/settings'), load('media', true)]);
@@ -1894,6 +1895,40 @@
     drawCustom();
 
     const hd = b.header;
+    // fülek: egyszerre egy beállítás csoport, az élő előnézet mindig látszik
+    const brandCards = {
+      theme: h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Válassz témát'))), h('div', { class: 'card-body' }, gallery)),
+      org: h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Szervezet, logó és címek'))),
+            h('div', { class: 'card-body fields' },
+              F.text(tr('Szervezet neve'), st, 'org_name', { onchange: ch }),
+              F.text(tr('Szlogen / alcím'), st, 'slogan', { onchange: ch, placeholder: tr('pl. Minden, amit tudni érdemes') }),
+              F.media(tr('Logó'), st, 'logo_media_id', { accept: 'image/', onchange: ch, hint: tr('Átlátszó hátterű PNG vagy SVG ajánlott.') }),
+              F.seg(tr('Logó vízjel a sarokban'), b, 'logo_corner', [['none', tr('Nincs')], ['tl', tr('↖ Bal fent')], ['tr', tr('↗ Jobb fent')], ['bl', tr('↙ Bal lent')], ['br', tr('↘ Jobb lent')]], { def: 'none', full: true, onchange: ch }),
+              F.number(tr('Vízjel mérete (% a képernyő magasságából)'), b, 'logo_size', { min: 3, max: 30, placeholder: '9', onchange: ch }),
+              F.number(tr('Vízjel átlátszatlansága (%)'), b, 'logo_opacity', { min: 10, max: 100, placeholder: '90', onchange: ch }))),
+      header: h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Fejléc sáv a képernyők tetején'))),
+            h('div', { class: 'card-body fields' },
+              F.toggle(tr('Fejléc megjelenítése'), hd, 'enabled', { full: true, onchange: ch, hint: tr('Logó, cím, alcím és óra a képernyő tetején, minden tartalom fölött.') }),
+              F.text(tr('Cím'), hd, 'title', { placeholder: tr('üresen: a szervezet neve'), onchange: ch }),
+              F.text(tr('Alcím'), hd, 'subtitle', { placeholder: tr('üresen: a szlogen'), onchange: ch }),
+              F.seg(tr('Stílus'), hd, 'style', [['surface', tr('Háttérszín')], ['accent', tr('Kiemelő szín')], ['gradient', tr('Átmenet#szín')]], { def: 'surface', onchange: ch }),
+              h('div', { class: 'row' }, F.toggle(tr('Logó'), hd, 'show_logo', { defaultOn: true, onchange: ch }), F.toggle(tr('Óra és dátum'), hd, 'show_clock', { defaultOn: true, onchange: ch })))),
+      fine: h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Finomhangolás: színek, betűk, forma'))), h('div', { class: 'card-body' }, custom)),
+      recolor: h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('Tartalmak színezése'))),
+            h('div', { class: 'card-body stack' },
+              h('p', { class: 'small muted', style: { margin: 0 } }, tr('Az új tartalmak alapból az arculat színeit használják. A korábban egyedi színekkel (háttér, szöveg, kártya- és gombszín) létrehozott tartalmakat itt egyszerre átszínezheted, így minden a kiválasztott témát követi – később témát váltva is. A képek, videók és háttérképek nem változnak.')),
+              h('div', {}, btn(tr('Összes tartalom arculat szerint'), async () => {
+                if (!(await confirmBox(tr('Minden tartalom egyedi színei az arculat színeire cserélődnek. Ez nem vonható vissza. Folytatod?'), { ok: tr('Átszínezés') }))) return;
+                try { const r = await POST('/api/slides/brandify', {}); invalidate('slides'); toast(tr('{n} / {total} tartalom átszínezve', { n: r.changed, total: r.total })); pv.reload(); } catch (e) { fail(e); }
+              }, { cls: 'primary', ic: 'palette' })))),
+    };
+    const brandTabs = h('div', { class: 'tabs-line one-row' });
+    const showBrandTab = () => {
+      brandTabs.replaceChildren(...[['theme', tr('Téma#arculat')], ['org', tr('Logó és név')], ['header', tr('Fejléc')], ['fine', tr('Finomhangolás')], ['recolor', tr('Átszínezés')]]
+        .map(([k, l]) => h('button', { type: 'button', class: brandTab === k ? 'on' : '', onclick: () => { brandTab = k; showBrandTab(); } }, l)));
+      for (const [k, el] of Object.entries(brandCards)) el.style.display = brandTab === k ? '' : 'none';
+    };
+    showBrandTab();
     view.replaceChildren(
       head(tr('Arculat'), tr('Színek, logó, betűtípusok és címek – egységes megjelenés minden képernyőn.'), [
         btn(tr('Alapértelmezés'), async () => {
@@ -1911,31 +1946,7 @@
           } catch (e) { fail(e); }
         }, { cls: 'primary', ic: 'save' })]),
       h('div', { class: 'split' },
-        h('div', { class: 'stack' },
-          h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('1. Válassz témát'))), h('div', { class: 'card-body' }, gallery)),
-          h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('2. Szervezet, logó és címek'))),
-            h('div', { class: 'card-body fields' },
-              F.text(tr('Szervezet neve'), st, 'org_name', { onchange: ch }),
-              F.text(tr('Szlogen / alcím'), st, 'slogan', { onchange: ch, placeholder: tr('pl. Minden, amit tudni érdemes') }),
-              F.media(tr('Logó'), st, 'logo_media_id', { accept: 'image/', onchange: ch, hint: tr('Átlátszó hátterű PNG vagy SVG ajánlott.') }),
-              F.seg(tr('Logó vízjel a sarokban'), b, 'logo_corner', [['none', tr('Nincs')], ['tl', tr('↖ Bal fent')], ['tr', tr('↗ Jobb fent')], ['bl', tr('↙ Bal lent')], ['br', tr('↘ Jobb lent')]], { def: 'none', full: true, onchange: ch }),
-              F.number(tr('Vízjel mérete (% a képernyő magasságából)'), b, 'logo_size', { min: 3, max: 30, placeholder: '9', onchange: ch }),
-              F.number(tr('Vízjel átlátszatlansága (%)'), b, 'logo_opacity', { min: 10, max: 100, placeholder: '90', onchange: ch }))),
-          h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('3. Fejléc sáv a képernyők tetején'))),
-            h('div', { class: 'card-body fields' },
-              F.toggle(tr('Fejléc megjelenítése'), hd, 'enabled', { full: true, onchange: ch, hint: tr('Logó, cím, alcím és óra a képernyő tetején, minden tartalom fölött.') }),
-              F.text(tr('Cím'), hd, 'title', { placeholder: tr('üresen: a szervezet neve'), onchange: ch }),
-              F.text(tr('Alcím'), hd, 'subtitle', { placeholder: tr('üresen: a szlogen'), onchange: ch }),
-              F.seg(tr('Stílus'), hd, 'style', [['surface', tr('Háttérszín')], ['accent', tr('Kiemelő szín')], ['gradient', tr('Átmenet#szín')]], { def: 'surface', onchange: ch }),
-              h('div', { class: 'row' }, F.toggle(tr('Logó'), hd, 'show_logo', { defaultOn: true, onchange: ch }), F.toggle(tr('Óra és dátum'), hd, 'show_clock', { defaultOn: true, onchange: ch })))),
-          h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('4. Finomhangolás: színek, betűk, forma'))), h('div', { class: 'card-body' }, custom)),
-          h('div', { class: 'card' }, h('div', { class: 'card-head' }, h('h3', {}, tr('5. Tartalmak színezése'))),
-            h('div', { class: 'card-body stack' },
-              h('p', { class: 'small muted', style: { margin: 0 } }, tr('Az új tartalmak alapból az arculat színeit használják. A korábban egyedi színekkel (háttér, szöveg, kártya- és gombszín) létrehozott tartalmakat itt egyszerre átszínezheted, így minden a kiválasztott témát követi – később témát váltva is. A képek, videók és háttérképek nem változnak.')),
-              h('div', {}, btn(tr('Összes tartalom arculat szerint'), async () => {
-                if (!(await confirmBox(tr('Minden tartalom egyedi színei az arculat színeire cserélődnek. Ez nem vonható vissza. Folytatod?'), { ok: tr('Átszínezés') }))) return;
-                try { const r = await POST('/api/slides/brandify', {}); invalidate('slides'); toast(tr('{n} / {total} tartalom átszínezve', { n: r.changed, total: r.total })); pv.reload(); } catch (e) { fail(e); }
-              }, { cls: 'primary', ic: 'palette' }))))),
+        h('div', { class: 'stack' }, brandTabs, ...Object.values(brandCards)),
         h('div', { class: 'preview-box stack' },
           h('div', { class: 'row between' }, h('b', {}, tr('Élő előnézet')),
             h('div', { class: 'row' },
@@ -2109,17 +2120,38 @@
             h('div', {}, btn(tr('Minta tartalmak létrehozása'), async () => {
               try { const r = await POST('/api/samples'); invalidate('playlists', 'slides', 'forms', 'calendars'); toast(tr('Minta tartalmak létrehozva')); location.hash = `#/playlists/${r.playlist_id}`; } catch (e) { fail(e); }
             }, { ic: 'plus' })))),
-        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer és mentés'))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer'))),
           h('div', { class: 'card-body stack' },
             updatesBox(st.version),
             h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)),
             h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))),
             h('div', { class: 'kv' }, tr('Lejátszó címe: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)),
-            h('div', { class: 'row' }, h('a', { class: 'btn', href: '/api/backup' }, icon('download'), tr('Adatbázis mentése')),
-              btn(tr('Képernyők újratöltése'), async () => { const r = await POST('/api/screens/broadcast', { command: 'reload' }); toast(tr('{n} képernyő újratöltve', { n: r.count })); }, { ic: 'refresh' })),
+            h('div', { class: 'row' }, btn(tr('Képernyők újratöltése'), async () => { const r = await POST('/api/screens/broadcast', { command: 'reload' }); toast(tr('{n} képernyő újratöltve', { n: r.count })); }, { ic: 'refresh' })))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Mentés#biztonsági'))),
+          h('div', { class: 'card-body stack' },
+            h('p', { class: 'small muted', style: { margin: 0 } }, tr('Az adatbázis (tartalmak, listák, képernyők, beállítások) letölthető egy fájlba. A szerver telepítő naponta automatikus teljes mentést is készít.')),
+            h('div', {}, h('a', { class: 'btn primary', href: '/api/backup' }, icon('download'), tr('Adatbázis mentése'))),
             h('div', { class: 'small muted' }, tr('A teljes mentéshez (médiafájlokkal együtt) a szerveren futtasd: '), h('span', { class: 'code-pill' }, 'sudo signage-backup'))))),
     );
     if (!admin) view.querySelectorAll('[data-admin]').forEach((el) => el.remove());
+    // fülek (mint a Sablonoknál): a kártyák a címük alapján kerülnek csoportba; csak a nem üres fülek látszanak
+    const TAB_OF = { [tr('Felhasználók')]: 'users', [tr('API kulcsok')]: 'users', [tr('Rendszer')]: 'system', [tr('Mentés#biztonsági')]: 'system', [tr('Hálózat (Raspberry Pi)')]: 'system', [tr('Minta tartalmak')]: 'system' };
+    const grid = view.querySelector('.grid.c2');
+    const cards = [...grid.children];
+    cards.forEach((c) => { c.dataset.tab = TAB_OF[c.querySelector('.card-head h3')?.textContent] || 'general'; });
+    // a fülön belüli sorrend: a fő kártya elöl
+    const FIRST = [tr('Rendszer'), tr('Mentés#biztonsági'), tr('Felhasználók')];
+    const isFirst = (c) => FIRST.includes(c.querySelector('.card-head h3')?.textContent);
+    grid.append(...cards.filter(isFirst), ...cards.filter((c) => !isFirst(c)));
+    const tabs = [['general', tr('Általános')], ['users', tr('Felhasználók és API')], ['system', tr('Rendszer')]].filter(([k]) => cards.some((c) => c.dataset.tab === k));
+    if (!tabs.some(([k]) => k === settingsTab)) settingsTab = 'general';
+    const bar = h('div', { class: 'tabs-line' });
+    const show = () => {
+      bar.replaceChildren(...tabs.map(([k, l]) => h('button', { type: 'button', class: settingsTab === k ? 'on' : '', onclick: () => { settingsTab = k; show(); } }, l)));
+      cards.forEach((c) => { c.style.display = c.dataset.tab === settingsTab ? '' : 'none'; });
+    };
+    if (tabs.length > 1) grid.before(bar);
+    show();
   }
 
   boot();

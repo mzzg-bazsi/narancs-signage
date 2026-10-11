@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.22.1] – 2026-10-11
+
+### Változott
+- **Arculat**: a beállítások fülekre bontva (Téma, Logó és név, Fejléc, Finomhangolás, Átszínezés), az élő előnézet végig látszik mellettük.
+- **Beállítások**: fülek (Általános, Felhasználók és API, Rendszer) a Sablonok oldal fülstílusával; a mentés külön „Mentés” kártyára került. A megnyitott fül mentés után is megmarad.
+
 ## [1.22.0] – 2026-10-11
 
 ### Új
