@@ -38,12 +38,52 @@ $KioskUser = 'NarancsKiosk'
 $KioskTask = 'Narancs Signage Display'
 $Winlogon = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
 
+$PwLessKey = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device'
+$PwLessPrev = Join-Path $Base 'passwordless.prev'
+
+# Az automatikus bejelentkezés jelszava az LSA titkos tárolóba kerül (mint a Sysinternals Autologonnál), nem olvasható szövegként a registrybe
+function Set-LsaSecret([string]$Key, [string]$Value) {
+  if (-not ('NsLsa' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class NsLsa {
+  [StructLayout(LayoutKind.Sequential)] struct US { public ushort Length; public ushort MaximumLength; public IntPtr Buffer; }
+  [StructLayout(LayoutKind.Sequential)] struct OA { public int Length; public IntPtr RootDirectory; public IntPtr ObjectName; public uint Attributes; public IntPtr SecurityDescriptor; public IntPtr SecurityQualityOfService; }
+  [DllImport("advapi32.dll")] static extern uint LsaOpenPolicy(IntPtr system, ref OA attrs, uint access, out IntPtr handle);
+  [DllImport("advapi32.dll")] static extern uint LsaStorePrivateData(IntPtr handle, ref US key, IntPtr data);
+  [DllImport("advapi32.dll")] static extern uint LsaClose(IntPtr handle);
+  [DllImport("advapi32.dll")] static extern int LsaNtStatusToWinError(uint status);
+  static US Str(string s) { US u = new US(); u.Buffer = Marshal.StringToHGlobalUni(s); u.Length = (ushort)(s.Length * 2); u.MaximumLength = (ushort)(s.Length * 2 + 2); return u; }
+  // value == null: törlés; visszatérés: Win32 hibakód (0 = rendben)
+  public static int Store(string key, string value) {
+    OA oa = new OA(); IntPtr h;
+    uint st = LsaOpenPolicy(IntPtr.Zero, ref oa, 0x000F0FFF, out h);
+    if (st != 0) return LsaNtStatusToWinError(st);
+    US k = Str(key); IntPtr p = IntPtr.Zero;
+    if (value != null) { US v = Str(value); p = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(US))); Marshal.StructureToPtr(v, p, false); }
+    st = LsaStorePrivateData(h, ref k, p);
+    LsaClose(h);
+    return st == 0 ? 0 : LsaNtStatusToWinError(st);
+  }
+}
+'@
+  }
+  return [NsLsa]::Store($Key, $Value)
+}
+
 # A kioszk fiók visszabontása (eltávolításkor, és ha a gép már nem „csak kijelző”)
 function Remove-Kiosk {
   Unregister-ScheduledTask -TaskName $KioskTask -Confirm:$false -ErrorAction SilentlyContinue
   if ((Get-ItemProperty $Winlogon -ErrorAction SilentlyContinue).DefaultUserName -eq $KioskUser) {
     Set-ItemProperty $Winlogon AutoAdminLogon '0'
     Remove-ItemProperty $Winlogon DefaultPassword -ErrorAction SilentlyContinue
+    [void](Set-LsaSecret 'DefaultPassword' $null)
+  }
+  # a Windows Hello beállítást visszaállítjuk, ha mi kapcsoltuk ki
+  if (Test-Path $PwLessPrev) {
+    Set-ItemProperty $PwLessKey DevicePasswordLessBuildVersion ([int](Get-Content $PwLessPrev)) -Type DWord -ErrorAction SilentlyContinue
+    Remove-Item $PwLessPrev
   }
   $u = Get-LocalUser $KioskUser -ErrorAction SilentlyContinue
   if ($u) {
@@ -200,10 +240,19 @@ if ($WithScreen) {
     else { New-LocalUser $KioskUser -Password $Sec -FullName 'Narancs Signage' -Description 'Narancs Signage display (kiosk)' -PasswordNeverExpires -UserMayNotChangePassword | Out-Null }
     # a Felhasználók csoport SID-del (magyar Windowson „Felhasználók” a neve), adminisztrátor nem lesz
     Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $KioskUser -ErrorAction SilentlyContinue
+    $err = Set-LsaSecret 'DefaultPassword' $Pw
+    if ($err) { throw "Could not store the automatic sign-in password (error $err)." }
+    Remove-ItemProperty $Winlogon DefaultPassword -ErrorAction SilentlyContinue
+    Remove-ItemProperty $Winlogon AutoLogonCount -ErrorAction SilentlyContinue   # ha volt, a számláló lejárta után kikapcsolná
     Set-ItemProperty $Winlogon AutoAdminLogon '1'
     Set-ItemProperty $Winlogon DefaultUserName $KioskUser
     Set-ItemProperty $Winlogon DefaultDomainName $env:COMPUTERNAME
-    Set-ItemProperty $Winlogon DefaultPassword $Pw
+    # Windows 11: a „Csak Windows Hello bejelentkezés a Microsoft-fiókokhoz” beállítás letiltja az automatikus bejelentkezést
+    $pl = (Get-ItemProperty $PwLessKey -ErrorAction SilentlyContinue).DevicePasswordLessBuildVersion
+    if ($pl -and $pl -ne 0) {
+      if (-not (Test-Path $PwLessPrev)) { Set-Content $PwLessPrev $pl }
+      Set-ItemProperty $PwLessKey DevicePasswordLessBuildVersion 0 -Type DWord
+    }
     Set-ItemProperty $Winlogon EnableFirstLogonAnimation 0 -Type DWord
     # az új fiók első bejelentkezésekor ne jöjjön fel az adatvédelmi beállítások képernyője
     New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE' -Force | Out-Null

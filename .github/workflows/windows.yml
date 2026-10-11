@@ -51,6 +51,7 @@ jobs:
           if ((Get-Content "$env:ProgramData\NarancsSignage\kiosk.ps1" -Raw) -notlike '*--kiosk http://192.168.1.10:8080/player/ *') { throw 'kiosk.ps1' }
           $w = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
           if ($w.AutoAdminLogon -ne '1' -or $w.DefaultUserName -ne 'NarancsKiosk') { throw 'autologon' }
+          if ($w.DefaultPassword) { throw 'a jelszó nem lehet szövegként a registryben' }
           if ((Get-LocalGroupMember -SID 'S-1-5-32-544').Name -like '*NarancsKiosk') { throw 'a kioszk fiók nem lehet admin' }
           # a kioszk szkript szintaxisa (PowerShell parser)
           $e = $null; [void][Management.Automation.Language.Parser]::ParseFile("$env:ProgramData\NarancsSignage\kiosk.ps1", [ref]$null, [ref]$e); if ($e) { throw ($e | Out-String) }
