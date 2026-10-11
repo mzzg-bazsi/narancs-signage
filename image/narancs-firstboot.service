@@ -2,7 +2,11 @@
 [Unit]
 Description=Narancs Signage first boot setup
 Wants=network-online.target
-After=network-online.target cloud-init.target
+# a cloud-init.target-re NEM várhat: a Trixie-n az a multi-user.target után jön, ami körkörös sorrendet adna,
+# és a systemd ezt a feladatot dobná el. Az Imager beállításai (Wi-Fi, felhasználó) már a hálózat előtt lefutnak.
+After=network-online.target
+# a bejelentkezés csak utána jelenjen meg, hogy a képernyőn látsszon a telepítés folyamata
+Before=getty@tty1.service
 ConditionPathExists=!/var/lib/narancs-signage-firstboot.done
 
 [Service]

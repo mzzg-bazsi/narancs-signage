@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.19.1] – 2026-10-11
+
+### Javítva
+- Raspberry Pi image: az első induláskori telepítés nem indult el (a `cloud-init.target` utáni sorrend a Trixie-n körkörös függőséget adott, és a systemd eldobta a feladatot). A telepítés alatt a folyamat a képernyőn látszik, a bejelentkezés csak utána jelenik meg. Már kiírt kártyán: `sudo sed -i 's/ cloud-init.target//' /etc/systemd/system/narancs-firstboot.service && sudo systemctl daemon-reload`, majd `sudo /usr/local/lib/narancs-signage/firstboot.sh`.
+
 ## [1.19.0] – 2026-10-11
 
 ### Új
