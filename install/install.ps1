@@ -153,7 +153,9 @@ if ($WithServer) {
   else {
     # saját Node.js a program mellé, közvetlenül a nodejs.org-ról (a winget nem mindenhol van meg, pl. régebbi Windows 10-en)
     $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
-    $lts = (Invoke-RestMethod 'https://nodejs.org/dist/index.json' | Where-Object { $_.lts } | Select-Object -First 1).version
+    # PowerShell 5.1-ben az irm a JSON tömböt egyben adja tovább, ezért foreach-csel bontjuk ki
+    $lts = ''
+    foreach ($r in (Invoke-RestMethod 'https://nodejs.org/dist/index.json')) { if ($r.lts) { $lts = [string]$r.version; break } }
     if ($lts -notmatch '^v\d+\.\d+\.\d+$') { throw 'Could not find the current Node.js version on nodejs.org.' }
     Info "Downloading Node.js $lts"
     $zip = Join-Path $env:TEMP "node-$lts-win-$arch.zip"
