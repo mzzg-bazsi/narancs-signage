@@ -7,6 +7,15 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.23.0] – 2026-10-11
+
+### Új
+- **Sötét és világos mód minden témához**: a 10 beépített téma mindkét változatban elérhető (Arculat → Téma → Mód), és képernyőnként is felülírható (Képernyők → Szerkesztés → Megjelenés → Sötét / világos mód).
+- **Saját témák**: „Mentés saját témaként” (a jelenlegi színek, betűk, forma, mindkét móddal), fájlba exportálás megosztáshoz (`.narancs-theme.json`) és importálás. A szerver szigorúan ellenőrzi a fájlt (csak színértékek és ismert formátumú betűnevek, legfeljebb 50 téma).
+
+### Változott
+- Az Arculat és a Beállítások képernyőképei a fülekkel (README, weboldal).
+
 ## [1.22.1] – 2026-10-11
 
 ### Változott

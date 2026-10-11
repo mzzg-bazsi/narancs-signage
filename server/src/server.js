@@ -18,6 +18,7 @@ import { BUILTIN_TEMPLATES, CATEGORIES } from './builtin-templates.js';
 import { galleryIndex, galleryTemplate, GALLERY_REPO } from './gallery.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
+import { cleanThemes } from './themes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
@@ -153,6 +154,7 @@ function orgInfo() {
     slogan: getSetting('slogan', ''),
     logo_media_id: getSetting('logo_media_id'),
     branding: getSetting('branding', { preset: 'narancs' }),
+    custom_themes: getSetting('custom_themes', {}),
     lang: lang(),
   };
 }
@@ -743,7 +745,7 @@ r.del('/api/alerts/:id', A, (req, res) => {
 // ---------- Beállítások, felhasználók, mentés ----------
 r.get('/api/settings', A, (req, res) => send(res, 200, {
   org_name: getSetting('org_name', 'Narancs Signage'), logo_media_id: getSetting('logo_media_id'),
-  slogan: getSetting('slogan', ''), branding: getSetting('branding', { preset: 'narancs' }),
+  slogan: getSetting('slogan', ''), branding: getSetting('branding', { preset: 'narancs' }), custom_themes: getSetting('custom_themes', {}),
   logo_url: mediaMap([getSetting('logo_media_id')])[getSetting('logo_media_id')]?.url || null,
   default_lat: getSetting('default_lat', 47.4979), default_lon: getSetting('default_lon', 19.0402), default_city: getSetting('default_city', 'Budapest'),
   language: lang(),
@@ -756,6 +758,7 @@ r.put('/api/settings', A, async (req, res) => {
     if (typeof b.branding !== 'object' || Array.isArray(b.branding) || JSON.stringify(b.branding).length > 20000) throw new HttpError(400, 'Érvénytelen arculat');
     setSetting('branding', b.branding);
   }
+  if (b.custom_themes !== undefined) setSetting('custom_themes', cleanThemes(b.custom_themes));
   if (b.language !== undefined) {
     if (!LANGS.includes(b.language)) throw new HttpError(400, 'Érvénytelen nyelv');
     setSetting('language', b.language);

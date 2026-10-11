@@ -1003,7 +1003,7 @@
     if (!T || !state.cfg) return;
     const org = state.cfg.org || {};
     const b = org.branding || {};
-    const r = T.resolve(b, settings().theme || '');
+    const r = T.resolve(b, settings().theme || '', { mode: settings().theme_mode, custom: org.custom_themes });
     const root = document.documentElement.style;
     for (const [k, v] of Object.entries(r.colors)) if (COLOR_VARS[k]) root.setProperty(COLOR_VARS[k], v);
     root.setProperty('--font', (T.FONTS[r.font] || T.FONTS.system).css);

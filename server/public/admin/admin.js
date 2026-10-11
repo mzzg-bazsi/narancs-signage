@@ -571,7 +571,7 @@
     if (st.setup) return authScreen(true);
     if (!st.user) { ME = null; return authScreen(false); }
     ME = st.user;
-    try { const st0 = await GET('/api/settings'); ME.org_name = st0.org_name; ME.logo_url = st0.logo_url; cache.branding = st0.branding; } catch { /* */ }
+    try { const st0 = await GET('/api/settings'); ME.org_name = st0.org_name; ME.logo_url = st0.logo_url; cache.branding = st0.branding; cache.custom_themes = st0.custom_themes; } catch { /* */ }
     shell();
     route();
     refreshBadges();
@@ -1006,7 +1006,8 @@
           F.textarea(tr('Hírszalag (soronként egy üzenet)'), st, 'ticker', { rows: 3, placeholder: tr('Pl. Ma 14:00-kor tűzriadó gyakorlat\nA kávézó ma 16:00-ig van nyitva'), hint: tr('Üresen hagyva nem jelenik meg.') }),
           F.number(tr('Hírszalag sebesség (%)'), st, 'ticker_speed', { min: 25, max: 400, placeholder: '100' }),
           F.color(tr('Hírszalag színe'), st, 'ticker_color'),
-          F.select(tr('Arculat / téma'), st, 'theme', [['', tr('Globális arculat (Arculat menü)')], ...Object.entries(window.SIGNAGE_THEMES.THEMES).map(([k, t]) => [k, `${tr(t.name)} – ${tr(t.desc)}`])], { full: true, hint: tr('Ez a képernyő eltérő témát is használhat (pl. étterem bordó, recepció kék). A logó és a fejléc a globális marad.') }),
+          F.select(tr('Arculat / téma'), st, 'theme', [['', tr('Globális arculat (Arculat menü)')], ...Object.entries({ ...window.SIGNAGE_THEMES.THEMES, ...(cache.custom_themes || {}) }).map(([k, t]) => [k, t.desc ? `${tr(t.name)} – ${tr(t.desc)}` : tr(t.name)])], { full: true, hint: tr('Ez a képernyő eltérő témát is használhat (pl. étterem bordó, recepció kék). A logó és a fejléc a globális marad.') }),
+          F.seg(tr('Sötét / világos mód'), st, 'theme_mode', [['', tr('A téma szerint')], ['dark', tr('Sötét')], ['light', tr('Világos')]], { def: '' }),
           F.color(tr('Kiemelő szín felülírása'), st, 'accent', { theme: false, hint: tr('Csak ezen a képernyőn, a téma kiemelő színe helyett') }));
       } else if (tab === 'power') {
         content = h('div', { class: 'fields' },
@@ -1812,7 +1813,7 @@
   function themeCss(str) {
     const T = window.SIGNAGE_THEMES;
     if (!T) return str;
-    const c = T.resolve(cache.branding || {}).colors;
+    const c = T.resolve(cache.branding || {}, '', { custom: cache.custom_themes }).colors;
     const map = { '--accent': c.accent, '--accent-fg': c.accent_fg, '--bg': c.bg, '--bg2': c.bg2, '--fg': c.fg, '--surface': c.surface, '--muted': c.muted };
     return String(str).replace(/var\((--[\w-]+)\)/g, (m, v) => map[v] || m);
   }
@@ -1828,6 +1829,9 @@
     st.branding.colors ||= {};
     st.branding.header ||= {};
     const b = st.branding;
+    const customs = st.custom_themes ||= {};
+    const all = () => ({ ...customs, ...T.THEMES });
+    const theme = () => all()[b.preset] || T.THEMES.narancs;
     let orig = JSON.stringify(st);
     dirty = () => JSON.stringify(st) !== orig;
 
@@ -1836,40 +1840,114 @@
       const logo = st.logo_media_id && mediaById(st.logo_media_id);
       pv.frame.contentWindow?.postMessage({
         type: 'branding',
-        org: { name: st.org_name, slogan: st.slogan, logo_media_id: st.logo_media_id || null, branding: clone(b) },
+        org: { name: st.org_name, slogan: st.slogan, logo_media_id: st.logo_media_id || null, branding: clone(b), custom_themes: clone(customs) },
         media: logo ? { [logo.id]: { id: logo.id, url: logo.url, mime: logo.mime, name: logo.name } } : {},
       }, location.origin);
     }, 120);
     pv.frame.addEventListener('load', () => setTimeout(push, 400));
     const ch = () => { push(); drawSwatches(); };
 
-    // --- Témák galériája ---
-    const gallery = h('div', { class: 'theme-grid' });
-    const drawGallery = () => gallery.replaceChildren(...Object.entries(T.THEMES).map(([k, t]) => {
-      const c = t.colors;
-      return h('button', { type: 'button', class: `theme-tile ${b.preset === k ? 'on' : ''}`, onclick: async () => {
-        const custom = Object.keys(b.colors).length || b.font || b.head_font || b.radius;
-        if (custom && b.preset !== k && !(await confirmBox(tr('A téma váltása törli az egyedi szín- és betűbeállításokat. Folytatod?'), { ok: tr('Téma váltása'), danger: false }))) return;
+    // --- Témák galériája: beépített + saját (mentett / importált) témák, sötét és világos mód ---
+    const gallery = h('div', { class: 'stack' });
+    const hasCustom = () => Object.keys(b.colors).length || b.font || b.head_font || b.radius;
+    const saveCustoms = async () => { await PUT('/api/settings', { custom_themes: customs }); cache.custom_themes = clone(customs); orig = JSON.stringify({ ...JSON.parse(orig), custom_themes: customs }); };
+    const slug = (x) => String(x || 'tema').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tema';
+    const exportTheme = (t) => {
+      const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ format: 'narancs-theme', version: 1, ...t }, null, 1)], { type: 'application/json' })), download: `${slug(t.name)}.narancs-theme.json` });
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    };
+    const newKey = () => `my_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const themeFile = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async () => {
+      const f = themeFile.files[0]; themeFile.value = '';
+      if (!f) return;
+      let j;
+      try { j = JSON.parse(await f.text()); } catch { j = null; }
+      if (j?.format !== 'narancs-theme') return toast(tr('Ez nem Narancs Signage téma fájl'), 'err');
+      const k = newKey();
+      customs[k] = { name: j.name, desc: j.desc, mode: j.mode, font: j.font, head_font: j.head_font, radius: j.radius, dark: j.dark, light: j.light };
+      try { await saveCustoms(); toast(tr('Téma importálva: {name}', { name: j.name })); } catch (e) { delete customs[k]; fail(e); }
+      drawGallery();
+    } });
+    const saveAsTheme = () => {
+      const r = T.resolve(b, '', { custom: customs });
+      const base = theme();
+      const mine = b.preset.startsWith('my_');
+      const meta = { name: mine ? base.name : '', desc: mine ? base.desc : '' };
+      const m = modal({
+        title: tr('Mentés saját témaként'),
+        body: h('div', { class: 'stack' },
+          h('p', { class: 'small muted', style: { margin: 0 } }, tr('A jelenlegi színek, betűk és forma saját témaként a galériába kerülnek. Fájlba exportálva meg is oszthatod, más pedig importálhatja.')),
+          F.text(tr('Név'), meta, 'name'), F.text(tr('Leírás'), meta, 'desc')),
+        foot: [btn(tr('Mégse'), () => m.close()), btn(tr('Mentés'), async () => {
+          if (!meta.name.trim()) return toast(tr('Adj nevet a témának'), 'err');
+          const other = r.mode === 'dark' ? 'light' : 'dark';
+          // a másik mód a kiinduló téma megfelelő változata, a saját kiemelő színnel
+          const otherPal = { ...T.palette(base, other), ...(b.colors.accent ? { accent: b.colors.accent } : {}), ...(b.colors.accent_fg ? { accent_fg: b.colors.accent_fg } : {}) };
+          const k = mine && meta.name.trim() === base.name ? b.preset : newKey();
+          const prev = customs[k];
+          customs[k] = { name: meta.name.trim(), desc: meta.desc.trim(), mode: r.mode, font: r.font, head_font: r.head_font, radius: r.radius, [r.mode]: r.colors, [other]: (prev && prev[other]) || otherPal };
+          try { await saveCustoms(); } catch (e) { if (prev) customs[k] = prev; else delete customs[k]; return fail(e); }
+          b.preset = k; b.mode = r.mode; b.colors = {}; delete b.font; delete b.head_font; delete b.radius;
+          m.close(); drawGallery(); drawCustom(); ch();
+          toast(tr('Téma elmentve – a képernyőkre a Mentés gombbal kerül ki'));
+        }, { cls: 'primary', ic: 'save' })],
+      });
+    };
+    const tile = ([k, t]) => {
+      const c = T.palette(t, b.mode || t.mode);
+      const el = h('button', { type: 'button', class: `theme-tile ${b.preset === k ? 'on' : ''}`, onclick: async () => {
+        if (hasCustom() && b.preset !== k && !(await confirmBox(tr('A téma váltása törli az egyedi szín- és betűbeállításokat. Folytatod?'), { ok: tr('Téma váltása'), danger: false }))) return;
         b.preset = k; b.colors = {}; delete b.font; delete b.head_font; delete b.radius;
         drawGallery(); drawCustom(); ch();
       } },
       h('div', { class: 'theme-pv', style: { background: `linear-gradient(135deg, ${c.bg2}, ${c.bg})`, color: c.fg, fontFamily: T.FONTS[t.head_font]?.css } },
         h('div', { class: 'tp-title' }, tr('Aa Üdv!')),
         h('div', { class: 'row', style: { gap: '5px' } }, h('span', { class: 'tp-btn', style: { background: c.accent, color: c.accent_fg } }, tr('Gomb')), h('span', { class: 'tp-card', style: { background: c.surface } }))),
-      h('div', { class: 'theme-meta' }, h('b', {}, tr(t.name)), h('span', {}, tr(t.desc))));
-    }));
+      h('div', { class: 'theme-meta' }, h('b', {}, tr(t.name)), t.desc ? h('span', {}, tr(t.desc)) : null));
+      if (!k.startsWith('my_')) return el;
+      return h('div', { class: 'theme-tile-wrap' }, el, h('div', { class: 'theme-tile-acts' },
+        btn('', () => exportTheme(t), { cls: 'sm icon', ic: 'download', title: tr('Exportálás fájlba (megosztáshoz)') }),
+        btn('', async () => {
+          if (!(await confirmBox(tr('Törlöd a(z) „{name}” témát?', { name: t.name }), { ok: tr('Törlés') }))) return;
+          const prev = customs[k];
+          delete customs[k];
+          try { await saveCustoms(); } catch (e) { customs[k] = prev; return fail(e); }
+          if (b.preset === k) { b.preset = 'narancs'; ch(); }
+          drawGallery(); drawCustom();
+        }, { cls: 'sm icon', ic: 'trash', title: tr('Törlés') })));
+    };
+    const drawGallery = () => {
+      const prevMode = b.mode;
+      const modeSeg = F.seg(tr('Mód'), b, 'mode', [['dark', tr('Sötét')], ['light', tr('Világos')]], { def: theme().mode || 'dark', onchange: async () => {
+        // az egyedi színek az előző módhoz készültek
+        if (Object.keys(b.colors).length) {
+          if (!(await confirmBox(tr('A mód váltása törli az egyedi színeket. Folytatod?'), { ok: tr('Mód váltása'), danger: false }))) { b.mode = prevMode; if (b.mode === undefined) delete b.mode; return drawGallery(); }
+          b.colors = {};
+        }
+        drawGallery(); drawCustom(); ch();
+      } });
+      const mine = Object.entries(customs);
+      gallery.replaceChildren(
+        h('div', { class: 'row between', style: { alignItems: 'flex-end' } }, modeSeg,
+          h('div', { class: 'row' }, themeFile,
+            btn(tr('Importálás'), () => themeFile.click(), { ic: 'upload', title: tr('Mások által megosztott téma fájl betöltése') }),
+            btn(tr('Mentés saját témaként'), saveAsTheme, { ic: 'save' }))),
+        h('div', { class: 'theme-grid' }, Object.entries(T.THEMES).map(tile)),
+        mine.length ? h('b', {}, tr('Saját témák')) : null,
+        mine.length ? h('div', { class: 'theme-grid' }, mine.map(tile)) : null);
+    };
     drawGallery();
 
     // --- Egyedi színek, betűk, forma ---
     const custom = h('div');
     const swatches = h('div', { class: 'row', style: { gap: '6px' } });
     const drawSwatches = () => {
-      const r = T.resolve(b);
+      const r = T.resolve(b, '', { custom: customs });
       swatches.replaceChildren(...['bg', 'bg2', 'surface', 'accent', 'accent_fg', 'fg', 'muted'].map((k) => h('span', { class: 'swatch', title: tr(T.COLOR_LABELS[k]), style: { background: r.colors[k] } })));
     };
-    const fontOpts = (withDefault) => [...(withDefault ? [['', tr('A téma szerint ({name})', { name: tr(T.FONTS[T.THEMES[b.preset]?.font]?.name || '') })]] : []), ...Object.entries(T.FONTS).map(([k, f]) => [k, tr(f.name)])];
+    const fontOpts = (withDefault) => [...(withDefault ? [['', tr('A téma szerint ({name})', { name: tr(T.FONTS[theme().font]?.name || '') })]] : []), ...Object.entries(T.FONTS).map(([k, f]) => [k, tr(f.name)])];
     const drawCustom = () => {
-      const r = T.resolve(b);
+      const r = T.resolve(b, '', { custom: customs });
       const colorField = (k) => {
         const val = b.colors[k] || '';
         const eff = r.colors[k];
@@ -1887,7 +1965,7 @@
         h('div', { class: 'field' }, h('label', {}, tr('Teljes paletta')), swatches),
         F.select(tr('Szöveg betűtípusa'), b, 'font', fontOpts(true), { onchange: (v) => { if (!v) delete b.font; drawCustom(); ch(); } }),
         F.select(tr('Címek betűtípusa'), b, 'head_font', fontOpts(true), { onchange: (v) => { if (!v) delete b.head_font; drawCustom(); ch(); } }),
-        F.seg(tr('Lekerekítés'), b, 'radius', Object.entries(T.RADIUS).map(([k, x]) => [k, tr(x.name)]), { def: T.THEMES[b.preset]?.radius, onchange: () => { drawCustom(); ch(); } }),
+        F.seg(tr('Lekerekítés'), b, 'radius', Object.entries(T.RADIUS).map(([k, x]) => [k, tr(x.name)]), { def: theme().radius, onchange: () => { drawCustom(); ch(); } }),
         h('div', { class: 'full' }, sample),
         h('div', { class: 'full small muted' }, tr('A Google betűtípusokhoz a kijelzőnek internet kell; nélküle a rendszer betűtípusa jelenik meg.'))));
       drawSwatches();

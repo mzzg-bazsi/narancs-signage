@@ -75,6 +75,8 @@ const EN = {
   'Ismeretlen parancs': 'Unknown command',
   'Az üzenet nem lehet üres': 'The message cannot be empty',
   'Érvénytelen arculat': 'Invalid branding',
+  'Érvénytelen téma': 'Invalid theme',
+  'Legfeljebb 50 saját téma lehet': 'At most 50 custom themes are allowed',
   'Érvénytelen nyelv': 'Invalid language',
   'Saját magadat nem törölheted': 'You cannot delete yourself',
   'A jelenlegi jelszó hibás': 'The current password is wrong',

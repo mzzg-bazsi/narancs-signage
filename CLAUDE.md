@@ -17,10 +17,11 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
   - `seed.js` minta tartalmak (alap lejátszási lista): első beállításkor és `POST /api/samples`
 - `server/public/admin/` – admin SPA (vanilla JS, build nélkül). Halvány narancs téma. `F.*` űrlap-segédek, `TYPES` = 15 tartalomtípus (a `zones` = osztott képernyő).
 - `server/public/player/` – lejátszó (kioszk böngészőben fut). Renderelők a `renderers` objektumban; `fixEmoji` minden emojit színes betűtípusba tesz; `#boot` indulókép.
-- `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (10 arculati téma, admin + lejátszó közös), `zones.js` (osztott képernyő elrendezések), `splash/` (logó: félnap egy tévén, bootképkockák).
+- `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (10 arculati téma `dark`/`light` palettával, `mode` = alapértelmezett; `resolve(branding, képernyőTéma, { mode, custom })`; admin + lejátszó közös), `zones.js` (osztott képernyő elrendezések), `splash/` (logó: félnap egy tévén, bootképkockák).
 - Osztott képernyő: minden zóna egy beágyazott lejátszó (`player/index.html?zone=3,5`), ami a szülő `window.__signage` állapotából olvassa a konfigurációt – így minden típus a zóna méretéhez igazodik.
 - Jogosultság: `auth.js` `authorize()` – szerepkörök `admin` | `editor` | `viewer` (`users.role`), API kulcs `Authorization: Bearer ns_…` (`api_tokens`, csak sha256 hash). Az `A` middleware a `server.js`-ben bejelentkezés + szerepkör. Új admin-only végpontot az `adminOnly()` listába kell felvenni.
 - Sémabővítés meglévő adatbázisokhoz: `db.js` `addColumn()` (pl. `events.rrule`, `users.role`).
+- Saját témák: `settings.custom_themes` (`my_…` kulcsok), a szerver `src/themes.js` `cleanThemes()`-szel ellenőrzi (a színek CSS-be kerülnek); fájlformátum `narancs-theme` v1; a lejátszó az `org.custom_themes`-ből kapja.
 - Riportok: a `stats` táblából (90 napig marad), `/api/reports`. Képernyőkép: az ügynök (`signage-agent`, `scrot`) tölti fel a `screenshots/<id>.jpg`-be.
 - iCal ismétlődés: `feeds.js` `expandRrule()`; teszt: `cd server && npm test` (ideiglenes adatkönyvtárral fut).
 - Sablonok: `templates.js` (formátum `narancs-template` v1: ref nevek s1/f1/c1/m1, kétnyelvű `{en, hu}` szövegek, `{{org_name}}`/`{{city}}`/`{{date+N}}` helyőrzők; export, ellenőrzött import tranzakcióban, mentés nélküli előnézet), beépítettek: `builtin-templates.js`. Új hivatkozó adatmezőnél a `REF_KEYS`-et bővíteni kell.
