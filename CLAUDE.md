@@ -49,5 +49,14 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
 
 ## Verziókezelés
 - GitHub: https://github.com/mzzg-bazsi/narancs-signage (**publikus**, `main`; commit e-mail: GitHub noreply álcím, a repo helyi git beállításában). `gh` be van jelentkezve (`mzzg-bazsi`).
-- Minden lezárt módosítás után: bejegyzés a `CHANGELOG.md` tetejére (`## [X.Y.Z] – dátum`, Új / Javítva / Változott), commit (magyar üzenet), majd `./scripts/release.sh patch|minor|major` (verzió emelés, tag, push).
+- Minden lezárt módosítás után: bejegyzés a `CHANGELOG.md` tetejére (`## [X.Y.Z] – dátum`, Új / Javítva / Változott), commit (magyar üzenet), majd `./scripts/release.sh patch|minor|major` (verzió emelés, tag, push, **GitHub Release** a `scripts/release-notes.sh` jegyzetével, assetként `install.sh` + `install-player.sh`). A tag indítja a Docker kép buildet (`ghcr.io/mzzg-bazsi/narancs-signage:X.Y.Z` és `latest`).
 - A kijelzőt érintő változás után a felhasználónak újra kell futtatnia a lejátszó telepítőt a VM-en; a lejátszó oldali (böngésző) változásokhoz elég egy távoli `reload` parancs.
+
+## Kapcsolódó repók (a `~/Desktop/Projektek/` alatt)
+- `narancs-signage-site` → `mzzg-bazsi/narancs-signage-website` (GitHub Pages, statikus, build nélkül): főoldal, `demo/`, `docs/` (`en.html` + `hu.html`, a `docs/index.html` tölti be, tartalomjegyzékkel), `compare/`, `templates/` (közösségi sablongaléria). **A funkciók változásakor ezt is frissíteni kell** (főoldal funkciók, docs EN+HU, összehasonlítás).
+  - Nyelv: `i18n.js` HU szótár, kulcs = az angol szöveg (szövegcsomópontonként, vegyes HTML-nél `data-i18n`); minden új angol szöveghez kell HU bejegyzés. A nyelv `localStorage` `site.lang`, `?lang=hu`.
+  - Közös fejléc minden oldalon (`.nav-links`; új oldalnál mind az 5 HTML-ben), egy stíluslap (`style.css`) – új stílusnál ügyelj a meglévő osztálynevekre (pl. `.gallery`, `.tv`, `.steps` már foglalt).
+  - Képernyőképek: `assets/shots/*.png` (1600×900, angol felület), tesztszerverről CDP-vel készülnek; a főoldal `a.lb` / `.gallery a` képei a lightboxban nyílnak. `assets/og.png` (1200×630) a megosztási kép, `assets/github-social.png` (1280×640) a GitHub social preview.
+  - Demó frissítése a főrepó változásai után: `node tools/build-demo.mjs ../signage` (saját 8199-es tesztszervert indít – a port legyen szabad).
+- `narancs-signage-templates` → `mzzg-bazsi/narancs-signage-templates`: sablonfájlok + `index.json` (Pages). A saját oldala csak átirányít a weboldal `templates/` oldalára; a `tools/build-index.mjs` a mini kijelzőkhöz `screens`/`playlist` kivonatot is ír az indexbe, és a fő repó `zones.js`-ét is közzéteszi. Teszt beküldés törlése: a `templates/<id>` mappa törlése a `main`-en.
+- A weboldal SEO: Google Search Console (a verifikációs meta a főoldalon szándékosan publikus), `sitemap.xml` hreflang párokkal – új oldalnál bővíteni kell.

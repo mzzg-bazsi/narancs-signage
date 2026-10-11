@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.18.1] – 2026-10-11
+
+### Változott
+- CLAUDE.md: a kapcsolódó repók (weboldal, sablongaléria) és a kiadási folyamat (GitHub Release, telepítő assetek, Docker) leírása.
+
 ## [1.18.0] – 2026-10-10
 
 ### Új
