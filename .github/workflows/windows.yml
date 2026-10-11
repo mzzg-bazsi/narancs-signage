@@ -45,3 +45,9 @@ jobs:
           $a = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).Arguments
           if ($a -notlike '*"http://192.168.1.10:8080/player/"*') { throw $a }
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
+      - name: Kézi indításkor a kiadott telepítő a GitHubról (letöltés, irm)
+        if: github.event_name == 'workflow_dispatch'
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1))) -Mode server -Port 8091
+          (Invoke-RestMethod http://127.0.0.1:8091/healthz).version
