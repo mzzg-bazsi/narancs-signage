@@ -1173,7 +1173,7 @@
     try {
       const cfg = await api(url);
       setOnline(true);
-      if (!cfg.paired) { setLang(cfg.lang); showPairing(cfg.code); return; }
+      if (!cfg.paired) { setLang(cfg.lang); showPairing(cfg.code, cfg.lan); return; }
       applyConfig(cfg);
     } catch (e) {
       if (e.status === 404 && !PREVIEW) { await hello(); return; }
@@ -1187,7 +1187,7 @@
     $('#offline').hidden = on || PREVIEW;
   }
 
-  function showPairing(code) {
+  function showPairing(code, lan) {
     state.cfg = null;
     clearTimeout(state.timer);
     $('#stage').replaceChildren();
@@ -1195,7 +1195,8 @@
     hideBoot();
     $('#pairing').hidden = false;
     $('#pair-code').textContent = code;
-    $('#pair-url').textContent = `${location.origin}/admin/`;
+    const origin = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && lan?.length ? `${location.protocol}//${lan[0]}${location.port ? `:${location.port}` : ''}` : location.origin;
+    $('#pair-url').textContent = `${origin}/admin/`;
     $('#pair-info').textContent = `${tr('Eszköz')}: ${DEVICE.slice(0, 8)} · ${screen.width}×${screen.height}`;
   }
 
@@ -1208,7 +1209,7 @@
       setOnline(true);
       setLang(r.lang);
       showStatus(null);
-      if (!r.paired) showPairing(r.code);
+      if (!r.paired) showPairing(r.code, r.lan);
       return r;
     } catch (e) {
       setOnline(false);

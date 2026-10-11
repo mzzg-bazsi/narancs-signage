@@ -121,6 +121,16 @@ Or `docker compose up -d` with the [docker-compose.yml](docker-compose.yml) in t
 
 **Locked out?** On the server: `sudo signage-reset-password <username>` (prints a new password; `--admin` also makes the user an administrator).
 
+### Raspberry Pi: ready-made image
+
+Two images based on Raspberry Pi OS Lite (64-bit, Pi 3/4/5/Zero 2 W) that install the latest release on the first start: **server + display** in one, or **display only**. In Raspberry Pi Imager set *App Options → Content Repository* to
+
+```
+https://github.com/mzzg-bazsi/narancs-signage/releases/download/pi-image/narancs-signage-pi.json
+```
+
+then pick the image and set Wi-Fi, user and SSH as usual. For *display only*, set `SERVER=http://SERVER-IP:8080` in `narancs-signage.txt` on the boot partition. Details: [documentation](https://mzzg-bazsi.github.io/narancs-signage-website/docs/#pi-image), files: [pi-image release](https://github.com/mzzg-bazsi/narancs-signage/releases/tag/pi-image).
+
 ### 2. Display / player (Ubuntu Server or Raspberry Pi OS Lite – arm64, armhf, amd64)
 
 On the device connected to the display, run a single command:

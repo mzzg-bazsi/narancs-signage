@@ -1,0 +1,12 @@
+# Narancs Signage – display (screen) image settings
+# Edit this file on the boot partition after flashing (it is visible on Mac and Windows too).
+# Wi-Fi, user name, password and SSH: set them in Raspberry Pi Imager (OS customisation).
+
+# Address of your Narancs Signage server (required):
+SERVER=
+
+# Optional: rotate the screen (90, 180 or 270)
+ROTATE=
+
+# Optional: restart the device every night at 4:30 (yes/no)
+NIGHTLY_REBOOT=no

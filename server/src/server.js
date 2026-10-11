@@ -2,6 +2,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
@@ -182,6 +183,11 @@ function newPairCode() {
 // =====================================================================
 //  Lejátszó API (nyilvános, eszközazonosítóval)
 // =====================================================================
+// a saját gépről (localhost) futó lejátszó párosító képernyőjén a hálózati cím jelenjen meg (pl. Raspberry Pi szerver+kijelző)
+function lanFor(req) {
+  if (!/^(::1|127\.|::ffff:127\.)/.test(req.socket.remoteAddress || '')) return undefined;
+  return Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address);
+}
 r.post('/api/player/hello', async (req, res) => {
   const body = await readBody(req);
   let s = screenByDevice(body.device);
@@ -193,14 +199,14 @@ r.post('/api/player/hello', async (req, res) => {
   } else {
     run('UPDATE screens SET info = ?, last_seen = ? WHERE id = ?', info, now(), s.id);
   }
-  send(res, 200, { paired: !!s.approved, code: s.code, name: s.name, server_version: VERSION, lang: lang() });
+  send(res, 200, { paired: !!s.approved, code: s.code, name: s.name, server_version: VERSION, lang: lang(), lan: lanFor(req) });
 });
 
 r.get('/api/player/config', (req, res) => {
   const s = screenByDevice(req.query.get('device'));
   if (!s) throw new HttpError(404, 'Ismeretlen eszköz');
   run('UPDATE screens SET last_seen = ? WHERE id = ?', now(), s.id);
-  if (!s.approved) return send(res, 200, { paired: false, code: s.code, lang: lang() });
+  if (!s.approved) return send(res, 200, { paired: false, code: s.code, lang: lang(), lan: lanFor(req) });
   send(res, 200, { paired: true, ...playerConfig(s) });
 });
 

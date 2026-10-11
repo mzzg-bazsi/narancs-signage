@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.19.0] – 2026-10-11
+
+### Új
+- **Raspberry Pi image-ek**: két kiírásra kész image a Raspberry Pi OS Lite (64 bites) alapján – **szerver + kijelző** egyben és **csak kijelző**. Az első induláskor letöltik és telepítik a legfrissebb kiadást (nem kell minden verzióhoz újraépíteni őket); a beállítások a boot partíción lévő `narancs-signage.txt`-ben (`SERVER`, `PORT`, `ROTATE`, `NIGHTLY_REBOOT`). A Wi-Fi, felhasználó és SSH a Raspberry Pi Imagerben állítható be; ehhez saját Imager tartalomtár (`narancs-signage-pi.json`) készül. Build: `image/build.sh`, `.github/workflows/pi-image.yml` (kézzel indítva, a `pi-image` kiadásba).
+- Lejátszó: ha a kijelző a saját gépén futó szerverhez kapcsolódik (`localhost`), a párosító képernyő a szerver hálózati címét mutatja.
+
 ## [1.18.3] – 2026-10-11
 
 ### Változott

@@ -1,0 +1,16 @@
+# Narancs Signage – egyszeri telepítés az első indításkor (Raspberry Pi image)
+[Unit]
+Description=Narancs Signage first boot setup
+Wants=network-online.target
+After=network-online.target cloud-init.target
+ConditionPathExists=!/var/lib/narancs-signage-firstboot.done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/narancs-signage/firstboot.sh
+StandardOutput=journal+console
+StandardError=journal+console
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

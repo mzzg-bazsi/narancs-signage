@@ -1,0 +1,27 @@
+# Raspberry Pi image-ek (kijelző és szerver+kijelző) – kézzel indítva, ritkán: az image-ek az első
+# induláskor a legfrissebb kiadást telepítik, ezért nem kell minden verzióhoz újraépíteni.
+# Eredmény: a „pi-image” Release (nem „latest”, hogy a /releases/latest/ a kódkiadásra mutasson).
+name: Raspberry Pi images
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: sudo bash image/build.sh
+      - name: Publish to the pi-image release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd image/out
+          if gh release view pi-image >/dev/null 2>&1; then
+            gh release upload pi-image *.img.xz *.sha256 narancs-signage-pi.json --clobber
+            gh release edit pi-image --notes-file notes.md --latest=false
+          else
+            gh release create pi-image --target main --title "Raspberry Pi images" --notes-file notes.md --latest=false *.img.xz *.sha256 narancs-signage-pi.json
+          fi

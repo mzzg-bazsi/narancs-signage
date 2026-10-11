@@ -121,6 +121,16 @@ Vagy `docker compose up -d` a repóban lévő [docker-compose.yml](docker-compos
 
 **Kizártad magad?** A szerveren: `sudo signage-reset-password <felhasználónév>` (új jelszót ír ki; a `--admin` kapcsolóval adminisztrátor is lesz).
 
+### Raspberry Pi: kész image
+
+Két image a Raspberry Pi OS Lite (64 bites, Pi 3/4/5/Zero 2 W) alapján, amik az első induláskor a legfrissebb kiadást telepítik: **szerver + kijelző** egyben, vagy **csak kijelző**. A Raspberry Pi Imagerben az *App Options → Content Repository* értéke legyen
+
+```
+https://github.com/mzzg-bazsi/narancs-signage/releases/download/pi-image/narancs-signage-pi.json
+```
+
+majd válaszd ki az image-et, és állítsd be a Wi-Fit, a felhasználót és az SSH-t a szokásos módon. *Csak kijelzőnél* a boot partíción a `narancs-signage.txt`-ben add meg: `SERVER=http://SZERVER-IP:8080`. Részletek: [dokumentáció](https://mzzg-bazsi.github.io/narancs-signage-website/docs/#pi-image), fájlok: [pi-image kiadás](https://github.com/mzzg-bazsi/narancs-signage/releases/tag/pi-image).
+
 ### 2. Kijelző / lejátszó (Ubuntu Server vagy Raspberry Pi OS Lite – arm64, armhf, amd64)
 
 A kijelzőhöz kötött eszközön egyetlen parancs:
