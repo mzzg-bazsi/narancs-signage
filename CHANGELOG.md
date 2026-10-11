@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.29.1] – 2026-10-11
+
+### Javítva
+- Ha az admin felületet a szerver gépén `localhost`-ról nyitják meg (pl. a Windows tálca ikonról), az új kijelzőkhöz kiírt címek (telepítő parancs, Windows kijelző szerver címe, lejátszó címe, média link) a szerver helyi hálózati címét mutatják `localhost` helyett. Több hálózati kártyánál a 192.168.x / 10.x cím kerül előre.
+
 ## [1.29.0] – 2026-10-11
 
 ### Új

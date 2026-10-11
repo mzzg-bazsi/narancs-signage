@@ -191,7 +191,10 @@ function newPairCode() {
 // a saját gépről (localhost) futó lejátszó párosító képernyőjén a hálózati cím jelenjen meg (pl. Raspberry Pi szerver+kijelző)
 function lanFor(req) {
   if (!/^(::1|127\.|::ffff:127\.)/.test(req.socket.remoteAddress || '')) return undefined;
-  return Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address);
+  // a valószínű helyi hálózati cím elöl (192.168 → 10 → 172.16–31), a virtuális / link-local címek hátul vagy ki
+  const rank = (ip) => (/^192\.168\./.test(ip) ? 0 : /^10\./.test(ip) ? 1 : /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ? 2 : 3);
+  return Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'))
+    .map((a) => a.address).sort((a, b) => rank(a) - rank(b));
 }
 r.post('/api/player/hello', async (req, res) => {
   const body = await readBody(req);
@@ -749,7 +752,7 @@ r.get('/api/settings', A, (req, res) => send(res, 200, {
   slogan: getSetting('slogan', ''), branding: getSetting('branding', { preset: 'narancs' }), custom_themes: getSetting('custom_themes', {}),
   logo_url: mediaMap([getSetting('logo_media_id')])[getSetting('logo_media_id')]?.url || null,
   default_lat: getSetting('default_lat', 47.4979), default_lon: getSetting('default_lon', 19.0402), default_city: getSetting('default_city', 'Budapest'),
-  language: lang(),
+  language: lang(), lan: lanFor(req),
   version: VERSION, data_dir: DATA_DIR, node: process.version, uptime: process.uptime(),
 }));
 r.put('/api/settings', A, async (req, res) => {

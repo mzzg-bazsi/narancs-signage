@@ -141,6 +141,7 @@
   //  Gyorsítótárazott adatok
   // =====================================================================
   const cache = {};
+  let LAN = null; // a szerver helyi hálózati címei (csak ha az admint a szerver gépén, localhostról nyitották meg)
   async function load(kind, force = false) {
     if (!cache[kind] || force) cache[kind] = await GET(`/api/${kind}`);
     return cache[kind];
@@ -571,7 +572,7 @@
     if (st.setup) return authScreen(true);
     if (!st.user) { ME = null; return authScreen(false); }
     ME = st.user;
-    try { const st0 = await GET('/api/settings'); ME.org_name = st0.org_name; ME.logo_url = st0.logo_url; cache.branding = st0.branding; cache.custom_themes = st0.custom_themes; } catch { /* */ }
+    try { const st0 = await GET('/api/settings'); ME.org_name = st0.org_name; ME.logo_url = st0.logo_url; cache.branding = st0.branding; cache.custom_themes = st0.custom_themes; LAN = st0.lan || null; } catch { /* */ }
     shell();
     route();
     refreshBadges();
@@ -819,17 +820,24 @@
     });
   }
 
+  // A kijelzőknek megadandó cím: ha az admint a szerver gépén localhostról nyitották meg (pl. a Windows tálca ikonról),
+  // a localhost a kijelzőn nem működne – ilyenkor a szerver helyi hálózati címe
+  function serverOrigin() {
+    const local = /^(localhost|127\.|\[::1\]$)/.test(location.hostname);
+    return local && LAN?.length ? `${location.protocol}//${LAN[0]}${location.port ? `:${location.port}` : ''}` : location.origin;
+  }
+
   function installHint() {
-    const cmd = `curl -fsSL ${location.origin}/install-player.sh | sudo bash`;
+    const cmd = `curl -fsSL ${serverOrigin()}/install-player.sh | sudo bash`;
     return h('div', { class: 'small', style: { background: 'var(--primary-softer)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 14px' } },
       h('b', {}, tr('💡 Új kijelző telepítése (Ubuntu Server / Raspberry Pi, ARM vagy x86):')),
       h('div', { class: 'row', style: { marginTop: '8px', flexWrap: 'nowrap' } },
         h('code', { class: 'code-pill grow', style: { overflowX: 'auto', whiteSpace: 'nowrap', padding: '6px 10px' } }, cmd),
         btn(tr('Másolás'), () => { navigator.clipboard?.writeText(cmd).then(() => toast(tr('Parancs vágólapra másolva')), () => toast(cmd)); }, { cls: 'sm', ic: 'copy' })),
       h('div', { class: 'row', style: { marginTop: '10px', alignItems: 'center' } },
-        h('b', { class: 'grow' }, tr('🪟 Windows kijelző: a telepítőben válaszd a „Csak kijelző – kioszk gép” módot, szerver címnek ezt add meg: '), h('span', { class: 'code-pill' }, location.origin)),
+        h('b', { class: 'grow' }, tr('🪟 Windows kijelző: a telepítőben válaszd a „Csak kijelző – kioszk gép” módot, szerver címnek ezt add meg: '), h('span', { class: 'code-pill' }, serverOrigin())),
         h('a', { class: 'btn sm', href: 'https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/NarancsSignageSetup.exe' }, icon('download'), tr('Windows telepítő'))),
-      h('div', { class: 'muted', style: { marginTop: '6px' } }, tr('Vagy nyisd meg bármely böngészőben: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)));
+      h('div', { class: 'muted', style: { marginTop: '6px' } }, tr('Vagy nyisd meg bármely böngészőben: '), h('span', { class: 'code-pill' }, `${serverOrigin()}/player/`)));
   }
 
   // Újraindítási lehetőségek egy képernyőre (screen) vagy az összesre (null)
@@ -1546,7 +1554,7 @@
           : isVid ? h('video', { src: m.url, controls: true, style: { maxWidth: '100%', maxHeight: '55vh', borderRadius: '10px' } })
             : h('iframe', { src: m.url, style: { width: '100%', height: '55vh', border: 0 } }),
         h('div', { class: 'fields' }, F.text(tr('Név'), data, 'name'), F.wrap(tr('Adatok'), h('div', { class: 'small muted' }, `${m.mime} · ${fmtBytes(m.size)} · ${fmtDate(m.created_at)}`))),
-        h('div', { class: 'small' }, tr('Közvetlen link: '), h('a', { href: m.url, target: '_blank' }, location.origin + m.url))),
+        h('div', { class: 'small' }, tr('Közvetlen link: '), h('a', { href: m.url, target: '_blank' }, serverOrigin() + m.url))),
       foot: [
         btn(tr('Törlés'), async () => {
           if (!(await confirmBox(tr('Biztosan törlöd: „{name}”? A tartalmakból is eltűnik.', { name: m.name }), { ok: tr('Törlés') }))) return;
@@ -2247,7 +2255,7 @@
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer'))),
           h('div', { class: 'card-body stack' },
             sysBox,
-            h('div', { class: 'kv' }, tr('Lejátszó címe: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)),
+            h('div', { class: 'kv' }, tr('Lejátszó címe: '), h('span', { class: 'code-pill' }, `${serverOrigin()}/player/`)),
             h('div', { class: 'row' }, btn(tr('Képernyők újratöltése'), async () => { const r = await POST('/api/screens/broadcast', { command: 'reload' }); toast(tr('{n} képernyő újratöltve', { n: r.count })); }, { ic: 'refresh' })))),
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Frissítések'))),
           h('div', { class: 'card-body stack' }, updatesBox(st.version))),
