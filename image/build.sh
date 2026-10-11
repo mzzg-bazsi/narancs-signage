@@ -28,7 +28,7 @@ echo "Base image: $BASE_URL"
 curl -fL --retry 3 -o "$WORK/base.img.xz" "$BASE_URL"
 xz -d -T0 "$WORK/base.img.xz"
 
-for MODE in screen all-in-one; do
+for MODE in screen all-in-one server; do
   IMG="$WORK/narancs-signage-pi-$MODE.img"
   cp "$WORK/base.img" "$IMG"
   LOOP="$(losetup -fP --show "$IMG")"
@@ -46,7 +46,7 @@ for MODE in screen all-in-one; do
 done
 
 # tömörítés, ellenőrzőösszegek, Imager tartalomtár
-for MODE in screen all-in-one; do
+for MODE in screen all-in-one server; do
   IMG="$WORK/narancs-signage-pi-$MODE.img"
   stat -c %s "$IMG" > "$IMG.size"; sha256sum "$IMG" | cut -d' ' -f1 > "$IMG.sha"
   xz -T0 -6 -c "$IMG" > "$OUT/narancs-signage-pi-$MODE.img.xz"
@@ -57,12 +57,14 @@ import json, os, sys, datetime
 work, out, url = sys.argv[1:]
 base = json.load(open(f'{work}/base.json'))
 desc = {'screen': 'Display only – connects to your Narancs Signage server (set SERVER in narancs-signage.txt on the boot partition).',
-        'all-in-one': 'Server and display on one device – the admin panel runs on this Raspberry Pi.'}
+        'all-in-one': 'Server and display on one device – the admin panel runs on this Raspberry Pi.',
+        'server': 'Server only, without a display – your other screens connect to it.'}
+names = {'all-in-one': 'server + display', 'screen': 'display only', 'server': 'server only'}
 items = []
-for mode in ('all-in-one', 'screen'):
+for mode in ('all-in-one', 'screen', 'server'):
     f = f'narancs-signage-pi-{mode}.img'
     items.append({
-        'name': f'Narancs Signage ({"server + display" if mode == "all-in-one" else "display only"})',
+        'name': f'Narancs Signage ({names[mode]})',
         'description': desc[mode] + ' Installs the latest release on first start.',
         'icon': 'https://mzzg-bazsi.github.io/narancs-signage-website/assets/favicon.svg',
         'url': f'{url}/{f}.xz',
@@ -80,9 +82,10 @@ open(f'{out}/notes.md', 'w').write(f"""Ready-to-flash Raspberry Pi images. They 
 |---|---|
 | `narancs-signage-pi-all-in-one.img.xz` | Server + display on one Raspberry Pi |
 | `narancs-signage-pi-screen.img.xz` | Display only – set `SERVER=` in `narancs-signage.txt` on the boot partition |
+| `narancs-signage-pi-server.img.xz` | Server only, no display – the admin address is shown at login |
 
 **Easiest:** in Raspberry Pi Imager open *App Options → Content Repository → Use custom URL* and enter
-`{url}/narancs-signage-pi.json` – both images appear in the list, and the Wi-Fi / user / SSH settings work.
+`{url}/narancs-signage-pi.json` – all three images appear in the list, and the Wi-Fi / user / SSH settings work.
 Or download an image and use *Use custom* (or balenaEtcher).
 
 Base: {base['name']} ({base.get('release_date', '')}), 64-bit – Raspberry Pi 3, 4, 5, Zero 2 W. The first start needs internet and takes 5–15 minutes.

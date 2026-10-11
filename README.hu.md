@@ -123,7 +123,7 @@ Vagy `docker compose up -d` a repóban lévő [docker-compose.yml](docker-compos
 
 ### Raspberry Pi: kész image
 
-Két image a Raspberry Pi OS Lite (64 bites, Pi 3/4/5/Zero 2 W) alapján, amik az első induláskor a legfrissebb kiadást telepítik: **szerver + kijelző** egyben, vagy **csak kijelző**. A Raspberry Pi Imagerben az *App Options → Content Repository* értéke legyen
+Három image a Raspberry Pi OS Lite (64 bites, Pi 3/4/5/Zero 2 W) alapján, amik az első induláskor a legfrissebb kiadást telepítik: **szerver + kijelző** egyben, **csak kijelző** vagy **csak szerver**. A Raspberry Pi Imagerben az *App Options → Content Repository* értéke legyen
 
 ```
 https://github.com/mzzg-bazsi/narancs-signage/releases/download/pi-image/narancs-signage-pi.json

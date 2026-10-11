@@ -1,0 +1,6 @@
+# Narancs Signage – server image settings (no display on this device)
+# Edit this file on the boot partition after flashing (it is visible on Mac and Windows too).
+# Wi-Fi, user name, password and SSH: set them in Raspberry Pi Imager (OS customisation).
+
+# Port of the admin panel and the server:
+PORT=8080

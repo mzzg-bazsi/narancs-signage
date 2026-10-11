@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.20.0] – 2026-10-11
+
+### Új
+- **Csak szerveres Raspberry Pi image** (`narancs-signage-pi-server.img.xz`): a szerver kijelző nélkül, első induláskori telepítéssel; az admin felület címét a bejelentkező képernyő is kiírja (`/etc/issue.d`). A Raspberry Pi Imager tartalomtárban mindhárom image megjelenik.
+
 ## [1.19.1] – 2026-10-11
 
 ### Javítva

@@ -123,7 +123,7 @@ Or `docker compose up -d` with the [docker-compose.yml](docker-compose.yml) in t
 
 ### Raspberry Pi: ready-made image
 
-Two images based on Raspberry Pi OS Lite (64-bit, Pi 3/4/5/Zero 2 W) that install the latest release on the first start: **server + display** in one, or **display only**. In Raspberry Pi Imager set *App Options → Content Repository* to
+Three images based on Raspberry Pi OS Lite (64-bit, Pi 3/4/5/Zero 2 W) that install the latest release on the first start: **server + display** in one, **display only**, or **server only**. In Raspberry Pi Imager set *App Options → Content Repository* to
 
 ```
 https://github.com/mzzg-bazsi/narancs-signage/releases/download/pi-image/narancs-signage-pi.json
