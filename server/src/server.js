@@ -19,6 +19,7 @@ import { galleryIndex, galleryTemplate, GALLERY_REPO } from './gallery.js';
 import { LANGS, lang, locale, tr } from './i18n.js';
 import { seedSamples } from './seed.js';
 import { cleanThemes } from './themes.js';
+import { systemInfo } from './system.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
@@ -767,6 +768,7 @@ r.put('/api/settings', A, async (req, res) => {
   send(res, 200, { ok: true });
 });
 // frissítések: ellenőrzés a GitHubon, és „Frissítés most” a systemd-s Linux telepítésen
+r.get('/api/system', A, (req, res) => send(res, 200, { ...systemInfo(), version: VERSION, data_dir: DATA_DIR }));
 r.get('/api/updates', A, async (req, res) => send(res, 200, await checkUpdates(VERSION, PORT)));
 r.post('/api/updates/install', A, (req, res) => { requestUpdate(); send(res, 200, { ok: true }); });
 r.get('/api/updates/status', A, (req, res) => send(res, 200, { ...updateStatus(), version: VERSION }));

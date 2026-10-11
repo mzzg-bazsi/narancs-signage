@@ -7,6 +7,14 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.24.0] – 2026-10-11
+
+### Új
+- **Rendszer információk** a Beállítások → Rendszer kártyán: min fut a szerver (Docker konténer, Raspberry Pi típussal, virtuális gép, Mac, saját gép), telepítés módja, operációs rendszer, gépnév, processzor és terhelés, memória, hőmérséklet (Pi), szabad tárhely, adatbázis mérete, szerver és gép futásideje (`/api/system`, csak adminisztrátornak).
+
+### Változott
+- A frissítések külön **Frissítések** kártyára kerültek.
+
 ## [1.23.0] – 2026-10-11
 
 ### Új

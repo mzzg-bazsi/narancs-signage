@@ -417,3 +417,8 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .tabs-line.one-row > button { flex: none; white-space: nowrap; padding: 10px 8px; }
 .tpl-lang { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding-bottom: 6px; }
 .tpl-lang select { width: auto; }
+
+/* Beállítások → Rendszer: tömör kulcs–érték táblázat */
+.sys-table td { padding: 7px 12px; vertical-align: top; }
+.sys-table td:first-child { white-space: nowrap; width: 1%; }
+.sys-table .code-pill { word-break: break-all; }

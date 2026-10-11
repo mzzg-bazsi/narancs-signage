@@ -65,7 +65,7 @@ export function currentUser(req) {
 
 // csak adminisztrátornak: felhasználók, API kulcsok, hálózat, frissítés, rendszerbeállítások, mentés, párosítás, képernyő törlése
 function adminOnly(method, p) {
-  return /^\/api\/(users|tokens|network|updates)(\/|$)/.test(p) || ['/api/backup', '/api/samples', '/api/screens/pair', '/api/slides/brandify'].includes(p)
+  return /^\/api\/(users|tokens|network|updates|system)(\/|$)/.test(p) || ['/api/backup', '/api/samples', '/api/screens/pair', '/api/slides/brandify'].includes(p)
     || (method === 'PUT' && p === '/api/settings') || (method === 'DELETE' && /^\/api\/screens\/\d+$/.test(p));
 }
 const SELF_SERVICE = ['/api/account/password', '/api/auth/logout'];

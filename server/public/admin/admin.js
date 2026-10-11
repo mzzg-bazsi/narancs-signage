@@ -2040,6 +2040,30 @@
   //  Beállítások
   // =====================================================================
   // Frissítések: ellenőrzés a GitHubon; systemd-s Linux telepítésen „Frissítés most”, máshol a frissítő parancs
+  // Min fut a szerver és milyen erőforrásokkal (Beállítások → Rendszer)
+  function systemTable(x, st) {
+    if (!x) return h('div', { class: 'stack' }, h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)), h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))));
+    const long = (s) => { const d = Math.floor(s / 86400), hr = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return d ? tr('{d} nap {h} óra', { d, h: hr }) : hr ? tr('{h} óra {m} perc', { h: hr, m }) : fmtDur(s); };
+    const PLATFORM = { docker: tr('Docker konténer'), 'raspberry-pi': 'Raspberry Pi', vm: tr('Virtuális gép'), mac: 'Mac', 'bare-metal': tr('Saját gép (bare metal)') };
+    const INSTALL = { docker: 'Docker', linux: tr('Telepítő (systemd szolgáltatás)'), macos: tr('Telepítő (macOS háttérszolgáltatás)'), manual: tr('Kézi indítás') };
+    const rows = [
+      [tr('Futtatási környezet'), [PLATFORM[x.platform] || x.platform, x.model && x.platform === 'raspberry-pi' ? x.model : x.virt].filter(Boolean).join(' · ')],
+      [tr('Telepítés módja'), INSTALL[x.install] || x.install],
+      [tr('Operációs rendszer'), `${x.os} (${x.arch})`],
+      [tr('Gépnév'), x.hostname],
+      [tr('Processzor'), `${x.cpu || '—'} · ${tr('{n} mag', { n: x.cores })}${x.load != null ? ` · ${tr('terhelés {l}', { l: x.load.toFixed(2) })}` : ''}`],
+      // macOS-en a „szabad” memória a gyorsítótár miatt félrevezető, ott csak az összeset írjuk ki
+      [tr('Memória'), x.platform === 'mac' ? fmtBytes(x.mem.total) : tr('{free} szabad / {total}', { free: fmtBytes(x.mem.free), total: fmtBytes(x.mem.total) })],
+      x.temp != null ? [tr('Hőmérséklet'), `${x.temp} °C`] : null,
+      x.disk ? [tr('Tárhely (adatkönyvtár)'), tr('{free} szabad / {total}', { free: fmtBytes(x.disk.free), total: fmtBytes(x.disk.total) })] : null,
+      [tr('Adatkönyvtár'), h('span', { class: 'code-pill' }, x.data_dir)],
+      [tr('Adatbázis mérete'), fmtBytes(x.db_size)],
+      [tr('Szerver futásideje'), long(x.uptime)],
+      [tr('Gép futásideje'), long(x.sys_uptime)],
+    ].filter(Boolean);
+    return h('table', { class: 'table sys-table' }, rows.map(([k, v]) => h('tr', {}, h('td', { class: 'muted' }, k), h('td', {}, v))));
+  }
+
   function updatesBox(current) {
     const box = h('div', { class: 'stack' });
     const out = h('div', { class: 'stack' });
@@ -2129,7 +2153,8 @@
 
   async function pageSettings(view) {
     const admin = isAdmin();
-    const [st, users, tokens, net] = await Promise.all([GET('/api/settings'), admin ? GET('/api/users') : [], admin ? GET('/api/tokens') : [], admin ? GET('/api/network').catch(() => null) : null, load('media')]);
+    const [st, users, tokens, net, sys] = await Promise.all([GET('/api/settings'), admin ? GET('/api/users') : [], admin ? GET('/api/tokens') : [], admin ? GET('/api/network').catch(() => null) : null, admin ? GET('/api/system').catch(() => null) : null, load('media')]);
+    const sysBox = systemTable(sys, st);
     const pw = { current: '', password: '', password2: '' };
     const nu = { username: '', password: '', role: 'editor' };
     const nt = { name: '', role: 'editor' };
@@ -2200,11 +2225,11 @@
             }, { ic: 'plus' })))),
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer'))),
           h('div', { class: 'card-body stack' },
-            updatesBox(st.version),
-            h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)),
-            h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))),
+            sysBox,
             h('div', { class: 'kv' }, tr('Lejátszó címe: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)),
             h('div', { class: 'row' }, btn(tr('Képernyők újratöltése'), async () => { const r = await POST('/api/screens/broadcast', { command: 'reload' }); toast(tr('{n} képernyő újratöltve', { n: r.count })); }, { ic: 'refresh' })))),
+        h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Frissítések'))),
+          h('div', { class: 'card-body stack' }, updatesBox(st.version))),
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Mentés#biztonsági'))),
           h('div', { class: 'card-body stack' },
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('Az adatbázis (tartalmak, listák, képernyők, beállítások) letölthető egy fájlba. A szerver telepítő naponta automatikus teljes mentést is készít.')),
@@ -2213,12 +2238,12 @@
     );
     if (!admin) view.querySelectorAll('[data-admin]').forEach((el) => el.remove());
     // fülek (mint a Sablonoknál): a kártyák a címük alapján kerülnek csoportba; csak a nem üres fülek látszanak
-    const TAB_OF = { [tr('Felhasználók')]: 'users', [tr('API kulcsok')]: 'users', [tr('Rendszer')]: 'system', [tr('Mentés#biztonsági')]: 'system', [tr('Hálózat (Raspberry Pi)')]: 'system', [tr('Minta tartalmak')]: 'system' };
+    const TAB_OF = { [tr('Felhasználók')]: 'users', [tr('API kulcsok')]: 'users', [tr('Rendszer')]: 'system', [tr('Frissítések')]: 'system', [tr('Mentés#biztonsági')]: 'system', [tr('Hálózat (Raspberry Pi)')]: 'system', [tr('Minta tartalmak')]: 'system' };
     const grid = view.querySelector('.grid.c2');
     const cards = [...grid.children];
     cards.forEach((c) => { c.dataset.tab = TAB_OF[c.querySelector('.card-head h3')?.textContent] || 'general'; });
     // a fülön belüli sorrend: a fő kártya elöl
-    const FIRST = [tr('Rendszer'), tr('Mentés#biztonsági'), tr('Felhasználók')];
+    const FIRST = [tr('Rendszer'), tr('Frissítések'), tr('Mentés#biztonsági'), tr('Felhasználók')];
     const isFirst = (c) => FIRST.includes(c.querySelector('.card-head h3')?.textContent);
     grid.append(...cards.filter(isFirst), ...cards.filter((c) => !isFirst(c)));
     const tabs = [['general', tr('Általános')], ['users', tr('Felhasználók és API')], ['system', tr('Rendszer')]].filter(([k]) => cards.some((c) => c.dataset.tab === k));
