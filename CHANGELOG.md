@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.29.4] – 2026-10-11
+
+### Javítva
+- **Windows kioszk: nem indult el az Edge** – a Windows Defender a kioszk PowerShell szkriptjét kártevőnek jelölte („This script contains malicious content”), mert képernyőképet készít és a monitort kapcsolja. A kioszk (`kiosk.exe`) és a távvezérlő ügynök (`agent.exe`) mostantól kis C# program, amit a telepítő a Windowsba beépített .NET Framework fordítóval készít el; a működésük ugyanaz. A CI ténylegesen lefuttatja őket (Edge indul, képernyőkép elkészül, az ügynök csatlakozik és jelent).
+
 ## [1.29.3] – 2026-10-11
 
 ### Javítva
