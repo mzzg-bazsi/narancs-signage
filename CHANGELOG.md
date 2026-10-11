@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.18.2] – 2026-10-11
+
+### Javítva
+- Admin, színmezők: magyar felületen a háttér mező helykitöltője csak „pl.” volt (a `#` jelet a fordító a jelentés-elválasztónak vette); most a teljes „pl. #222 vagy linear-gradient(...)” látszik.
+
 ## [1.18.1] – 2026-10-11
 
 ### Változott

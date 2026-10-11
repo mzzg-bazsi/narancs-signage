@@ -405,7 +405,7 @@
     'Egérmutató mozgatáskor 3 mp-ig': 'Mouse pointer for 3 s when moved',
     '👆 Tablet': '👆 Tablet',
     '🖱️ Egér': '🖱️ Mouse',
-    'pl. #222 vagy linear-gradient(...)': 'e.g. #222 or linear-gradient(...)',
+    'pl. {c} vagy linear-gradient(...)': 'e.g. {c} or linear-gradient(...)',
     'Most játszik': 'Now playing',
     'Álló kijelző': 'Portrait display',
     'Fekvő kijelző': 'Landscape display',
