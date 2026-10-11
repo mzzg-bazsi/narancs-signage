@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.27.0] – 2026-10-11
+
+### Új
+- **Windows telepítő** (`install.ps1`, kiadási asset): `irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex` rendszergazdai PowerShellben. Választható: **csak szerver** (ütemezett feladat a gép indulásakor SYSTEM-ként, összeomlás után újraindul, tűzfal szabály, Node.js winget-tel ha hiányzik), **csak kijelző** (Microsoft Edge kioszk módban bejelentkezéskor, saját profillal, kikapcsolt képernyő-alvással) vagy **mindkettő**. Újrafuttatva frissít az előző beállításokkal, `-Uninstall` eltávolít (az adatok maradnak). Valódi Windowson tesztelve (GitHub Actions, `windows.yml`).
+- A Beállítások → Rendszer és a Frissítések kártya felismeri a Windows telepítést (frissítő parancs: ugyanez a sor).
+
 ## [1.26.0] – 2026-10-11
 
 ### Új

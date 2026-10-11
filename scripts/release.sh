@@ -28,7 +28,8 @@ if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
   # telepítők assetként: az install.sh ehhez a verzióhoz kötve (a /releases/latest/download/ cím mindig a legfrissebbet adja)
   ASSETS="$(mktemp -d)"
   sed "s/__VERSION__/$NEW/" install/install.sh > "$ASSETS/install.sh"
+  sed "s/__VERSION__/$NEW/" install/install.ps1 > "$ASSETS/install.ps1"
   cp install/install-player.sh "$ASSETS/install-player.sh"
-  ./scripts/release-notes.sh "$NEW" | gh release create "v$NEW" --verify-tag --title "v$NEW" --notes-file - "$ASSETS/install.sh" "$ASSETS/install-player.sh" >/dev/null && echo "✔ GitHub Release: v$NEW"
+  ./scripts/release-notes.sh "$NEW" | gh release create "v$NEW" --verify-tag --title "v$NEW" --notes-file - "$ASSETS/install.sh" "$ASSETS/install.ps1" "$ASSETS/install-player.sh" >/dev/null && echo "✔ GitHub Release: v$NEW"
   rm -rf "${ASSETS:?}"
 fi

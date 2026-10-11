@@ -10,4 +10,6 @@ DOCKER=""
 [[ "$(printf '1.15.0\n%s\n' "$V" | sort -V | head -1)" == 1.15.0 ]] && DOCKER="**Docker:** \`docker pull ghcr.io/mzzg-bazsi/narancs-signage:$V\` · "
 INSTALL=""
 [[ "$(printf '1.18.0\n%s\n' "$V" | sort -V | head -1)" == 1.18.0 ]] && INSTALL="**Server (Ubuntu/Debian):** \`curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/download/v$V/install.sh | sudo bash\` · **macOS:** same without \`sudo\` · "
+# Windows telepítő a 1.27.0 óta
+[[ "$(printf '1.27.0\n%s\n' "$V" | sort -V | head -1)" == 1.27.0 ]] && INSTALL+="**Windows (PowerShell, as Administrator):** \`irm https://github.com/mzzg-bazsi/narancs-signage/releases/download/v$V/install.ps1 | iex\` · "
 printf '\n---\n%s%s**Install / update:** [documentation](https://mzzg-bazsi.github.io/narancs-signage-website/docs/#quickstart) · [Full changelog](https://github.com/mzzg-bazsi/narancs-signage/blob/main/CHANGELOG.md)\n' "$INSTALL" "$DOCKER"

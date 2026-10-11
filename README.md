@@ -109,7 +109,17 @@ curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/downloa
 
 The one-line installer downloads the latest [release](https://github.com/mzzg-bazsi/narancs-signage/releases) and runs `install/install-server.sh` (from a cloned folder you can run that directly). On **macOS** run the same command without `sudo`: it installs Node.js with Homebrew if needed and starts the server at login (LaunchAgent).
 
-The installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `... | sudo bash -s -- --port 80`.
+#### Windows (server, display, or both)
+
+Open **PowerShell as Administrator** and run:
+
+```powershell
+irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
+```
+
+It asks what to install: **server only**, **display only** (Microsoft Edge full screen at sign-in, pointing to another server) or **both** on one PC. The server runs at startup as a scheduled task (Node.js is installed with winget if missing), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.
+
+The Linux installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `... | sudo bash -s -- --port 80`.
 
 Open the printed address (`http://SERVER-IP:8080/admin/`). On first visit you choose the language and create the admin account; a default playlist with sample content is created as well.
 
@@ -180,6 +190,7 @@ server/
   public/shared/       shared: translations (i18n.js), branding themes (themes.js), logo
 install/
   install.sh           one-line installer from GitHub (Ubuntu/Debian → install-server.sh, macOS → LaunchAgent)
+  install.ps1          Windows installer: server, display (Edge kiosk) or both
   install-server.sh    server installer (systemd, backup, firewall)
   install-player.sh    kiosk installer (X11, Chromium, autologin, monitor schedule)
 ```

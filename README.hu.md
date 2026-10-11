@@ -109,7 +109,17 @@ curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/downloa
 
 Az egysoros telepítő letölti a legfrissebb [kiadást](https://github.com/mzzg-bazsi/narancs-signage/releases), és lefuttatja az `install/install-server.sh`-t (klónozott mappából ez közvetlenül is futtatható). **macOS**-en ugyanez a parancs `sudo` nélkül: ha kell, Homebrew-val telepíti a Node.js-t, és bejelentkezéskor elindítja a szervert (LaunchAgent).
 
-A telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `... | sudo bash -s -- --port 80`.
+#### Windows (szerver, kijelző vagy mindkettő)
+
+Nyisd meg a **PowerShellt rendszergazdaként**, és futtasd:
+
+```powershell
+irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
+```
+
+Megkérdezi, mit telepítsen: **csak szervert**, **csak kijelzőt** (Microsoft Edge teljes képernyőn bejelentkezéskor, egy másik szerverre mutatva) vagy **mindkettőt** egy gépre. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, winget-tel telepíti), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.
+
+A Linux telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `... | sudo bash -s -- --port 80`.
 
 Nyisd meg a kiírt címet (`http://SZERVER-IP:8080/admin/`) – első alkalommal kiválasztod a nyelvet és létrehozod az admin fiókot; ekkor egy alap lejátszási lista is létrejön minta tartalmakkal.
 
@@ -180,6 +190,7 @@ server/
   public/shared/       közös: fordítások (i18n.js), arculati témák (themes.js), logó
 install/
   install.sh           egysoros telepítő a GitHubról (Ubuntu/Debian → install-server.sh, macOS → LaunchAgent)
+  install.ps1          Windows telepítő: szerver, kijelző (Edge kioszk) vagy mindkettő
   install-server.sh    szerver telepítő (systemd, mentés, tűzfal)
   install-player.sh    kioszk telepítő (X11, Chromium, autologin, monitor időzítés)
 ```

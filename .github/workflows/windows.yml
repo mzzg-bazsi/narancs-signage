@@ -37,3 +37,11 @@ jobs:
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Uninstall
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'task maradt' }
           if (-not (Test-Path "$env:ProgramData\NarancsSignage\data")) { throw 'az adat elveszett' }
+      - name: Csak kijelző, egy másik szerverre mutatva
+        shell: powershell
+        run: |
+          & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode screen -Server 192.168.1.10:8080/
+          $lnk = Join-Path ([Environment]::GetFolderPath('Startup')) 'Narancs Signage Display.lnk'
+          $a = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).Arguments
+          if ($a -notlike '*"http://192.168.1.10:8080/player/"*') { throw $a }
+          if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'szerver nem kellett volna' }
