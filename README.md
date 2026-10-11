@@ -95,6 +95,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 - 🐳 Docker image (amd64 + arm64) besides the Ubuntu installer
 - 📦 Templates: 10 ready-made content packs (restaurant, office, shop, clinic, school, hotel, gym, conference, bar, salon) with live preview; export any content or playlist as a `.narancs.json` file and import it into another system; browse and install community templates from the [template gallery](https://github.com/mzzg-bazsi/narancs-signage-templates) – or submit your own
 - 🌐 Static IP address from the admin panel when the server runs on a Raspberry Pi (Settings → Network)
+- 🔄 Check for updates in Settings, and one-click update on installer-based servers (Ubuntu/Debian, Raspberry Pi)
 - 💾 Automatic daily backup + downloadable database backup
 - 🌗 Light/dark mode in the admin panel, works on mobile too
 
@@ -192,7 +193,7 @@ Translations: every UI string is wrapped in `tr('…')` with the original Hungar
 | Status | `systemctl status narancs-signage` |
 | Logs | `journalctl -u narancs-signage -f` |
 | Manual backup | `sudo signage-backup` (→ `/var/backups/narancs-signage/`) |
-| Update | `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (data is kept) |
+| Update | **Settings → Check for updates → Update now**, or `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (data is kept) |
 | Data location | `/var/lib/narancs-signage` (database + media) |
 | Player settings | `/etc/narancs-signage/player.conf` on the display device |
 

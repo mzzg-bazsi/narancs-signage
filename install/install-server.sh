@@ -132,6 +132,36 @@ chmod +x /usr/local/bin/signage-backup
 # napi automatikus mentés hajnali 3-kor
 echo "0 3 * * * root /usr/local/bin/signage-backup >/dev/null 2>&1" > /etc/cron.d/narancs-signage-backup
 
+# ---------- Frissítés az admin felületről (Beállítások → Frissítések keresése → Frissítés most) ----------
+# A szerver a $DATA_DIR/update/request.json-t írja; a path egység root jogon, külön szolgáltatásban futtatja
+# a signage-update-et, így az a szerver újraindulását is túléli.
+install -m 0755 "$SRC_DIR/install/signage-update.sh" /usr/local/sbin/signage-update
+install -d -o signage -g signage -m 0750 "$DATA_DIR/update"
+touch "$DATA_DIR/update/enabled"
+cat > /etc/systemd/system/$SERVICE-update.path <<EOF
+[Unit]
+Description=Narancs Signage update requests
+
+[Path]
+PathChanged=$DATA_DIR/update/request.json
+
+[Install]
+WantedBy=multi-user.target
+EOF
+cat > /etc/systemd/system/$SERVICE-update.service <<EOF
+[Unit]
+Description=Narancs Signage update to the latest release
+
+[Service]
+Type=oneshot
+Environment=SIGNAGE_DATA=$DATA_DIR
+Environment=SIGNAGE_PORT=$PORT
+ExecStart=/usr/local/sbin/signage-update
+TimeoutStartSec=30min
+EOF
+systemctl daemon-reload
+systemctl enable --now $SERVICE-update.path >/dev/null 2>&1
+
 # ---------- Hálózat (statikus IP az admin felületről) – csak Raspberry Pi + NetworkManager ----------
 # A szerver nem rootként fut: a kérést a $DATA_DIR/network/request.json-ba írja, ezt a path egység figyeli,
 # és root jogon futtatja a signage-network segédet (az újra ellenőrzi az értékeket).
@@ -199,5 +229,6 @@ echo "  Useful commands:"
 echo "     systemctl status $SERVICE      – status"
 echo "     journalctl -u $SERVICE -f      – logs"
 echo "     sudo signage-backup            – backup (also runs automatically every day)"
+echo "     sudo signage-update            – update to the latest release (also from the admin panel)"
 [[ -x /usr/local/sbin/signage-network ]] && echo "     sudo signage-network dhcp      – back to automatic IP address (DHCP)"
 echo

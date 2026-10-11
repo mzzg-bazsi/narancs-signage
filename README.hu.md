@@ -95,6 +95,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 - 🐳 Docker image (amd64 + arm64) az Ubuntu telepítő mellett
 - 📦 Sablonok: 10 kész tartalomcsomag (étterem, iroda, üzlet, rendelő, iskola, szálloda, edzőterem, konferencia, bár, szalon) élő előnézettel; bármely tartalom vagy lista exportálható `.narancs.json` fájlba, és másik rendszerbe importálható; a [közösségi sablongaléria](https://github.com/mzzg-bazsi/narancs-signage-templates) sablonjai az adminból böngészhetők és telepíthetők – vagy küldd be a sajátodat
 - 🌐 Statikus IP cím az admin felületről, ha a szerver Raspberry Pi-n fut (Beállítások → Hálózat)
+- 🔄 Frissítések keresése a Beállításokban, és egy kattintásos frissítés a telepítővel telepített szervereken (Ubuntu/Debian, Raspberry Pi)
 - 💾 Napi automatikus mentés + letölthető adatbázis mentés
 - 🌗 Világos/sötét mód az admin felületen, mobilon is használható
 
@@ -190,7 +191,7 @@ install/
 | Állapot | `systemctl status narancs-signage` |
 | Napló | `journalctl -u narancs-signage -f` |
 | Kézi mentés | `sudo signage-backup` (→ `/var/backups/narancs-signage/`) |
-| Frissítés | `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (az adatok megmaradnak) |
+| Frissítés | **Beállítások → Frissítések keresése → Frissítés most**, vagy `curl -fsSL https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.sh \| sudo bash` (az adatok megmaradnak) |
 | Adatok helye | `/var/lib/narancs-signage` (adatbázis + média) |
 | Lejátszó beállítás | `/etc/narancs-signage/player.conf` a kijelző eszközön |
 

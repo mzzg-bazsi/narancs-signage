@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.22.0] – 2026-10-11
+
+### Új
+- **Frissítések keresése** a Beállítások → Rendszer és mentés kártyán: a szerver a GitHub legfrissebb kiadásával hasonlít, kiírja az újdonságok linkjét és a telepítés módjához illő frissítő parancsot (Ubuntu/Debian/Raspberry Pi, macOS, Docker, kézi).
+- **Frissítés most** gomb a telepítővel telepített szervereken (Ubuntu/Debian, Raspberry Pi): a `narancs-signage-update.path` egység root jogon, külön szolgáltatásban futtatja a `signage-update`-et (a legfrissebb `install.sh` a meglévő porttal és adatkönyvtárral), így az túléli a szerver újraindulását; a végén a kijelzők újratöltést kapnak. Parancssorból: `sudo signage-update`. Csak adminisztrátornak (`/api/updates`).
+
 ## [1.21.0] – 2026-10-11
 
 ### Új

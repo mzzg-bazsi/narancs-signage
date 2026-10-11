@@ -1950,6 +1950,48 @@
   // =====================================================================
   //  Beállítások
   // =====================================================================
+  // Frissítések: ellenőrzés a GitHubon; systemd-s Linux telepítésen „Frissítés most”, máshol a frissítő parancs
+  function updatesBox(current) {
+    const box = h('div', { class: 'stack' });
+    const out = h('div', { class: 'stack' });
+    const watch = async () => {
+      out.replaceChildren(h('div', { class: 'small' }, tr('Frissítés folyamatban… A szerver közben újraindul, ez 1–3 perc. Az oldal magától frissül.')));
+      for (let i = 0; i < 200; i++) {
+        await new Promise((ok) => setTimeout(ok, 3000));
+        const x = await GET('/api/updates/status').catch(() => null); // újraindulás közben nem válaszol
+        if (!x) continue;
+        if (x.version !== current) {
+          await POST('/api/screens/broadcast', { command: 'reload' }).catch(() => {});
+          toast(tr('Frissítve: v{v}', { v: x.version }));
+          setTimeout(() => location.reload(), 1200);
+          return;
+        }
+        if (x.result && !x.result.ok) {
+          out.replaceChildren(h('div', { class: 'small', style: { color: 'var(--danger)' } }, x.result.error), h('pre', { class: 'code-pill', style: { whiteSpace: 'pre-wrap', fontSize: '12px', padding: '10px', maxHeight: '220px', overflow: 'auto' } }, x.log));
+          return;
+        }
+      }
+    };
+    const check = async () => {
+      out.replaceChildren(h('div', { class: 'small muted' }, tr('Keresés…#frissítés')));
+      let u;
+      try { u = await GET('/api/updates'); } catch (e) { out.replaceChildren(h('div', { class: 'small', style: { color: 'var(--danger)' } }, e.message)); return; }
+      if (!u.update_available) return out.replaceChildren(h('div', { class: 'small' }, tr('✓ A legfrissebb verzió fut (v{v}).', { v: u.current })));
+      const cmd = h('div', { class: 'row', style: { flexWrap: 'nowrap' } }, h('code', { class: 'code-pill grow', style: { overflowX: 'auto', whiteSpace: 'nowrap', padding: '6px 10px' } }, u.command),
+        btn(tr('Másolás'), () => navigator.clipboard?.writeText(u.command).then(() => toast(tr('Parancs vágólapra másolva'))), { cls: 'sm', ic: 'copy' }));
+      const where = { docker: tr('A docker-compose.yml mappájában futtasd (docker run esetén: kép letöltése, majd a konténer újra létrehozása).'), macos: tr('Futtasd a Mac Termináljában.'), manual: tr('A program mappájában futtasd, majd indítsd újra a szervert.'), linux: tr('Vagy futtasd a szerveren:') }[u.install_type];
+      out.replaceChildren(
+        h('div', {}, h('b', {}, tr('Új verzió érhető el: v{v}', { v: u.latest })), ' ', h('span', { class: 'small muted' }, tr('(most: v{v})', { v: u.current })), ' · ', h('a', { href: u.url, target: '_blank', rel: 'noopener' }, tr('Újdonságok'))),
+        u.can_update ? h('div', {}, btn(tr('Frissítés most#szoftver'), async () => {
+          if (!(await confirmBox(tr('A szerver frissül a v{v} verzióra és újraindul, ez 1–3 perc. A kijelzők közben a tárolt tartalmat játsszák, utána újracsatlakoznak.', { v: u.latest }), { ok: tr('Frissítés#szoftver'), title: tr('Frissítés#szoftver') }))) return;
+          try { await POST('/api/updates/install'); watch(); } catch (e) { fail(e); }
+        }, { cls: 'primary', ic: 'download' })) : null,
+        h('div', { class: 'small muted' }, where), cmd);
+    };
+    box.replaceChildren(h('div', { class: 'row' }, h('div', { class: 'kv grow' }, tr('Verzió: '), h('b', {}, `v${current}`)), btn(tr('Frissítések keresése'), check, { ic: 'refresh' })), out);
+    return box;
+  }
+
   // Hálózat (statikus IP) – csak ha a szerver Raspberry Pi-n fut, és a telepítő feltette a root segédet
   function networkCard(net) {
     const box = h('div', { class: 'card-body stack' });
@@ -2069,6 +2111,7 @@
             }, { ic: 'plus' })))),
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Rendszer és mentés'))),
           h('div', { class: 'card-body stack' },
+            updatesBox(st.version),
             h('div', { class: 'kv' }, tr('Adatkönyvtár: '), h('span', { class: 'code-pill' }, st.data_dir)),
             h('div', { class: 'kv' }, tr('Futásidő: '), h('b', {}, fmtDur(st.uptime))),
             h('div', { class: 'kv' }, tr('Lejátszó címe: '), h('span', { class: 'code-pill' }, `${location.origin}/player/`)),

@@ -11,6 +11,7 @@ import {
 import { Router, HttpError, send, readBody, readRaw, serveFile, serveStatic, MIME } from './http.js';
 import { createUser, login, sessionCookie, currentUser, requireAuth, authorize, userCount, listUsers, verifyPassword, hashPassword, createToken, listTokens, setRole, ROLES } from './auth.js';
 import { fetchRss, fetchWeather, geocode, refreshIcal, refreshAllIcal, expandRrule } from './feeds.js';
+import { checkUpdates, requestUpdate, updateStatus } from './updates.js';
 import { networkState, requestNetworkChange, requestNetworkStatus } from './network.js';
 import { exportTemplate, importTemplate, templatePreview, normalizeFormFields, localized } from './templates.js';
 import { BUILTIN_TEMPLATES, CATEGORIES } from './builtin-templates.js';
@@ -762,6 +763,10 @@ r.put('/api/settings', A, async (req, res) => {
   notifyChange();
   send(res, 200, { ok: true });
 });
+// frissítések: ellenőrzés a GitHubon, és „Frissítés most” a systemd-s Linux telepítésen
+r.get('/api/updates', A, async (req, res) => send(res, 200, await checkUpdates(VERSION, PORT)));
+r.post('/api/updates/install', A, (req, res) => { requestUpdate(); send(res, 200, { ok: true }); });
+r.get('/api/updates/status', A, (req, res) => send(res, 200, { ...updateStatus(), version: VERSION }));
 // hálózat (statikus IP) – csak Raspberry Pi-n, ahol a telepítő a root segédet is feltette
 r.get('/api/network', A, (req, res) => send(res, 200, { ...networkState(), port: PORT }));
 r.post('/api/network', A, async (req, res) => send(res, 200, requestNetworkChange(await readBody(req))));

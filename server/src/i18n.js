@@ -8,7 +8,10 @@ export const lang = () => (LANGS.includes(getSetting('language')) ? getSetting('
 export const locale = () => ({ en: 'en-GB', hu: 'hu-HU' })[lang()];
 
 const EN = {
-  // hálózat (Raspberry Pi)
+  // hálózat (Raspberry Pi), frissítés
+  'Nem sikerült ellenőrizni a frissítéseket (van internet a szerveren?)': 'Could not check for updates (does the server have internet?)',
+  'Ezen a telepítésen a frissítés a parancssorból indítható': 'On this installation, start the update from the command line',
+  'A frissítés már folyamatban van': 'An update is already running',
   'A hálózat ezen a rendszeren nem állítható': 'The network cannot be configured on this system',
   'Érvénytelen mód': 'Invalid mode',
   'Érvénytelen IP cím (formátum: 192.168.1.50/24)': 'Invalid IP address (format: 192.168.1.50/24)',
