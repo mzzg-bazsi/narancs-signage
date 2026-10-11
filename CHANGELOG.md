@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.24.1] – 2026-10-11
+
+### Javítva
+- **Telefonos nézet**: az Arculat oldal nem lóg ki jobbra (a fülsor miatt szélesebb lett az oldal), a témák két oszlopban; a Beállítások fülei egy sorban (vízszintesen görgethetők); az új felhasználó és API kulcs mezői egymás alá kerülnek, nem csúsznak egymásra.
+
 ## [1.24.0] – 2026-10-11
 
 ### Új

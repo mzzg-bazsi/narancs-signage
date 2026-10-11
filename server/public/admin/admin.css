@@ -317,7 +317,7 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .sched-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; background: var(--surface-2); }
 
 @media (max-width: 1100px) {
-  .split { grid-template-columns: 1fr; }
+  .split { grid-template-columns: minmax(0, 1fr); }
   .grid.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .preview-box { position: static; }
@@ -332,6 +332,9 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
   .level-pick { grid-template-columns: repeat(2, 1fr); }
   .pl-item { flex-wrap: wrap; }
   .cal-layout { grid-template-columns: 1fr !important; }
+  /* új felhasználó / API kulcs: a mezők egymás alá, teljes szélességben */
+  .add-row { flex-direction: column; align-items: stretch !important; }
+  .add-row > .btn { align-self: flex-start; }
 }
 
 /* Arculat oldal */
@@ -422,3 +425,4 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .sys-table td { padding: 7px 12px; vertical-align: top; }
 .sys-table td:first-child { white-space: nowrap; width: 1%; }
 .sys-table .code-pill { word-break: break-all; }
+@media (max-width: 760px) { .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

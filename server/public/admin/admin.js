@@ -2196,7 +2196,7 @@
               try { await POST('/api/account/password', pw); toast(tr('Jelszó módosítva')); } catch (e) { fail(e); }
             }, { cls: 'primary' })))),
         h('div', { class: 'card', 'data-admin': 1 }, h('div', { class: 'card-head' }, h('h3', {}, tr('Felhasználók'))), usersBox,
-          h('div', { class: 'card-body row', style: { borderTop: '1px solid var(--border)', alignItems: 'flex-end' } },
+          h('div', { class: 'card-body row add-row', style: { borderTop: '1px solid var(--border)', alignItems: 'flex-end' } },
             h('div', { class: 'grow' }, F.text(tr('Felhasználónév'), nu, 'username')), h('div', { class: 'grow' }, F.text(tr('Jelszó'), nu, 'password', { type: 'password' })),
             h('div', {}, F.select(tr('Szerepkör'), nu, 'role', roleOpts)),
             btn(tr('Hozzáadás'), async () => { try { drawUsers(await POST('/api/users', nu)); toast(tr('Felhasználó létrehozva')); } catch (e) { fail(e); } }, { cls: 'primary', ic: 'plus' }))),
@@ -2204,7 +2204,7 @@
           h('div', { class: 'card-body stack' },
             h('p', { class: 'small muted', style: { margin: 0 } }, tr('Más rendszerek (pl. Home Assistant, Zapier, saját szkript) ezzel a kulccsal hívhatják az API-t – például vészjelzést küldhetnek. Fejléc: '), h('span', { class: 'code-pill' }, 'Authorization: Bearer ns_…')),
             tokensBox,
-            h('div', { class: 'row', style: { alignItems: 'flex-end' } },
+            h('div', { class: 'row add-row', style: { alignItems: 'flex-end' } },
               h('div', { class: 'grow' }, F.text(tr('Kulcs neve'), nt, 'name', { placeholder: tr('pl. Home Assistant') })),
               h('div', {}, F.select(tr('Szerepkör'), nt, 'role', roleOpts)),
               btn(tr('Kulcs létrehozása'), async () => {
@@ -2248,7 +2248,7 @@
     grid.append(...cards.filter(isFirst), ...cards.filter((c) => !isFirst(c)));
     const tabs = [['general', tr('Általános')], ['users', tr('Felhasználók és API')], ['system', tr('Rendszer')]].filter(([k]) => cards.some((c) => c.dataset.tab === k));
     if (!tabs.some(([k]) => k === settingsTab)) settingsTab = 'general';
-    const bar = h('div', { class: 'tabs-line' });
+    const bar = h('div', { class: 'tabs-line one-row' });
     const show = () => {
       bar.replaceChildren(...tabs.map(([k, l]) => h('button', { type: 'button', class: settingsTab === k ? 'on' : '', onclick: () => { settingsTab = k; show(); } }, l)));
       cards.forEach((c) => { c.style.display = c.dataset.tab === settingsTab ? '' : 'none'; });
