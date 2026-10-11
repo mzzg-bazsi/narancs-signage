@@ -111,13 +111,15 @@ The one-line installer downloads the latest [release](https://github.com/mzzg-ba
 
 #### Windows (server, display, or both)
 
-Open **PowerShell as Administrator** and run:
+Download and run the installer: **[NarancsSignageSetup.exe](https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/NarancsSignageSetup.exe)** (English / Hungarian wizard). It is not code-signed, so Windows SmartScreen may warn: *More info → Run anyway*. Choose **server and display**, **server only**, or **display only – kiosk PC**: a dedicated kiosk account signs in automatically and Microsoft Edge shows the display full screen, restarting it if it is closed. Uninstall from *Settings → Apps* (the data is kept).
+
+Or from **PowerShell as Administrator**:
 
 ```powershell
 irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
 ```
 
-It asks what to install: **server only**, **display only** (Microsoft Edge full screen at sign-in, pointing to another server) or **both** on one PC. The server runs at startup as a scheduled task (Node.js is installed with winget if missing), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.
+It asks the same question. The server runs at startup as a scheduled task (Node.js is installed with winget if missing), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.
 
 The Linux installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `... | sudo bash -s -- --port 80`.
 

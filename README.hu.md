@@ -111,13 +111,15 @@ Az egysoros telepítő letölti a legfrissebb [kiadást](https://github.com/mzzg
 
 #### Windows (szerver, kijelző vagy mindkettő)
 
-Nyisd meg a **PowerShellt rendszergazdaként**, és futtasd:
+Töltsd le és futtasd a telepítőt: **[NarancsSignageSetup.exe](https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/NarancsSignageSetup.exe)** (magyar / angol varázsló). Nincs digitálisan aláírva, ezért a Windows SmartScreen figyelmeztethet: *További információ → Futtatás mindenképp*. Választható: **szerver és kijelző**, **csak szerver**, vagy **csak kijelző – kioszk gép**: egy külön kioszk fiók automatikusan bejelentkezik, és a Microsoft Edge teljes képernyőn mutatja a kijelzőt (bezárás után újraindul). Eltávolítás: *Gépház → Alkalmazások* (az adatok megmaradnak).
+
+Vagy **rendszergazdai PowerShellből**:
 
 ```powershell
 irm https://github.com/mzzg-bazsi/narancs-signage/releases/latest/download/install.ps1 | iex
 ```
 
-Megkérdezi, mit telepítsen: **csak szervert**, **csak kijelzőt** (Microsoft Edge teljes képernyőn bejelentkezéskor, egy másik szerverre mutatva) vagy **mindkettőt** egy gépre. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, winget-tel telepíti), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.
+Ugyanezt kérdezi meg. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, winget-tel telepíti), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.
 
 A Linux telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `... | sudo bash -s -- --port 80`.
 

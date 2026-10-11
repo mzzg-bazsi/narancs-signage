@@ -7,6 +7,12 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.28.0] – 2026-10-11
+
+### Új
+- **Grafikus Windows telepítő** (`NarancsSignageSetup.exe`, Inno Setup, magyar/angol varázsló, licenc, ikon): Szerver és kijelző / Csak szerver / Csak kijelző, port és szerver cím oldal, a végén admin felület megnyitása; eltávolítás a Gépház → Alkalmazások alól (az adatok maradnak). A GitHub Actions minden kiadásnál Windowson fordítja, csendes telepítéssel kipróbálja és feltölti a kiadásba. A háttérben a tesztelt `install.ps1` fut (napló: `%ProgramData%\NarancsSignage\setup.log`).
+- **Csak kijelző = kioszk gép** Windowson: külön, nem rendszergazda `NarancsKiosk` fiók automatikus bejelentkezéssel (véletlen jelszó), bejelentkezéskor az Edge teljes képernyőn, bezárás / összeomlás után 3 mp-en belül újraindul; az első bejelentkezéses adatvédelmi és Edge üdvözlő képernyők kikapcsolva. Eltávolításkor (vagy módváltáskor) a fiók és az automatikus bejelentkezés törlődik.
+
 ## [1.27.0] – 2026-10-11
 
 ### Új
