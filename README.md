@@ -119,7 +119,7 @@ Or from **PowerShell as Administrator**:
 irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex
 ```
 
-It asks the same question. The server runs at startup as a scheduled task (Node.js is installed with winget if missing), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.
+It asks the same question. The server runs at startup as a scheduled task (if Node.js is missing, it downloads its own copy from nodejs.org), data: `C:\ProgramData\NarancsSignage\data`. Running it again updates the program.
 
 The Linux installer sets up Node.js 24 (if missing), creates the `narancs-signage` systemd service, configures a daily backup and prints the address of the admin panel. Different port: `... | sudo bash -s -- --port 80`.
 

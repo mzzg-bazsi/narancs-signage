@@ -106,7 +106,7 @@ if ($Uninstall) {
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Get-NetFirewallRule -DisplayName $RuleName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
   Remove-Item $Shortcut -ErrorAction SilentlyContinue
-  foreach ($d in 'server', 'install') { Remove-Item (Join-Path $Base $d) -Recurse -Force -ErrorAction SilentlyContinue }
+  foreach ($d in 'server', 'install', 'node') { Remove-Item (Join-Path $Base $d) -Recurse -Force -ErrorAction SilentlyContinue }
   Ok "Narancs Signage removed. Your data is kept in $Base\data"
   return
 }
@@ -143,20 +143,30 @@ New-Item -ItemType Directory -Force $Base | Out-Null
 # ---------- Szerver ----------
 $Ver = ''
 if ($WithServer) {
-  function Test-Node {
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { return $false }
-    try { return [version](& node -p 'process.versions.node') -ge [version]'22.13.0' } catch { return $false }
+  function Test-NodeExe($exe) {
+    try { return [version](& $exe -p 'process.versions.node') -ge [version]'22.13.0' } catch { return $false }
   }
-  if (-not (Test-Node)) {
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-      Info 'Installing Node.js LTS (winget)...'
-      winget install --id OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements | Out-Null
-      $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
-    }
-    if (-not (Test-Node)) { throw 'Node.js 22.13 or newer is required. Install it from https://nodejs.org, then run this again.' }
+  $Node = $null
+  $sysNode = Get-Command node -ErrorAction SilentlyContinue
+  if ($sysNode -and (Test-NodeExe $sysNode.Source)) { $Node = $sysNode.Source }
+  elseif ((Test-Path "$Base\node\node.exe") -and (Test-NodeExe "$Base\node\node.exe")) { $Node = "$Base\node\node.exe" }
+  else {
+    # saját Node.js a program mellé, közvetlenül a nodejs.org-ról (a winget nem mindenhol van meg, pl. régebbi Windows 10-en)
+    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+    $lts = (Invoke-RestMethod 'https://nodejs.org/dist/index.json' | Where-Object { $_.lts } | Select-Object -First 1).version
+    if ($lts -notmatch '^v\d+\.\d+\.\d+$') { throw 'Could not find the current Node.js version on nodejs.org.' }
+    Info "Downloading Node.js $lts"
+    $zip = Join-Path $env:TEMP "node-$lts-win-$arch.zip"
+    Invoke-WebRequest "https://nodejs.org/dist/$lts/node-$lts-win-$arch.zip" -OutFile $zip -UseBasicParsing
+    Stop-Server
+    Remove-Item "$Base\node", "$Base\node-$lts-win-$arch" -Recurse -Force -ErrorAction SilentlyContinue
+    tar -xf $zip -C $Base
+    Rename-Item "$Base\node-$lts-win-$arch" 'node'
+    Remove-Item $zip -ErrorAction SilentlyContinue
+    $Node = "$Base\node\node.exe"
+    if (-not (Test-NodeExe $Node)) { throw 'Node.js could not be installed. Install Node.js 22.13 or newer from https://nodejs.org, then run this again.' }
   }
-  $Node = (Get-Command node).Source
-  Ok "Node.js $(& node -v)"
+  Ok "Node.js $(& $Node -v)"
 
   # forrás: a kiadás csomagja a GitHubról
   $Tmp = $null

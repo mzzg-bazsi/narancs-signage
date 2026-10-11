@@ -18,7 +18,11 @@ jobs:
       - name: Telepítés (Windows PowerShell 5.1, ugyanúgy szkriptblokkként, mint az irm | iex)
         shell: powershell
         run: |
+          # Node.js nélküli gépet utánzunk: a telepítőnek magának kell letöltenie
+          $env:Path = ($env:Path -split ';' | Where-Object { $_ -and -not (Test-Path (Join-Path $_ 'node.exe')) }) -join ';'
+          if (Get-Command node -ErrorAction SilentlyContinue) { throw 'node még elérhető' }
           & ([scriptblock]::Create((Get-Content -Raw install\install.ps1))) -Mode both -Port 8090 -Source .
+          if (-not (Test-Path "$env:ProgramData\NarancsSignage\node\node.exe")) { throw 'saját node hiányzik' }
       - name: Ellenőrzés
         shell: powershell
         run: |

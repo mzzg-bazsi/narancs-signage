@@ -119,7 +119,7 @@ Vagy **rendszergazdai PowerShellből**:
 irm https://raw.githubusercontent.com/mzzg-bazsi/narancs-signage/main/install/install.ps1 | iex
 ```
 
-Ugyanezt kérdezi meg. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, winget-tel telepíti), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.
+Ugyanezt kérdezi meg. A szerver ütemezett feladatként a gép indulásakor fut (ha nincs Node.js, saját példányt tölt le a nodejs.org-ról), adatok: `C:\ProgramData\NarancsSignage\data`. Újrafuttatva frissít.
 
 A Linux telepítő feltelepíti a Node.js 24-et (ha nincs), létrehozza a `narancs-signage` systemd szolgáltatást, beállítja a napi mentést és kiírja az admin felület címét. Más port: `... | sudo bash -s -- --port 80`.
 
