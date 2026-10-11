@@ -1,0 +1,2 @@
+# a shell szkriptek Windowson (pl. a Windows telepítő buildjében) is LF sorvéggel maradjanak – a bash a CRLF-et nem futtatja
+*.sh text eol=lf

@@ -142,6 +142,10 @@ jobs:
           Start-Process install\windows\Output\NarancsSignageSetup.exe '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TYPE=both /PORT=8092' -Wait
           Get-Content "$env:ProgramData\NarancsSignage\setup.log"
           if (-not (Invoke-RestMethod http://127.0.0.1:8092/healthz).ok) { throw 'healthz' }
+          # a kiadott lejátszó telepítő Linuxon fut: Windows sorvég (CR) nem lehet benne
+          $sh = (Invoke-WebRequest http://127.0.0.1:8092/install-player.sh -UseBasicParsing).Content
+          if ($sh.Contains("`r")) { throw 'install-player.sh has CRLF line endings' }
+          if ((Get-Content "$env:ProgramData\NarancsSignage\install\install-player.sh" -Raw).Contains("`r")) { throw 'the installed install-player.sh has CRLF (.gitattributes?)' }
           Start-Process "${env:ProgramFiles}\Narancs Signage\unins000.exe" '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait
           for ($i = 0; $i -lt 60 -and (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue); $i++) { Start-Sleep 1 }
           if (Get-ScheduledTask -TaskName 'Narancs Signage Server' -ErrorAction SilentlyContinue) { throw 'uninstall did not run' }

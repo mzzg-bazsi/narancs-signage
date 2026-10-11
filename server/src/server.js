@@ -843,7 +843,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/healthz') return send(res, 200, { ok: true, version: VERSION });
     if (p === '/install-player.sh') {
       // a lejátszó telepítő a szerver saját címével kitöltve: curl … | sudo bash
-      const script = fs.readFileSync(path.resolve(__dirname, '..', '..', 'install', 'install-player.sh'), 'utf8');
+      // a CRLF sorvégeket levágjuk: Windowson futó szervernél a fájl Windows-sorvéggel is odakerülhet, és a bash azt nem futtatja
+      const script = fs.readFileSync(path.resolve(__dirname, '..', '..', 'install', 'install-player.sh'), 'utf8').replace(/\r\n/g, '\n');
       const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
       const origin = `${proto}://${String(req.headers.host || `localhost:${PORT}`).replace(/[^\w.:\-[\]]/g, '')}`;
       return send(res, 200, script.replace('__SIGNAGE_SERVER__', origin), { 'Content-Type': 'text/x-shellscript; charset=utf-8' });

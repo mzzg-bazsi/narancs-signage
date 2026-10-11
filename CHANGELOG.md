@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.29.3] – 2026-10-11
+
+### Javítva
+- **Windowson futó szerverről a lejátszó telepítése** (`curl …/install-player.sh | sudo bash`) „invalid option name: pipefail” hibával állt le: a Windows telepítő buildjében a `.sh` fájlok Windows-sorvéget (CRLF) kaptak. A szerver mostantól mindig LF sorvéggel adja ki a szkriptet, a `.gitattributes` pedig a buildben is LF-en tartja a `.sh` fájlokat; a Windows CI ellenőrzi.
+
 ## [1.29.2] – 2026-10-11
 
 ### Javítva
