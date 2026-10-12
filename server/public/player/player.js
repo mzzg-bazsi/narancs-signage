@@ -1088,7 +1088,7 @@
     if (m.type === 'branding') {
       state.cfg.org = { ...state.cfg.org, ...m.org };
       state.cfg.media = { ...state.cfg.media, ...(m.media || {}) };
-      if (m.theme !== undefined) state.cfg.screen.settings = { ...state.cfg.screen.settings, theme: m.theme };
+      if (m.theme !== undefined) state.cfg.screen.settings = { ...state.cfg.screen.settings, theme: m.theme, theme_mode: m.theme_mode || '' };
       applyOverlays();
       if (state.current?.slide?.type === 'text') { state.index--; next(); } // a logó újrarajzolásához
     } else if (m.type === 'nav') { state.interactUntil = 0; next(m.step || 1); }

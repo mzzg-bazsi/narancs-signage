@@ -17,7 +17,7 @@ Saját fejlesztésű digital signage rendszer. A felhasználó magyarul kommunik
   - `seed.js` minta tartalmak (alap lejátszási lista): első beállításkor és `POST /api/samples`
 - `server/public/admin/` – admin SPA (vanilla JS, build nélkül). Halvány narancs téma. `F.*` űrlap-segédek, `TYPES` = 15 tartalomtípus (a `zones` = osztott képernyő).
 - `server/public/player/` – lejátszó (kioszk böngészőben fut). Renderelők a `renderers` objektumban; `fixEmoji` minden emojit színes betűtípusba tesz; `#boot` indulókép.
-- `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (10 arculati téma `dark`/`light` palettával, `mode` = alapértelmezett; `resolve(branding, képernyőTéma, { mode, custom })`; admin + lejátszó közös), `zones.js` (osztott képernyő elrendezések), `splash/` (logó: félnap egy tévén, bootképkockák).
+- `server/public/shared/` – `i18n.js` (fordítások, dátumnevek), `themes.js` (8 arculati téma `dark`/`light` palettával, `mode` = alapértelmezett; `resolve(branding, képernyőTéma, { mode, custom })`; admin + lejátszó közös), `zones.js` (osztott képernyő elrendezések), `splash/` (logó: félnap egy tévén, bootképkockák).
 - Osztott képernyő: minden zóna egy beágyazott lejátszó (`player/index.html?zone=3,5`), ami a szülő `window.__signage` állapotából olvassa a konfigurációt – így minden típus a zóna méretéhez igazodik.
 - Jogosultság: `auth.js` `authorize()` – szerepkörök `admin` | `editor` | `viewer` (`users.role`), API kulcs `Authorization: Bearer ns_…` (`api_tokens`, csak sha256 hash). Az `A` middleware a `server.js`-ben bejelentkezés + szerepkör. Új admin-only végpontot az `adminOnly()` listába kell felvenni.
 - Sémabővítés meglévő adatbázisokhoz: `db.js` `addColumn()` (pl. `events.rrule`, `users.role`).

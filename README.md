@@ -25,7 +25,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/admin-content-editor.png" alt="Content editor (interactive menu)"><br><sub>Content editor (interactive menu)</sub></td>
-    <td width="50%"><img src="docs/screenshots/admin-branding.png" alt="Branding: 10 themes, live preview"><br><sub>Branding: 10 themes, live preview</sub></td>
+    <td width="50%"><img src="docs/screenshots/admin-branding.png" alt="Branding: 8 themes, live preview"><br><sub>Branding: 8 themes, live preview</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/admin-alerts.png" alt="Emergency alerts"><br><sub>Emergency alerts</sub></td>
@@ -86,7 +86,7 @@ A complete, self-hosted digital signage system: a central admin panel (with a so
 **More**
 - 🌍 Selectable language (English / Hungarian, English by default): admin panel, displays, server messages
 - 🚀 A default playlist with sample content on first install – a newly paired screen shows something right away
-- 🎨 Branding: 10 built-in themes (Orange, Ocean, Forest, Midnight purple, Burgundy, Black & gold, Neon, Clean light, Corporate blue, Pastel), custom colours, fonts, corner rounding, logo watermark, header bar with title/subtitle/clock, a different theme per screen – with live preview
+- 🎨 Branding: 8 built-in themes (Orange, Ocean, Forest, Midnight purple, Burgundy, Black & gold, Neon, Pastel), custom colours, fonts, corner rounding, logo watermark, header bar with title/subtitle/clock, a different theme per screen – with live preview
 - 🚨 Emergency alerts / notices: an instant full-screen message on all or selected screens (templates: fire alarm, evacuation…), with expiry
 - 📊 Dashboard: online screens, view and touch statistics, most viewed content, form submissions
 - 📈 Reports (proof of play): what played where and how often, by content and screen, with CSV export

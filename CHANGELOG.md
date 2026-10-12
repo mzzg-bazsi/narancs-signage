@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.30.0] – 2026-10-12
+
+### Változott
+- A „Tiszta világos” és a „Vállalati kék” téma megszűnt: ugyanazt adja a Narancs, illetve az Óceán téma világos módja. A korábban ezeket használó arculat és képernyők induláskor automatikusan átállnak (Narancs / Óceán, világos mód).
+
 ## [1.29.4] – 2026-10-11
 
 ### Javítva

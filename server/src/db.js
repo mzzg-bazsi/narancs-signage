@@ -192,3 +192,14 @@ export function getSetting(key, def = null) {
 export function setSetting(key, value) {
   run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, JSON.stringify(value));
 }
+
+// v1.30: a „Tiszta világos” és „Vállalati kék” téma megszűnt – a Narancs / Óceán világos módja ugyanaz
+const GONE_THEMES = { vilagos: 'narancs', vallalati: 'ocean' };
+{
+  const b = getSetting('branding');
+  if (b && GONE_THEMES[b.preset]) setSetting('branding', { ...b, preset: GONE_THEMES[b.preset], mode: b.mode || 'light' });
+  for (const s of Screens.list()) {
+    const st = s.settings || {};
+    if (GONE_THEMES[st.theme]) Screens.update(s.id, { settings: { ...st, theme: GONE_THEMES[st.theme], theme_mode: st.theme_mode || 'light' } });
+  }
+}
