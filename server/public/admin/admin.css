@@ -145,6 +145,7 @@ input[type="color"].input { padding: 3px; height: 40px; cursor: pointer; }
 .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
 .seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--muted); }
 .seg button.on { background: var(--surface); color: var(--primary-strong); box-shadow: var(--shadow); }
+.seg .seg-ic { display: flex; align-items: center; } .seg .seg-ic .i { width: 16px; height: 16px; }
 .daypick { display: flex; gap: 4px; }
 .daypick button { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); cursor: pointer; font-size: 12px; font-weight: 600; }
 .daypick button.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }

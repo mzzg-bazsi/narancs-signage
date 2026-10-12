@@ -7,6 +7,14 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.31.1] – 2026-10-12
+
+### Javítva
+- Arculat: a témaválasztóban a világos alapú témák (Pasztell, Grafit) sötét módban is világosan látszottak; most minden csempe a kiválasztott módot mutatja, és témaváltáskor a mód megmarad.
+
+### Változott
+- A sötét / világos mód választó felirat helyett hold és nap ikont mutat (az Arculatban és a képernyő beállításainál).
+
 ## [1.31.0] – 2026-10-12
 
 ### Új

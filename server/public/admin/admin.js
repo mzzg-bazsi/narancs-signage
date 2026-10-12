@@ -70,9 +70,12 @@
     touch: '<path d="M9 11V5a2 2 0 1 1 4 0v6M13 10a2 2 0 1 1 4 0v2M17 11a2 2 0 1 1 4 0v4a7 7 0 0 1-7 7h-2a7 7 0 0 1-5.6-2.8L3 15.5a2 2 0 0 1 3-2.6L9 15"/>',
     power: '<path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"/>',
     moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     palette: '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7h2A5.5 5.5 0 0 0 22 11c0-5-4.5-9-10-9z"/>',
   };
   const icon = (n, cls = '') => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'i ' + cls); s.innerHTML = ICONS[n] || ''; return s; };
+  // sötét / világos mód választó ikonnal (a felirat súgóként és képernyőolvasónak marad)
+  const modeIcon = (n, label) => h('span', { class: 'seg-ic', title: label, 'aria-label': label }, icon(n));
   const btn = (label, onclick, { cls = '', ic, title, disabled } = {}) => h('button', { class: `btn ${cls}`, onclick, title, disabled, type: 'button' }, ic ? icon(ic) : null, label);
   const fmtBytes = (n) => { if (!n) return '0 B'; const u = ['B', 'KB', 'MB', 'GB', 'TB']; const i = Math.min(4, Math.floor(Math.log(n) / Math.log(1024))); return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`; };
   const fmtDate = (t) => new Date(t).toLocaleString(LOCALE, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -1019,7 +1022,7 @@
           F.number(tr('Hírszalag sebesség (%)'), st, 'ticker_speed', { min: 25, max: 400, placeholder: '100' }),
           F.color(tr('Hírszalag színe'), st, 'ticker_color'),
           F.select(tr('Arculat / téma'), st, 'theme', [['', tr('Globális arculat (Arculat menü)')], ...Object.entries({ ...window.SIGNAGE_THEMES.THEMES, ...(cache.custom_themes || {}) }).map(([k, t]) => [k, t.desc ? `${tr(t.name)} – ${tr(t.desc)}` : tr(t.name)])], { full: true, hint: tr('Ez a képernyő eltérő témát is használhat (pl. étterem bordó, recepció kék). A logó és a fejléc a globális marad.') }),
-          F.seg(tr('Sötét / világos mód'), st, 'theme_mode', [['', tr('A téma szerint')], ['dark', tr('Sötét')], ['light', tr('Világos')]], { def: '' }),
+          F.seg(tr('Sötét / világos mód'), st, 'theme_mode', [['', tr('A téma szerint')], ['dark', modeIcon('moon', tr('Sötét'))], ['light', modeIcon('sun', tr('Világos'))]], { def: '' }),
           F.color(tr('Kiemelő szín felülírása'), st, 'accent', { theme: false, hint: tr('Csak ezen a képernyőn, a téma kiemelő színe helyett') }));
       } else if (tab === 'power') {
         content = h('div', { class: 'fields' },
@@ -1906,9 +1909,10 @@
       });
     };
     const tile = ([k, t]) => {
-      const c = T.palette(t, b.mode || t.mode);
+      const c = T.palette(t, b.mode || theme().mode || 'dark');
       const el = h('button', { type: 'button', class: `theme-tile ${b.preset === k ? 'on' : ''}`, onclick: async () => {
         if (hasCustom() && b.preset !== k && !(await confirmBox(tr('A téma váltása törli az egyedi szín- és betűbeállításokat. Folytatod?'), { ok: tr('Téma váltása'), danger: false }))) return;
+        b.mode ||= theme().mode || 'dark'; // a kiválasztott mód marad, nem a téma alapértelmezése
         b.preset = k; b.colors = {}; delete b.font; delete b.head_font; delete b.radius;
         drawGallery(); drawCustom(); ch();
       } },
@@ -1930,7 +1934,7 @@
     };
     const drawGallery = () => {
       const prevMode = b.mode;
-      const modeSeg = F.seg(tr('Mód'), b, 'mode', [['dark', tr('Sötét')], ['light', tr('Világos')]], { def: theme().mode || 'dark', onchange: async () => {
+      const modeSeg = F.seg(tr('Mód'), b, 'mode', [['dark', modeIcon('moon', tr('Sötét'))], ['light', modeIcon('sun', tr('Világos'))]], { def: theme().mode || 'dark', onchange: async () => {
         // az egyedi színek az előző módhoz készültek
         if (Object.keys(b.colors).length) {
           if (!(await confirmBox(tr('A mód váltása törli az egyedi színeket. Folytatod?'), { ok: tr('Mód váltása'), danger: false }))) { b.mode = prevMode; if (b.mode === undefined) delete b.mode; return drawGallery(); }
