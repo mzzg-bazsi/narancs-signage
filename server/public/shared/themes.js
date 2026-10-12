@@ -46,6 +46,15 @@
     pasztell: { name: 'Pasztell', desc: 'Lágy, vidám – iskolák, óvodák', font: 'nunito', head_font: 'nunito', radius: 'round', mode: 'light',
       light: { accent: '#f472b6', accent_fg: '#ffffff', bg: '#fff7fb', bg2: '#e0f2fe', fg: '#2d2438', surface: 'rgba(45,36,56,0.05)', muted: 'rgba(45,36,56,0.62)' },
       dark: { accent: '#f9a8d4', accent_fg: '#3a0d24', bg: '#1e1a2b', bg2: '#2d3a55', fg: '#fdf2f8', surface: 'rgba(255,255,255,0.08)', muted: 'rgba(253,242,248,0.7)' } },
+    grafit: { name: 'Grafit', desc: 'Minimalista fekete-fehér, piros kiemelés', font: 'inter', head_font: 'inter', radius: 'sharp', mode: 'light',
+      light: { accent: '#dc2626', accent_fg: '#ffffff', bg: '#ffffff', bg2: '#e9e9e9', fg: '#111111', surface: 'rgba(17,17,17,0.05)', muted: 'rgba(17,17,17,0.62)' },
+      dark: { accent: '#ef4444', accent_fg: '#ffffff', bg: '#101010', bg2: '#2a2a2a', fg: '#fafafa', surface: 'rgba(255,255,255,0.07)', muted: 'rgba(250,250,250,0.68)' } },
+    napfeny: { name: 'Napfény', desc: 'Napsárga és mélykék – üzletek, iskolák', font: 'poppins', head_font: 'montserrat', radius: 'round', mode: 'dark',
+      dark: { accent: '#facc15', accent_fg: '#1a1500', bg: '#0b1633', bg2: '#1d3b8f', fg: '#ffffff', surface: 'rgba(255,255,255,0.08)', muted: 'rgba(255,255,255,0.72)' },
+      light: { accent: '#1d4ed8', accent_fg: '#ffffff', bg: '#fffdf0', bg2: '#fde68a', fg: '#0f1d40', surface: 'rgba(15,29,64,0.06)', muted: 'rgba(15,29,64,0.66)' } },
+    korall: { name: 'Korall', desc: 'Élénk korall és mély türkiz – éttermek, fitnesz', font: 'roboto', head_font: 'poppins', radius: 'soft', mode: 'dark',
+      dark: { accent: '#ff7f6b', accent_fg: '#2a0a05', bg: '#052628', bg2: '#0f4c4f', fg: '#f0fdfa', surface: 'rgba(255,255,255,0.08)', muted: 'rgba(240,253,250,0.72)' },
+      light: { accent: '#d4472f', accent_fg: '#ffffff', bg: '#f4fbfa', bg2: '#cdeeea', fg: '#0b2f30', surface: 'rgba(11,47,48,0.06)', muted: 'rgba(11,47,48,0.64)' } },
   };
 
   const COLOR_LABELS = {

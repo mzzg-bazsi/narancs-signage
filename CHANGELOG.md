@@ -7,6 +7,11 @@ A verziószámozás a [szemantikus verziózást](https://semver.org/lang/hu/) k�
 
 Az aktuális verzió a `server/package.json`-ban van, az admin felület Beállítások oldalán is látszik.
 
+## [1.31.0] – 2026-10-12
+
+### Új
+- Három új arculati téma, sötét és világos móddal: **Grafit** (minimalista fekete-fehér, piros kiemelés), **Napfény** (napsárga és mélykék) és **Korall** (korall és mély türkiz).
+
 ## [1.30.0] – 2026-10-12
 
 ### Változott

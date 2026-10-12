@@ -25,7 +25,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/hu/admin-content-editor.png" alt="Tartalomszerkesztő (interaktív menü)"><br><sub>Tartalomszerkesztő (interaktív menü)</sub></td>
-    <td width="50%"><img src="docs/screenshots/hu/admin-branding.png" alt="Arculat: 8 téma, élő előnézet"><br><sub>Arculat: 8 téma, élő előnézet</sub></td>
+    <td width="50%"><img src="docs/screenshots/hu/admin-branding.png" alt="Arculat: 11 téma, élő előnézet"><br><sub>Arculat: 11 téma, élő előnézet</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/hu/admin-alerts.png" alt="Vészjelzés"><br><sub>Vészjelzés</sub></td>
@@ -86,7 +86,7 @@ Teljeskörű, saját üzemeltetésű digital signage rendszer: központi admin f
 **Egyéb**
 - 🌍 Választható nyelv (English / Magyar, alapból angol): admin felület, kijelzők, szerverüzenetek
 - 🚀 Első telepítéskor alap lejátszási lista minta tartalmakkal – a képernyő párosítás után azonnal mutat valamit
-- 🎨 Arculat: 10 előre megadott téma (Narancs, Óceán, Erdő, Éjféli lila, Bordó, Fekete-arany, Neon, Pasztell), egyedi színek, betűtípusok, lekerekítés, logó vízjel, fejléc sáv címmel/alcímmel/órával, képernyőnként eltérő téma – élő előnézettel
+- 🎨 Arculat: 10 előre megadott téma (Narancs, Óceán, Erdő, Éjféli lila, Bordó, Fekete-arany, Neon, Pasztell, Grafit, Napfény, Korall), egyedi színek, betűtípusok, lekerekítés, logó vízjel, fejléc sáv címmel/alcímmel/órával, képernyőnként eltérő téma – élő előnézettel
 - 🚨 Vészjelzés / közlemény: azonnali, teljes képernyős üzenet minden vagy kiválasztott képernyőre (sablonok: tűzriadó, evakuálás…), lejárati idővel
 - 📊 Irányítópult: online képernyők, megjelenések és érintések statisztikája, legnézettebb tartalmak, beküldések
 - 📈 Riportok (lejátszási igazolás): mi, hol és hányszor ment le, tartalom és képernyő szerint, CSV exporttal
